@@ -1,12 +1,29 @@
 import cv2
 import numpy
+import sys
+
+total = 0
 
 def diffImg(t1, t2, t3):
+	global total
 	d1 = cv2.absdiff(t3,t2)
 	d2 = cv2.absdiff(t2,t1)
-	return cv2.bitwise_and(d1, d2)
+	diff = cv2.bitwise_and(d1, d2)
 
-cap = cv2.VideoCapture("fk_test_1.mp4")
+	# threshold(src, thresh, maxval, type)
+	ret, thresh = cv2.threshold(diff, 10, 255, cv2.THRESH_BINARY)
+	total = total + cv2.sumElems(thresh)[0]
+	return thresh
+
+if len(sys.argv)!=2:                 
+    print "Usage : python mar1.py <video_file>"
+    sys.exit(0)
+
+cap = cv2.VideoCapture(sys.argv[1])
+
+# gobble the intro
+for x in xrange(1,70):
+	ret, frame1 = cap.read()
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
@@ -22,7 +39,6 @@ while(cap.isOpened()):
 	ret, frame3 = cap.read()
 	
 	if ret == True:
-		
 		gray1 = gray2
 		gray2 = gray3
 		gray3 = cv2.cvtColor(frame3, cv2.COLOR_RGB2GRAY)
@@ -32,9 +48,7 @@ while(cap.isOpened()):
 	else:
 		break
 
-	
-
-
+print '%g' % total
 cap.release()
 cv2.destroyAllWindows()
 
