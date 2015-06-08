@@ -15,7 +15,6 @@ while(cap.isOpened()):
 	ret, frame = cap.read()
 
 	if ret == True:
-		frame = cv2.flip(frame, 0)	
 		vout.write(frame) 
 		cv2.imshow('frame',frame)
 	
