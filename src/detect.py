@@ -30,20 +30,23 @@ def main():
 
 	# Get on with the capture
 	while(cap.isOpened()):
-		
+
+		temp = frame1 # without contours
 		current = diff(grayed0, grayed1, grayed2)
 		current = morph(current)
-		
 
+		temp_thresh = current.copy()
+
+		# Frame1 gets modified with contours
 		if tracking:
-			print "tracking"
-
+			search(frame1, temp_thresh)
+		
 		cv2.imshow('Feed', frame1)
 
 		if debugging:
-			cv2.imshow('difference', current)
+			cv2.imshow('Threshold Image', current) # why does this go odd
 		else:
-			cv2.destroyWindow('difference')
+			cv2.destroyWindow('Threshold Image')
 
 		if paused:
 			cv2.waitKey()
@@ -53,7 +56,7 @@ def main():
 		ret, next_frame = cap.read()
 
 		if ret == True:
-			frame0 = frame1
+			frame0 = temp
 			grayed0 = grayed1
 
 			frame1 = frame2
@@ -91,8 +94,21 @@ def morph(image):
 	ret, image = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
 	return image
 
-def search(src):
-	contours, hierarchy = cv2.findContours(src, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def search(src, thresh):
+	objectDetected = False
+
+	# find contours in threshold
+	contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+	if len(contours) > 0:
+		objectDetected = True
+	else:
+		objectDetected = False
+
+	# draw the contours onto the source image
+	if objectDetected:
+		cv2.drawContours(src, contours, -1, (0,255,0), 3)
+
 
 def track():
 	global tracking
