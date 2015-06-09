@@ -3,48 +3,65 @@ import cv2
 import numpy as np
 import sys
 
+cap = 0
+debug = False
+tracking = False
+paused = False
+
 def main():
+	global cap
+	keys = {-1: cont, 116 : track, 112 : pause, 113: quit, 100: debug}
+
 	if len(sys.argv)!=2:                 
 		print "Usage : python detect.py <video_file>"
 		sys.exit(0)
 
-	process()
-
-def process():
 	cap = cv2.VideoCapture(sys.argv[1])
 
+	# read three frames for initialisation
 	ret, frame0 = cap.read()
-	ret, frame1 = cap.read()
-	ret, frame2 = cap.read()
-
 	grayed0 = cv2.cvtColor(frame0, cv2.COLOR_RGB2GRAY)
+	
+	ret, frame1 = cap.read()
 	grayed1 = cv2.cvtColor(frame1, cv2.COLOR_RGB2GRAY)
-	grayed2 = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)
+	
+	ret, frame2 = cap.read()
+	grayed2 = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)	
 
 	# Get on with the capture
 	while(cap.isOpened()):
 		
 		current = diff(grayed0, grayed1, grayed2)
 		
-		cv2.imshow('Difference', morph(current))
+		cv2.imshow('Feed', frame1)
+		
+		if debug == True:
+			cv2.imshow('difference', current)
+		else:
+			cv2.destroyWindow('difference')
 
 		# Next iteration
 		ret, next_frame = cap.read()
 
 		if ret == True:
+			frame0 = frame1
 			grayed0 = grayed1
+
+			frame1 = frame2
 			grayed1 = grayed2
+
+			frame2 = next_frame
 			grayed2 = cv2.cvtColor(next_frame, cv2.COLOR_RGB2GRAY)
 
-			# hit q to quit
-			if cv2.waitKey(1) & 0xFF == ord('q'):
-				break
+			keys[cv2.waitKey(1)]()
+
 		else:
 			break
 
 	cap.release()
 	cv2.destroyAllWindows()
-
+		
+# returns a thresholded difference image
 def diff(f0, f1, f2):
 	d1 = cv2.absdiff(f2, f1)
 	d2 = cv2.absdiff(f1, f0)
@@ -54,12 +71,37 @@ def diff(f0, f1, f2):
 	ret, overlap = cv2.threshold(overlap, 40, 255, cv2.THRESH_BINARY)
 	return overlap
 
+# returns a re-thresholded image after blur and open/close/erode/dilate
 def morph(image):
-	kernel = np.ones((7,7),np.uint8)
+	# kernel = np.ones((7,7),np.uint8)
 	# image = cv2.dilate(image, kernel)
-	image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-	# image = cv2.GaussianBlur(image, (3,3), 0)
+	# image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+	image = cv2.GaussianBlur(image, (15,15), 0)
+	ret, image = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
 	return image
+
+def search(src):
+	contours, hierarchy = cv2.findContours(src, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+def track():
+	print "tracking mode"
+
+def pause():
+	print "pause"
+	paused = not paused
+
+def cont():
+	return
+
+def debug():
+	global debug
+	debug = not debug
+
+def quit():
+	global cap
+	cap.release()
+	cv2.destroyAllWindows()
+	sys.exit(0)
 
 # Procedural body
 main()
