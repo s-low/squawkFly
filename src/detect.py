@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 cap = 0
-debug = False
+debugging = False
 tracking = False
 paused = False
 
@@ -32,13 +32,18 @@ def main():
 	while(cap.isOpened()):
 		
 		current = diff(grayed0, grayed1, grayed2)
+		current = morph(current)
 		
 		cv2.imshow('Feed', frame1)
 		
-		if debug == True:
+		if debugging:
 			cv2.imshow('difference', current)
 		else:
 			cv2.destroyWindow('difference')
+
+		if paused:
+			cv2.waitKey()
+			pause()
 
 		# Next iteration
 		ret, next_frame = cap.read()
@@ -84,18 +89,29 @@ def search(src):
 	contours, hierarchy = cv2.findContours(src, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 def track():
-	print "tracking mode"
+	global tracking
+	tracking = not tracking
+
+	if tracking:
+		print "Tracking ON"
+	else: 
+		print "Tracking OFF"
 
 def pause():
-	print "pause"
+	global paused
 	paused = not paused
+
+def debug():
+	global debugging
+	debugging = not debugging
+
+	if debugging:
+		print "Debug ON"
+	else: 
+		print "Debug OFF"
 
 def cont():
 	return
-
-def debug():
-	global debug
-	debug = not debug
 
 def quit():
 	global cap
