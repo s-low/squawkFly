@@ -34,8 +34,12 @@ def main():
 		current = diff(grayed0, grayed1, grayed2)
 		current = morph(current)
 		
+
+		if tracking:
+			print "tracking"
+
 		cv2.imshow('Feed', frame1)
-		
+
 		if debugging:
 			cv2.imshow('difference', current)
 		else:
@@ -58,8 +62,10 @@ def main():
 			frame2 = next_frame
 			grayed2 = cv2.cvtColor(next_frame, cv2.COLOR_RGB2GRAY)
 
-			keys[cv2.waitKey(1)]()
-
+			try:
+				keys[cv2.waitKey(1)]()
+			except KeyError:
+				continue
 		else:
 			break
 
