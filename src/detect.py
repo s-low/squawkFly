@@ -1,15 +1,24 @@
+#!/usr/bin/python
+
 # MAIN DETECTION TEST FILE
+import sys
+sys.path.append('/usr/local/lib/python2.7/site-packages')
 import cv2
 import numpy as np
-import sys
 
 cap = 0
 debugging = False
 tracking = True
 paused = False
 
+outfile = None
+
+startOfFile = True
+time = 0
+ 
 def main():
 	global cap
+	global outfile
 	keys = {-1: cont, 116 : track, 112 : pause, 113: quit, 100: debug}
 
 	if len(sys.argv)!=2:                 
@@ -17,6 +26,7 @@ def main():
 		sys.exit(0)
 
 	cap = cv2.VideoCapture(sys.argv[1])
+	outfile = open('output.txt', 'w')
 
 	# read three frames for initialisation
 	ret, frame0 = cap.read()
@@ -74,6 +84,7 @@ def main():
 
 	cap.release()
 	cv2.destroyAllWindows()
+	outfile.close()
 		
 # returns a thresholded difference image
 def diff(f0, f1, f2):
@@ -95,6 +106,10 @@ def morph(image):
 	return image
 
 def search(src, thresh):
+	global outfile
+	global startOfFile
+	global time
+	time+= 1
 	objectDetected = False
 
 	# find contours in threshold
@@ -116,9 +131,16 @@ def search(src, thresh):
 			if area < 1000 and area > 5:
 				# filter by squareness
 				x, y, w, h = cv2.boundingRect(contour)
-				
 				if square(h, w) and circular(area, h, w):
 					cv2.rectangle(src,(x,y),(x+w,y+h),(0,0,255),2)
+					cx = x + float(w)/2.0
+					cy = -1 * (y + float(h)/2.0)
+					if not startOfFile:
+						outfile.write('\n')
+
+					outfile.write(`cx` + ' ' + `cy` + ' ' + `time`)
+					if startOfFile:
+						startOfFile = False
 
 
 def square(h, w):
@@ -134,7 +156,7 @@ def circular(area, h, w):
 	pi4 = (3.142/4.0)
 	closeness = abs(ratio - pi4)
 
-	if closeness < 0.2:
+	if closeness < 0.4:
 		return True
 	else:
 		return False
