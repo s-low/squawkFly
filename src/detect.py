@@ -5,7 +5,7 @@ import sys
 
 cap = 0
 debugging = False
-tracking = False
+tracking = True
 paused = False
 
 def main():
@@ -108,7 +108,36 @@ def search(src, thresh):
 	# draw the contours onto the source image
 	if objectDetected:
 		cv2.drawContours(src, contours, -1, (0,255,0), 3)
+		for contour in contours:
 
+			area = cv2.contourArea(contour)
+			
+			# filter by size
+			if area < 1000 and area > 5:
+				# filter by squareness
+				x, y, w, h = cv2.boundingRect(contour)
+				
+				if square(h, w) and circular(area, h, w):
+					cv2.rectangle(src,(x,y),(x+w,y+h),(0,0,255),2)
+
+
+def square(h, w):
+	squareness = abs((float(w)/float(h)) - 1)
+	if squareness < 0.3:
+		return True
+	else:
+		return False
+
+# if perfectly circular then ration of areas: contour/box = pi/4
+def circular(area, h, w):
+	ratio =  float(area) / (float(h)*float(w))
+	pi4 = (3.142/4.0)
+	closeness = abs(ratio - pi4)
+
+	if closeness < 0.2:
+		return True
+	else:
+		return False
 
 def track():
 	global tracking
