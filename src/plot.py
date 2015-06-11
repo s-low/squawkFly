@@ -4,13 +4,11 @@ from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
-x_set = []
-y_set = []
+plt.style.use('ggplot')
 
 # FLAGS
 animate_on = True
-stack = True
+stack = False
 
 # DATA
 with open("output.txt") as datafile:
@@ -32,8 +30,6 @@ for i in range(0, max_frame+1):
 	frame_array[i]["x"] = []
 	frame_array[i]["y"] = []
 
-
-
 # for each recorded frame
 for row in data:	
 	x = row.split(' ')[0]
@@ -51,18 +47,28 @@ for row in data:
 fig = plt.figure()
 
 ax = plt.axes(xlim=(0, 900), ylim=(-600, 0))
+ax.set_title("Ball Candidate Centroids", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
+counter = ax.text(710, -40, 'Frame:', fontsize=15)
 scat, = ax.plot([], [], 'ro')
+
+
+x_set = []
+y_set = []
 
 # initialization function: plot the background of each frame
 def init():
 	scat.set_data([], [])
 	return scat,
 
-def animate(i):
+def animate(i, fig, counter):
+	global max_frame
 	global x_set
 	global y_set
+
+	counter.set_text('Frame: ' + `i`)
+
 	if stack:
 		x_set = x_set + frame_array[i]["x"]
 		y_set = y_set + frame_array[i]["y"]
@@ -71,10 +77,17 @@ def animate(i):
 		y_set = frame_array[i]["y"]
 
 	scat.set_data(x_set, y_set)
-	return scat,
+
+	# re-initialise the datasets to empty for the repeat animation
+	if int(i) == int(max_frame-1):
+		x_set = []
+		y_set = []
+
+	return scat
 
 if animate_on:
-	anim = animation.FuncAnimation(fig, animate, init_func=init, frames=120, interval=90, blit=False)
+	anim = animation.FuncAnimation(fig, animate, fargs=(fig, counter), init_func=init, frames=max_frame, interval=40, blit=False)
+	anim.save('animation1.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 else:
 	scat.set_data(all_x, all_y)
 
