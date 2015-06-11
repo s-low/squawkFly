@@ -5,14 +5,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+x_set = []
+y_set = []
+
+# FLAGS
+animate_on = True
+stack = True
+
+# DATA
 with open("output.txt") as datafile:
 	data = datafile.read()
 	datafile.close()
 
 data = data.split('\n')
 
-# x = [row.split(' ')[0] for row in data]
-# y = [row.split(' ')[1] for row in data]
+all_x = [row.split(' ')[0] for row in data]
+all_y = [row.split(' ')[1] for row in data]
 all_frames = [row.split(' ')[2] for row in data]
 
 # now translate into frame array
@@ -24,11 +32,14 @@ for i in range(0, max_frame+1):
 	frame_array[i]["x"] = []
 	frame_array[i]["y"] = []
 
+
+
 # for each recorded frame
-for row in data:
+for row in data:	
 	x = row.split(' ')[0]
 	y = row.split(' ')[1]
 	f = int(row.split(' ')[2])
+
 	frame_array[f]["x"].append(x)
 	frame_array[f]["y"].append(y)
 
@@ -50,12 +61,22 @@ def init():
 	return scat,
 
 def animate(i):
-	x = frame_array[i]["x"]
-	y = frame_array[i]["y"]
-	scat.set_data(x, y)
+	global x_set
+	global y_set
+	if stack:
+		x_set = x_set + frame_array[i]["x"]
+		y_set = y_set + frame_array[i]["y"]
+	else:
+		x_set = frame_array[i]["x"]
+		y_set = frame_array[i]["y"]
+
+	scat.set_data(x_set, y_set)
 	return scat,
 
-anim = animation.FuncAnimation(fig, animate, init_func=init, frames=120, interval=90, blit=False)
+if animate_on:
+	anim = animation.FuncAnimation(fig, animate, init_func=init, frames=120, interval=90, blit=False)
+else:
+	scat.set_data(all_x, all_y)
 
 # start animation
 plt.show()
