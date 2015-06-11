@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 with open("output.txt") as datafile:
-    data = datafile.read()
-    datafile.close()
+	data = datafile.read()
+	datafile.close()
 
 data = data.split('\n')
 
@@ -29,40 +29,33 @@ for row in data:
 	x = row.split(' ')[0]
 	y = row.split(' ')[1]
 	f = int(row.split(' ')[2])
-	print 
 	frame_array[f]["x"].append(x)
 	frame_array[f]["y"].append(y)
 
-print frame_array
+# frame_array is an array of dictionaries - each containing the dataset for that
+# particular frame. The animation need simply update the dataset with the data 
+# from that particular frame
 
 # set up the figure, the axis, and the plot element we want to animate
 fig = plt.figure()
-ax = plt.axes(xlim=(0, 2), ylim=(-10, 10))
-scat, = ax.plot([], [], 'bo')
+
+ax = plt.axes(xlim=(0, 900), ylim=(-600, 0))
+ax.set_xlabel("Graphical X")
+ax.set_ylabel("Graphical Y")
+scat, = ax.plot([], [], 'ro')
 
 # initialization function: plot the background of each frame
 def init():
-    scat.set_data([], [])
-    return scat,
+	scat.set_data([], [])
+	return scat,
 
 def animate(i):
-    x = np.linspace(0, 2, 1000)
-    y = np.sin(2 * np.pi * (x - 0.01 * i))
-    scat.set_data(x, y)
-    return scat,
+	x = frame_array[i]["x"]
+	y = frame_array[i]["y"]
+	scat.set_data(x, y)
+	return scat,
 
-
-
-
-
-
-# ax = fig.add_subplot(111)
-# ax.set_xlabel('Graphical x')
-# ax.set_ylabel('Graphical y')
-# ax.set_ylim([-500,0])
-# ax.set_xlim([0,900])
-		
-anim = animation.FuncAnimation(fig, animate, init_func=init, frames=200, interval=20, blit=False)
+anim = animation.FuncAnimation(fig, animate, init_func=init, frames=120, interval=90, blit=False)
 
 # start animation
 plt.show()
