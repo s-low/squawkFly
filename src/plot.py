@@ -1,14 +1,15 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 
 from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
 plt.style.use('ggplot')
 
 # FLAGS
 animate_on = True
-stack = False
+stack = True
 
 # DATA
 with open("output.txt") as datafile:
@@ -46,7 +47,7 @@ for row in data:
 # set up the figure, the axis, and the plot element we want to animate
 fig = plt.figure()
 
-ax = plt.axes(xlim=(0, 900), ylim=(-600, 0))
+ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Candidate Centroids", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
@@ -87,7 +88,7 @@ def animate(i, fig, counter):
 
 if animate_on:
 	anim = animation.FuncAnimation(fig, animate, fargs=(fig, counter), init_func=init, frames=max_frame, interval=40, blit=False)
-	anim.save('animation1.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+	# anim.save('animation1.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 else:
 	scat.set_data(all_x, all_y)
 
