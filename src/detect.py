@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 
 # MAIN DETECTION TEST FILE
 import sys
@@ -98,10 +98,10 @@ def diff(f0, f1, f2):
 
 # returns a re-thresholded image after blur and open/close/erode/dilate
 def morph(image):
-	# kernel = np.ones((7,7),np.uint8)
-	# image = cv2.dilate(image, kernel)
-	# image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-	image = cv2.GaussianBlur(image, (15,15), 0)
+	kernel = np.ones((9,9),np.uint8)
+	image = cv2.dilate(image, kernel)
+	image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+	image = cv2.GaussianBlur(image, (11,11), 0)
 	ret, image = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
 	return image
 
@@ -128,7 +128,7 @@ def search(src, thresh):
 			area = cv2.contourArea(contour)
 			
 			# filter by size
-			if area < 1000 and area > 5:
+			if area < 1500 and area > 5:
 				# filter by squareness
 				x, y, w, h = cv2.boundingRect(contour)
 				if square(h, w) and circular(area, h, w):
@@ -141,7 +141,6 @@ def search(src, thresh):
 					outfile.write(`cx` + ' ' + `cy` + ' ' + `time`)
 					if startOfFile:
 						startOfFile = False
-
 
 def square(h, w):
 	squareness = abs((float(w)/float(h)) - 1)
