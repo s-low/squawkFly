@@ -4,6 +4,8 @@ timed.txt
 
 motiontracking.cpp
 
+animate.py
+
 *.mp4
 
 *.mov
