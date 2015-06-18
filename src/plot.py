@@ -45,7 +45,10 @@ for row in data:
 # from that particular frame
 
 # set up the figure, the axis, and the plot element we want to animate
-fig = plt.figure()
+dpi = 113
+h = 800 / dpi
+w = 1280 / dpi
+fig = plt.figure(figsize=(w,h))
 
 ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Candidate Centroids", y = 1.03)
