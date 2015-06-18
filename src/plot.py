@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-
+import sys
 from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,8 +8,13 @@ import matplotlib.animation as animation
 plt.style.use('ggplot')
 
 # FLAGS
+save = False
 animate_on = True
-stack = True
+stack = False
+
+if len(sys.argv) == 2:
+	if sys.argv[1] == 'w':
+		save = True
 
 # DATA
 with open("output.txt") as datafile:
@@ -91,7 +96,8 @@ def animate(i, fig, counter):
 
 if animate_on:
 	anim = animation.FuncAnimation(fig, animate, fargs=(fig, counter), init_func=init, frames=max_frame, interval=40, blit=False)
-	# anim.save('animation1.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+	if save:
+		anim.save('animations/fkz3.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 else:
 	scat.set_data(all_x, all_y)
 
