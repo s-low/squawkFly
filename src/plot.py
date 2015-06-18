@@ -12,9 +12,11 @@ save = False
 animate_on = True
 stack = False
 
-if len(sys.argv) == 2:
-	if sys.argv[1] == 'w':
+if len(sys.argv) > 1:
+	if sys.argv[1] == 'w' or sys.argv[2] == 'w':
 		save = True
+	if sys.argv[1] == 's' or sys.argv[2] == 's':
+		stack = True
 
 # DATA
 with open("output.txt") as datafile:
@@ -68,6 +70,7 @@ y_set = []
 
 # initialization function: plot the background of each frame
 def init():
+
 	scat.set_data([], [])
 	return scat,
 
@@ -97,7 +100,7 @@ def animate(i, fig, counter):
 if animate_on:
 	anim = animation.FuncAnimation(fig, animate, fargs=(fig, counter), init_func=init, frames=max_frame, interval=40, blit=False)
 	if save:
-		anim.save('animations/fkz3.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+		anim.save('animations/test.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 else:
 	scat.set_data(all_x, all_y)
 
