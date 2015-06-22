@@ -22,7 +22,7 @@ max_frame = int(all_frames[-1])
 dpi = 113
 h = 800 / dpi
 w = 1280 / dpi
-fig = plt.figure(figsize=(w,h))
+fig = plt.figure("YCP",figsize=(w,h))
 
 ax = plt.axes(xlim=(0, max_frame), ylim=(-720, 0))
 ax.set_title("Y position of Ball Candidates by Frame", y = 1.03)
