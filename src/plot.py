@@ -9,7 +9,7 @@ plt.style.use('ggplot')
 
 # FLAGS
 save = False
-animate_on = True
+animate_on = False
 stack = False
 
 if len(sys.argv) > 1:
@@ -61,7 +61,8 @@ ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Candidate Centroids", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
-counter = ax.text(710, -40, 'Frame:', fontsize=15)
+if animate_on:
+	counter = ax.text(710, -40, 'Frame:', fontsize=15)
 scat, = ax.plot([], [], 'ro')
 
 
@@ -70,7 +71,6 @@ y_set = []
 
 # initialization function: plot the background of each frame
 def init():
-
 	scat.set_data([], [])
 	return scat,
 
