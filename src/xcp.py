@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 plt.style.use('ggplot')
 
 # DATA
@@ -24,13 +25,13 @@ h = 800 / dpi
 w = 1280 / dpi
 fig = plt.figure(figsize=(w,h))
 
-ax = plt.axes(xlim=(0, 80), ylim=(0, 1280))
+ax = plt.axes(xlim=(0, 1280), ylim=(0, max_frame))
 ax.set_title("X position of Ball Candidates by Frame", y = 1.03)
-ax.set_xlabel("Frame Number")
-ax.set_ylabel("Graphical X")
+ax.set_xlabel("Graphical X")
+ax.set_ylabel("Frame Number")
 
 scat, = ax.plot([], [], 'ro')
 
-scat.set_data(all_frames, all_x)
+scat.set_data(all_x,all_frames)
 
 plt.show()
