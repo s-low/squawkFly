@@ -25,7 +25,7 @@ h = 800 / dpi
 w = 1280 / dpi
 fig = plt.figure("XCP",figsize=(w,h))
 
-ax = plt.axes(xlim=(0, 1280), ylim=(0, max_frame))
+ax = plt.axes(xlim=(0, 1280), ylim=(0, max_frame+5))
 ax.set_title("X position of Ball Candidates by Frame", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Frame Number")

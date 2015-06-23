@@ -24,7 +24,7 @@ h = 800 / dpi
 w = 1280 / dpi
 fig = plt.figure("YCP",figsize=(w,h))
 
-ax = plt.axes(xlim=(0, max_frame), ylim=(-720, 0))
+ax = plt.axes(xlim=(0, max_frame+5), ylim=(-720, 0))
 ax.set_title("Y position of Ball Candidates by Frame", y = 1.03)
 ax.set_xlabel("Frame Number")
 ax.set_ylabel("Graphical Y")
