@@ -33,6 +33,8 @@ with open("output.txt") as datafile:
 	data = datafile.read()
 	datafile.close()
 
+outfile = open('kalman_points.txt', 'w')
+
 data = data.split('\n')
 
 all_x = [row.split(' ')[0] for row in data]
@@ -152,4 +154,6 @@ for index, f0 in enumerate(frame_array):
 					# Estimate new ball location
 
 for point in kalman_points:
-	print point
+	outfile.write(`point[0]` +" "+ ` point[0]` + "\n")
+
+outfile.close()
