@@ -57,6 +57,10 @@ for row in data:
 	frame_array[f]["x"].append(x)
 	frame_array[f]["y"].append(y)
 
+
+
+kalman_points = []
+
 # FOR each frame F0:
 for index, f0 in enumerate(frame_array):
 	# print "Frame: "+ `index`
@@ -86,36 +90,54 @@ for index, f0 in enumerate(frame_array):
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
 			if sep < max_dist:
-				# init kalman filter
+				# INITIALISE KALMAN FILTER
 				# state vec (x, y, v_x, v_y)
-				# measure vec (x, y)
+				# measure vec (z_x, z_y)
 
-				kf = cv.CreateKalman(dynam_params=4, measure_params=2, control_params=0)
-				s_vector = cv.CreateMat(4, 1, cv.CV_32FC1)
-				s_noise  = cv.CreateMat(4, 1, cv.CV_32FC1)
-				m_vector = cv.CreateMat(2, 1, cv.CV_32FC1)
-				m_noise  = cv.CreateMat(2, 1, cv.CV_32FC1)
-
-				cv.SetIdentity(kf.measurement_matrix)
+				kf = cv.CreateKalman(4, 2, 0)
+				state = cv.CreateMat(4, 1, cv.CV_32FC1)
+				proc_noise  = cv.CreateMat(4, 1, cv.CV_32FC1)
+				measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
 				
+				# transition matrix init 
 				for j in range(4):
 					for k in range(4):
 						kf.transition_matrix[j,k] = 0
 					kf.transition_matrix[j,j] = 1
 
-				kf.transition_matrix[0,2] = 1
-				kf.transition_matrix[1,3] = 1
+				# kf.transition_matrix[0,2] = 1
+				# kf.transition_matrix[1,3] = 1
 
-				a = np.asarray(kf.transition_matrix[:,:])
-				print "Transition Matrix: \n", a
-				
-				b = np.asarray(kf.measurement_matrix[:,:])
-				print "\nMeasurement Matrix: \n", b
+				# measurement matrix init
+				cv.SetIdentity(kf.measurement_matrix)
 
-				sys.exit()
-				# predict location in F++
-				# ret = kf.predict()
-				# print ret
+				processNoiseCovariance = 1e-4
+				measurementNoiseCovariance = 1e-1
+				errorCovariancePost= 0.1
+
+				cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(processNoiseCovariance))
+				cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(measurementNoiseCovariance))
+				cv.SetIdentity(kf.error_cov_post, cv.RealScalar(errorCovariancePost))
+
+				# predict location in f2 from state f1
+				measurement[0, 0] = b1_x
+				measurement[1, 0] = b1_y
+
+				state[0,0] = b1_x
+				state[1,0] = b1_y
+				state[2,0] = 10
+				state[3,0] = 10
+
+				predicted = cv.KalmanPredict(kf)
+				corrected = cv.KalmanCorrect(kf, measurement)
+
+				# print "State: \n", np.asarray(s_vector[:,:])
+				# print "\nMeasurement:\n", np.asarray(measurement[:,:])
+				# print "\nPrediction: \n", np.asarray(predicted[:,:])
+				# print "\nCorrected: \n",  np.asarray(corrected[:,:])
+
+				corrected_point = (corrected[0,0],corrected[1,0])
+				kalman_points.append(corrected_point)
 
 				# IF prediction is verified:
 					# add b, b+, b++ to T_cand
@@ -128,3 +150,6 @@ for index, f0 in enumerate(frame_array):
 
 					# But always:
 					# Estimate new ball location
+
+for point in kalman_points:
+	print point
