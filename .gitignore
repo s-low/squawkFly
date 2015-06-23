@@ -10,6 +10,8 @@ motiontracking.cpp
 
 animate.py
 
+*.gif
+
 *.mp4
 
 *.mov
