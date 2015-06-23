@@ -1,5 +1,7 @@
 #!/usr/local/bin/python
 
+# 1D Kalman filter.
+
 # INPUT: Output.txt containing set of ball candidates for each frame
 # format is space delimited three column file eg:
 # X    Y    F
@@ -12,7 +14,17 @@
 
 import sys
 import cv2
+import cv2.cv as cv
 import numpy as np 
+from pykalman import KalmanFilter
+
+def printMatrix(testMatrix):
+		print ' ',
+		for i in range(len(testMatrix[1])):  # Make it work with non square matrices.
+			  print i,
+		print
+		for i, element in enumerate(testMatrix):
+			  print i, ' '.join(element)
 
 # KALMAN PARAMETERS
 max_dist = 20
@@ -45,13 +57,10 @@ for row in data:
 	frame_array[f]["x"].append(x)
 	frame_array[f]["y"].append(y)
 
-# frame_array is an array of dictionaries - each containing the dataset for that
-# particular frame. 
-
 # FOR each frame F0:
 for index, f0 in enumerate(frame_array):
-	print "Frame: "+ `index`
-	print f0
+	# print "Frame: "+ `index`
+	# print f0
 
 	# always need two frames of headroom
 	if index == max_frame - 1:
@@ -74,14 +83,41 @@ for index, f0 in enumerate(frame_array):
 			# IF separation between b and b+ is small:
 			xdiff = abs(b_x - b1_x)
 			ydiff = abs(b_y - b1_y)
-			sep = ((xdiff**2) + (ydiff**2))**(0.5)
+			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
-			# if sep < max_dist:
+			if sep < max_dist:
 				# init kalman filter
+				# state vec (x, y, v_x, v_y)
+				# measure vec (x, y)
+
+				kf = cv.CreateKalman(dynam_params=4, measure_params=2, control_params=0)
+				s_vector = cv.CreateMat(4, 1, cv.CV_32FC1)
+				s_noise  = cv.CreateMat(4, 1, cv.CV_32FC1)
+				m_vector = cv.CreateMat(2, 1, cv.CV_32FC1)
+				m_noise  = cv.CreateMat(2, 1, cv.CV_32FC1)
+
+				cv.SetIdentity(kf.measurement_matrix)
+				
+				for j in range(4):
+					for k in range(4):
+						kf.transition_matrix[j,k] = 0
+					kf.transition_matrix[j,j] = 1
+
+				kf.transition_matrix[0,2] = 1
+				kf.transition_matrix[1,3] = 1
+
+				a = np.asarray(kf.transition_matrix[:,:])
+				print "Transition Matrix: \n", a
+				
+				b = np.asarray(kf.measurement_matrix[:,:])
+				print "\nMeasurement Matrix: \n", b
+
+				sys.exit()
 				# predict location in F++
+				# ret = kf.predict()
+				# print ret
 
 				# IF prediction is verified:
-					
 					# add b, b+, b++ to T_cand
 					# update prediction function
 
