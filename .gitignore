@@ -10,6 +10,10 @@ motiontracking.cpp
 
 animate.py
 
+cheat.txt
+
+kalman_points.txt
+
 *.gif
 
 *.mp4
