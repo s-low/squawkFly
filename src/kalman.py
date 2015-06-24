@@ -19,12 +19,13 @@ import numpy as np
 from pykalman import KalmanFilter
 
 def verified(corrected_point, next_frame):
-	for point in next_frame["x"]:
-		cx = next_frame["x"].pop(0)
-		cy = next_frame["y"].pop(0)
+	for point_index, point in enumerate(next_frame["x"]):
+		cx = next_frame["x"][point_index]
+		cy = next_frame["y"][point_index]
 		c = (cx, cy)
+		print "Compared with:", c
 
-		if point_is_near_point(corrected_point, c, 60):
+		if point_is_near_point(corrected_point, c, 200):
 			print "VERIFIED"
 			return True
 
@@ -35,9 +36,6 @@ def point_is_near_point(point1, point2, dist):
 	y1 = point1[1]	
 	x2 = point2[0]
 	y2 = point2[1]
-
-	print "P1: ", x1, y1
-	print "P2: ",x2, y2	
 
 	xdiff = float(x1) - float(x2)
 	ydiff = float(y1) - float(y2)
@@ -84,32 +82,35 @@ for row in data:
 trajectories = []
 
 # FOR each frame F0:
-for index, f0 in enumerate(frame_array):
+for frame_index, f0 in enumerate(frame_array):
 	# print "Frame: "+ `index`
 	# print f0
 	
-	print "\n",index, f0	
+	print "\n",frame_index, f0	
 	# always need two frames of headroom
-	if index == max_frame - 1:
+	if frame_index == max_frame - 1:
 		break
 
 	# next frames
-	f1 = frame_array[index + 1]
-	f2 = frame_array[index + 2]
+	f1 = frame_array[frame_index + 1]
+	f2 = frame_array[frame_index + 2]
 
 	# FOR each candidate b in F0:
-	for b in f0["x"]:
-		b_index = index
-		b_x = float(f0["x"].pop(0))
-		b_y = float(f0["y"].pop(0))
+	for b_index, b in enumerate(f0["x"]):
+		b_frame = frame_index
+		
+		b_x = float(f0["x"][b_index])
+		b_y = float(f0["y"][b_index])
 
 		b = (b_x, b_y)
 
 		# FOR each candidate b1 in F1:
-		for b1 in f1["x"]:
-			b1_index = index + 1
-			b1_x = float(f1["x"].pop(0))
-			b1_y = float(f1["y"].pop(0))
+		for b1_index, b1 in enumerate(f1["x"]):
+			b1_frame = frame_index + 1
+			
+			b1_x = float(f1["x"][b1_index])
+			b1_y = float(f1["y"][b1_index])
+			
 			b1 = (b1_x, b1_y)
 		
 			# IF separation between b and b+ is small:
@@ -118,8 +119,8 @@ for index, f0 in enumerate(frame_array):
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
 			if sep < max_dist:
-				print "-----INIT KALMAN-----"
-				print "Initial pair in Frames: ",`index`, `index+1`
+				print "\n-----INIT KALMAN-----"
+				print "Initial pair in Frames: ",`frame_index`, `frame_index+1`
 				print b, b1,"SEP:", sep
 
 				this_trajectory = []
@@ -161,13 +162,14 @@ for index, f0 in enumerate(frame_array):
 				corrected = cv.KalmanCorrect(kf, measurement)
 				corrected_point = (corrected[0,0], corrected[1,0])
 
-
 				# print "State: \n", np.asarray(s_vector[:,:])
 				# print "\nMeasurement:\n", np.asarray(measurement[:,:])
 				# print "\nPrediction: \n", np.asarray(predicted[:,:])
 				# print "\nCorrected: \n",  np.asarray(corrected[:,:])
-				print "PREDICTED for frame:",`index+2`, predicted_point
-				print "CORRECTED for frame:",`index+2`, corrected_point
+
+				print "PREDICTED for frame",`frame_index+2`,":", predicted_point
+				print "CORRECTED for frame",`frame_index+2`,":", corrected_point
+
 				# IF prediction is verified
 				if verified(corrected_point, f2):
 					# add b, b+, b++ to T_cand
@@ -184,9 +186,8 @@ for index, f0 in enumerate(frame_array):
 					# But always:
 					# Estimate new ball location
 
-for trajectory in trajectories:
-	print trajectory
+for ti, trajectory in enumerate(trajectories):
 	for point in trajectory:
-		outfile.write(`point[0]` +" "+ ` point[1]` + "\n")
+		outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
 
 outfile.close()
