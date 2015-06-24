@@ -14,6 +14,8 @@ cheat.txt
 
 kalman_points.txt
 
+*.pyc
+
 *.gif
 
 *.mp4
