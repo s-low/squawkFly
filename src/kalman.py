@@ -20,14 +20,14 @@ from pykalman import KalmanFilter
 
 def verified(corrected_point, next_frame):
 	for point_index, point in enumerate(next_frame["x"]):
-		cx = next_frame["x"][point_index]
-		cy = next_frame["y"][point_index]
+		cx = float(next_frame["x"][point_index])
+		cy = float(next_frame["y"][point_index])
 		c = (cx, cy)
 		print "Compared with:", c
 
 		if point_is_near_point(corrected_point, c, 200):
 			print "VERIFIED"
-			return True
+			return c
 
 	return False
 
@@ -154,11 +154,14 @@ for frame_index, f0 in enumerate(frame_array):
 				cv.SetIdentity(kf.error_cov_post, cv.RealScalar(errorCovariancePost))
 
 				# predict location in f2 from state f1
+				control_mat = cv.CreateMat(2, 1, cv.CV_32FC1)
+
+				predicted = cv.KalmanPredict(kf, control_mat)
+				predicted_point = (predicted[0,0],predicted[1,0])
+
 				measurement[0, 0] = b1_x
 				measurement[1, 0] = b1_y
 
-				predicted = cv.KalmanPredict(kf)
-				predicted_point = (predicted[0,0],predicted[1,0])
 				corrected = cv.KalmanCorrect(kf, measurement)
 				corrected_point = (corrected[0,0], corrected[1,0])
 
@@ -171,13 +174,20 @@ for frame_index, f0 in enumerate(frame_array):
 				print "CORRECTED for frame",`frame_index+2`,":", corrected_point
 
 				# IF prediction is verified
-				if verified(corrected_point, f2):
+				b2 = verified(corrected_point, f2)
+				if b2 is not False:
 					# add b, b+, b++ to T_cand
-					this_trajectory.append(corrected_point)
+					this_trajectory.append(b)
+					this_trajectory.append(b1)
+					this_trajectory.append(b2)
 
 					# update prediction function
+					predicted = cv.KalmanPredict(kf)
+					predicted_point = (predicted[0,0],predicted[1,0])
+					print "PREDICTED for frame",`frame_index+2`,":", predicted_point
 
-				trajectories.append(this_trajectory)
+					# this needs to become recursive
+				
 				# ELSE:
 					
 					# IF too many unverified predictions:
@@ -185,6 +195,7 @@ for frame_index, f0 in enumerate(frame_array):
 
 					# But always:
 					# Estimate new ball location
+				trajectories.append(this_trajectory)
 
 for ti, trajectory in enumerate(trajectories):
 	for point in trajectory:

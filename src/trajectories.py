@@ -15,8 +15,8 @@ data = data.split('\n')
 # remove the newline at EOF
 data.pop(-1)
 
-all_x = [row.split(' ')[0] for row in data]
-all_y = [row.split(' ')[1] for row in data]
+all_x = [row.split(' ')[1] for row in data]
+all_y = [row.split(' ')[2] for row in data]
 
 dpi = 113
 h = 800 / dpi
