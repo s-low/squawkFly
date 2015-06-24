@@ -11,6 +11,9 @@ with open("kalman_points.txt") as datafile:
 
 data = data.split('\n')
 
+# remove the newline at EOF
+data.pop(-1)
+
 all_x = [row.split(' ')[0] for row in data]
 all_y = [row.split(' ')[1] for row in data]
 
@@ -19,7 +22,7 @@ h = 800 / dpi
 w = 1280 / dpi
 fig = plt.figure(figsize=(w,h))
 
-ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
+ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Points from Kalman Filter", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
