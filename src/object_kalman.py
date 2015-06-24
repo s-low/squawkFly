@@ -19,9 +19,12 @@ import numpy as np
 
 from kfilter import KFilter
 
+# KALMAN PARAMETERS
+init_dist = 40
+verify_distance = 30
+max_frame = 0
+
 def verified(corrected_point, next_frame_index):
-	
-	verify_distance = 150
 	next_frame = frame_array[next_frame_index]
 
 	for point_index, point in enumerate(next_frame["x"]):
@@ -29,6 +32,7 @@ def verified(corrected_point, next_frame_index):
 		cy = float(next_frame["y"][point_index])
 		c = (cx, cy)
 		print "Compared with:", c
+		
 		if point_is_near_point(corrected_point, c, verify_distance):
 			print "VERIFIED"
 			return c
@@ -71,50 +75,50 @@ def build_trajectory(this_trajectory, kf, frame_index, p0, p1):
 	# IF corrected prediction is verified
 	if p2 is not False:
 		# add b, b+, b++ to T_cand
-		this_trajectory.append(p0)
 		this_trajectory.append(p1)
-
+		
 		# update prediction function
 		build_trajectory(this_trajectory, kf, frame_index+1, p1, p2)
 
-	# pass back the final trajectory
-	"Return trajectory"
 	return this_trajectory
 
-# KALMAN PARAMETERS
-max_dist = 40
+# retrieve output of detection system and parse
+def get_data(filename):
+	global max_frame
 
-with open("output.txt") as datafile:
-	data = datafile.read()
-	datafile.close()
+	with open(filename) as datafile:
+		data = datafile.read()
+		datafile.close()
 
+	data = data.split('\n')
+
+	all_x = [row.split(' ')[0] for row in data]
+	all_y = [row.split(' ')[1] for row in data]
+	all_frames = [row.split(' ')[2] for row in data]
+
+	# now translate into frame array
+	max_frame = int(all_frames[-1])
+	frame_array = [{} for x in xrange(max_frame+1)]
+
+	# for each data point - dump it into the frame of dictionaries
+	for i in range(0, max_frame+1):
+		frame_array[i]["x"] = []
+		frame_array[i]["y"] = []
+
+	# for each recorded frame
+	for row in data:	
+		x = row.split(' ')[0]
+		y = row.split(' ')[1]
+		f = int(row.split(' ')[2])
+
+		frame_array[f]["x"].append(x)
+		frame_array[f]["y"].append(y)
+
+	return frame_array
+
+
+frame_array = get_data('output.txt')
 outfile = open('kalman_points.txt', 'w')
-
-
-data = data.split('\n')
-
-all_x = [row.split(' ')[0] for row in data]
-all_y = [row.split(' ')[1] for row in data]
-all_frames = [row.split(' ')[2] for row in data]
-
-# now translate into frame array
-max_frame = int(all_frames[-1])
-frame_array = [{} for x in xrange(max_frame+1)]
-
-# for each data point - dump it into the frame of dictionaries
-for i in range(0, max_frame+1):
-	frame_array[i]["x"] = []
-	frame_array[i]["y"] = []
-
-# for each recorded frame
-for row in data:	
-	x = row.split(' ')[0]
-	y = row.split(' ')[1]
-	f = int(row.split(' ')[2])
-
-	frame_array[f]["x"].append(x)
-	frame_array[f]["y"].append(y)
-
 trajectories = []
 
 # FOR each frame F0:
@@ -150,7 +154,7 @@ for frame_index, f0 in enumerate(frame_array):
 			ydiff = abs(b0_y - b1_y)
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
-			if sep < max_dist:
+			if sep < init_dist:
 				print "\n-----INIT KALMAN-----"
 				print "Initial pair in Frames: ",`frame_index`, `frame_index+1`
 				print b0, b1, "SEP:", sep
