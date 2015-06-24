@@ -18,16 +18,38 @@ import cv2.cv as cv
 import numpy as np 
 from pykalman import KalmanFilter
 
-def printMatrix(testMatrix):
-		print ' ',
-		for i in range(len(testMatrix[1])):  # Make it work with non square matrices.
-			  print i,
-		print
-		for i, element in enumerate(testMatrix):
-			  print i, ' '.join(element)
+def verified(corrected_point, next_frame):
+	for point in next_frame["x"]:
+		cx = next_frame["x"].pop(0)
+		cy = next_frame["y"].pop(0)
+		c = (cx, cy)
+		
+		if point_is_near_point(corrected_point, c, 60):
+			print "VERIFIED"
+			return True
+
+	return False
+
+def point_is_near_point(point1, point2, dist):
+	x1 = point1[0]
+	y1 = point1[1]	
+	x2 = point2[0]
+	y2 = point2[1]
+
+	print "P1: ", x1, y1
+	print "P2: ",x2, y2	
+
+	xdiff = float(x1) - float(x2)
+	ydiff = float(y1) - float(y2)
+	sep = ((xdiff**2) + (ydiff**2)) ** 0.5
+	print "Sep: ",sep
+	if sep < dist:
+		return True
+	else: 
+		return False
 
 # KALMAN PARAMETERS
-max_dist = 20
+max_dist = 40
 
 with open("output.txt") as datafile:
 	data = datafile.read()
@@ -60,8 +82,7 @@ for row in data:
 	frame_array[f]["y"].append(y)
 
 
-
-kalman_points = []
+trajectories = []
 
 # FOR each frame F0:
 for index, f0 in enumerate(frame_array):
@@ -92,6 +113,8 @@ for index, f0 in enumerate(frame_array):
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
 			if sep < max_dist:
+				this_trajectory = []
+				print "Initalising Kalman Filter"
 				# INITIALISE KALMAN FILTER
 				# state vec (x, y, v_x, v_y)
 				# measure vec (z_x, z_y)
@@ -107,8 +130,8 @@ for index, f0 in enumerate(frame_array):
 						kf.transition_matrix[j,k] = 0
 					kf.transition_matrix[j,j] = 1
 
-				# kf.transition_matrix[0,2] = 1
-				# kf.transition_matrix[1,3] = 1
+				kf.transition_matrix[0,2] = 1
+				kf.transition_matrix[1,3] = 1
 
 				# measurement matrix init
 				cv.SetIdentity(kf.measurement_matrix)
@@ -125,11 +148,6 @@ for index, f0 in enumerate(frame_array):
 				measurement[0, 0] = b1_x
 				measurement[1, 0] = b1_y
 
-				state[0,0] = b1_x
-				state[1,0] = b1_y
-				state[2,0] = 10
-				state[3,0] = 10
-
 				predicted = cv.KalmanPredict(kf)
 				corrected = cv.KalmanCorrect(kf, measurement)
 
@@ -138,13 +156,16 @@ for index, f0 in enumerate(frame_array):
 				# print "\nPrediction: \n", np.asarray(predicted[:,:])
 				# print "\nCorrected: \n",  np.asarray(corrected[:,:])
 
-				corrected_point = (corrected[0,0],corrected[1,0])
-				kalman_points.append(corrected_point)
+				corrected_point = (corrected[0,0], corrected[1,0])
 
-				# IF prediction is verified:
+				# IF prediction is verified
+				if verified(corrected_point, f2):
 					# add b, b+, b++ to T_cand
+					this_trajectory.append(corrected_point)
+
 					# update prediction function
 
+				trajectories.append(this_trajectory)
 				# ELSE:
 					
 					# IF too many unverified predictions:
@@ -153,7 +174,9 @@ for index, f0 in enumerate(frame_array):
 					# But always:
 					# Estimate new ball location
 
-for point in kalman_points:
-	outfile.write(`point[0]` +" "+ ` point[0]` + "\n")
+for trajectory in trajectories:
+	print trajectory
+	for point in trajectory:
+		outfile.write(`point[0]` +" "+ ` point[1]` + "\n")
 
 outfile.close()
