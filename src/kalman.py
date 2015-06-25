@@ -25,6 +25,7 @@ verify_distance = 30
 
 # Program markers
 max_frame = 0
+max_length = 0
 new_trajectory = True
 n_miss = 0
 max_misses = 5
@@ -201,13 +202,20 @@ for frame_index, f0 in enumerate(frame_array):
 				
 				if len(trajectory) != 0:
 					trajectories.append(trajectory)
+					if len(trajectory) > max_length:
+						max_length = len(trajectory)
 
 print ""
+count = 0
+min_length = 31
 for ti, trajectory in enumerate(trajectories):
-	if len(trajectory) > 4:
+	if len(trajectory) > min_length:
+		count +=1
 		for point in trajectory:
 			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
 
 print "Found",ti,"trajectories"
+print count,"are longer than",min_length
+print "Longest is",max_length,"long"
 
 outfile.close()
