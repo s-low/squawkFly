@@ -30,7 +30,7 @@ w = 1280 / dpi
 fig = plt.figure(figsize=(w,h))
 
 # xlim=(400, 800), ylim=(-720,0)
-ax = plt.axes()
+ax = plt.axes(xlim=(0, 1280), ylim=(-720,0))
 ax.set_title("Points from Kalman Filter", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
@@ -38,7 +38,7 @@ ax.set_ylabel("Graphical Y")
 # scat, = ax.plot([], [], 'ro')
 # first_row = kalman[0]
 # first_t = first_row.split(' ')[0]
-
+ax.plot(raw_x, raw_y, 'k.')
 # print first_t
 last_t = int(0)
 set_x = []
@@ -54,15 +54,16 @@ for row in kalman:
 		set_y.append(y)
 
 	else:
-		ax.plot(set_x, set_y)
+
+		ax.plot(set_x, set_y,linewidth=2)
 		set_x = []
 		set_y = []
 		last_t = t
 		set_x.append(x)
 		set_y.append(y)
 
-ax.plot(set_x, set_y)
-ax.plot(raw_x, raw_y, 'ro')
+ax.plot(set_x, set_y,linewidth=2)
+
 
 # scat.set_kalman(all_x,all_y)
 

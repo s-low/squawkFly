@@ -19,14 +19,21 @@ import numpy as np
 
 from kfilter import KFilter
 
-# KALMAN PARAMETERS
-init_dist = 80
-verify_distance = 40
+# Kalman Parameters
+init_dist = 60
+verify_distance = 30
+
+# Program markers
 max_frame = 0
 new_trajectory = True
+n_miss = 0
+max_misses = 5
 
 def verified(corrected_point, next_frame_index):
-	next_frame = frame_array[next_frame_index]
+	try:
+		next_frame = frame_array[next_frame_index]
+	except IndexError:
+		return False
 
 	for point_index, point in enumerate(next_frame["x"]):
 		cx = float(next_frame["x"][point_index])
@@ -53,28 +60,23 @@ def point_is_near_point(point1, point2, dist):
 		return False
 
 # given a valid pair of nearby points, try to build the next step in their trajectory
-def build_trajectory(this_trajectory, kf, frame_index, p0, p1):
+def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 
 	global new_trajectory
-	# print "\nBuilding trajectory"
-	# print "neck:", p0
-	# print "head:", p1
+	global n_miss
+
 	x = p1[0]
 	y = p1[1]
 
 	# predict and correct
-
-	# print "pre\n",np.asarray(kf.getPreState())
 	kf.update(x, y)
 	corrected = kf.getCorrected()
 	predicted = kf.getPredicted()
-	# print "post\n",np.asarray(kf.getPostState())
 
-	p2 = None
+	# verify
 	p_verification = verified(corrected, frame_index+1)
 
 	if p_verification is not False:
-		# add b, b+, b++ to T_cand and re-predict
 		print ""
 		print "f:"+`frame_index-1`, p0
 		print "f:"+`frame_index`, p1
@@ -82,21 +84,35 @@ def build_trajectory(this_trajectory, kf, frame_index, p0, p1):
 		print "Corrected:",corrected
 		print "VERIFIED by f:"+`frame_index+1`,p_verification
 
+		# if brand new, add the very first point too
 		if new_trajectory:
 			this_trajectory.append(p0)
 			new_trajectory = False
 
+		# if a bridge of unverifieds was needed, add it
+		if len(bridge) != 0:
+			this_trajectory = this_trajectory + bridge
+			bridge = []
+		
+		# add verified point to trajectory + continue
 		this_trajectory.append(p1)
-		build_trajectory(this_trajectory, kf, frame_index+1, p1, p_verification)
+		
+		build_trajectory(this_trajectory, bridge, kf, frame_index+1, p1, p_verification)
 
 	elif p_verification == False:
-		if new_trajectory == False:
+		n_miss += 1
+		
+		if n_miss >= max_misses:
 			print "--------------END-----------------"
-		# if too_many_misses:
-		# 	new trajectory time
-		# if not_too_many_misses:
-		new_trajectory = True
-		pass
+			n_miss = 0
+			new_trajectory = True
+			bridge = []
+		
+		elif n_miss < max_misses:
+			# keep predicting from the unverified corrected point
+			bridge.append(p1)
+			unverified = (corrected[0],corrected[1])
+			build_trajectory(this_trajectory, bridge, kf, frame_index+1, p1, unverified)
 
 	return this_trajectory
 
@@ -180,17 +196,18 @@ for frame_index, f0 in enumerate(frame_array):
 				kf.setPostState(b1[0], b1[1], vx, vy)
 	
 				this_t = []
-				trajectory = build_trajectory(this_t, kf, frame_index+1, b0, b1)
+				bridge = []
+				trajectory = build_trajectory(this_t, bridge, kf, frame_index+1, b0, b1)
 				
 				if len(trajectory) != 0:
 					trajectories.append(trajectory)
 
 print ""
 for ti, trajectory in enumerate(trajectories):
-	print "Found trajectory of length:", len(trajectory)
-	for point in trajectory:
-		outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
+	if len(trajectory) > 4:
+		for point in trajectory:
+			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
 
-print np.asarray(kf.getPostState())
+print "Found",ti,"trajectories"
 
 outfile.close()
