@@ -24,8 +24,8 @@ class KFilter(object):
 				self.kf.transition_matrix[j,k] = 0
 			self.kf.transition_matrix[j,j] = 1
 
-		self.kf.transition_matrix[0,2] = 1
-		self.kf.transition_matrix[1,3] = 1
+		# self.kf.transition_matrix[0,2] = 1
+		# self.kf.transition_matrix[1,3] = 1
 
 		cv.SetIdentity(self.kf.measurement_matrix)
 
@@ -51,7 +51,7 @@ class KFilter(object):
 		self.corrected = cv.KalmanCorrect(self.kf, self.measurement)
 
 	def getCorrected(self):
-		return (self.corrected[0,0],self.corrected[1,0])
+		return (self.corrected[0,0],self.corrected[1,0],self.corrected[2,0],self.corrected[3,0])
 
 	def getPredicted(self):
-		return (self.predicted[0,0],self.predicted[1,0])
+		return (self.predicted[0,0],self.predicted[1,0],self.predicted[2,0],self.predicted[3,0])
