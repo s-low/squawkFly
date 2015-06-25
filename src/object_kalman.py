@@ -20,21 +20,23 @@ import numpy as np
 from kfilter import KFilter
 
 # KALMAN PARAMETERS
-init_dist = 40
-verify_distance = 30
+init_dist = 80
+verify_distance = 60
 max_frame = 0
+new_trajectory = True
 
 def verified(corrected_point, next_frame_index):
 	next_frame = frame_array[next_frame_index]
+
+	# if len(next_frame["x"]) == 0:
+		# print "No points for comparison in next frame"
 
 	for point_index, point in enumerate(next_frame["x"]):
 		cx = float(next_frame["x"][point_index])
 		cy = float(next_frame["y"][point_index])
 		c = (cx, cy)
-		print "Compared with:", c
 		
 		if point_is_near_point(corrected_point, c, verify_distance):
-			print "VERIFIED"
 			return c
 
 	return False
@@ -48,7 +50,6 @@ def point_is_near_point(point1, point2, dist):
 	xdiff = float(x1) - float(x2)
 	ydiff = float(y1) - float(y2)
 	sep = ((xdiff**2) + (ydiff**2)) ** 0.5
-	print "Sep: ",sep
 	if sep < dist:
 		return True
 	else: 
@@ -57,28 +58,45 @@ def point_is_near_point(point1, point2, dist):
 # given a valid pair of nearby points, try to build the next step in their trajectory
 def build_trajectory(this_trajectory, kf, frame_index, p0, p1):
 
-	print "\nBuilding trajectory"
-	print "neck:", p0
-	print "head:", p1
+	global new_trajectory
+	# print "\nBuilding trajectory"
+	# print "neck:", p0
+	# print "head:", p1
 	x = p1[0]
 	y = p1[1]
 
 	# predict and correct
 	kf.update(x, y)
-	corrected_point = kf.getCorrected()
-	print "Predicted", kf.getPredicted()
-	print "Corrected: ", corrected_point
+	corrected = kf.getCorrected()
+	predicted = kf.getPredicted()
 
 	p2 = None
-	p2 = verified(corrected_point, frame_index+1)
+	p_verification = verified(corrected, frame_index+1)
 
-	# IF corrected prediction is verified
-	if p2 is not False:
-		# add b, b+, b++ to T_cand
+	if p_verification is not False:
+		# add b, b+, b++ to T_cand and re-predict
+		print ""
+		print "f:"+`frame_index-1`, p0
+		print "f:"+`frame_index`, p1
+		print "Predicted:",predicted
+		print "Corrected:",corrected
+		print "VERIFIED by f:"+`frame_index+1`,p_verification
+
+		if new_trajectory:
+			this_trajectory.append(p0)
+			new_trajectory = False
+
 		this_trajectory.append(p1)
-		
-		# update prediction function
-		build_trajectory(this_trajectory, kf, frame_index+1, p1, p2)
+		build_trajectory(this_trajectory, kf, frame_index+1, p1, p_verification)
+
+	elif p_verification == False:
+		if new_trajectory == False:
+			print "--------------END-----------------"
+		# if too_many_misses:
+		# 	new trajectory time
+		# if not_too_many_misses:
+		new_trajectory = True
+		pass
 
 	return this_trajectory
 
@@ -117,15 +135,13 @@ def get_data(filename):
 	return frame_array
 
 
-frame_array = get_data('output.txt')
+frame_array = get_data(sys.argv[1])
 outfile = open('kalman_points.txt', 'w')
 trajectories = []
 
 # FOR each frame F0:
 for frame_index, f0 in enumerate(frame_array):
 	
-	print "\n", frame_index, f0	
-
 	# always need two frames of headroom
 	if frame_index == max_frame - 1:
 		break
@@ -155,17 +171,21 @@ for frame_index, f0 in enumerate(frame_array):
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
 			if sep < init_dist:
-				print "\n-----INIT KALMAN-----"
-				print "Initial pair in Frames: ",`frame_index`, `frame_index+1`
-				print b0, b1, "SEP:", sep
+				# print "\n-----INIT KALMAN-----"
+				# print "Initial pair in Frames: ",`frame_index`, `frame_index+1`
+				# print b0, b1, "SEP:", sep
 
 				# init kalman and try to build a single trajectory
 				kf = KFilter()
 				this_t = []
 				trajectory = build_trajectory(this_t, kf, frame_index+1, b0, b1)
-				trajectories.append(trajectory)
+				
+				if len(trajectory) != 0:
+					trajectories.append(trajectory)
 
+print ""
 for ti, trajectory in enumerate(trajectories):
+	print "Found trajectory of length:", len(trajectory)
 	for point in trajectory:
 		outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
 
