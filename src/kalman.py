@@ -207,7 +207,7 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 31
+min_length = 15
 for ti, trajectory in enumerate(trajectories):
 	if len(trajectory) > min_length:
 		count +=1
@@ -215,7 +215,7 @@ for ti, trajectory in enumerate(trajectories):
 			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
 
 print "Found",ti,"trajectories"
-print count,"are longer than",min_length
+print count,"are longer than",min_length,"points"
 print "Longest is",max_length,"long"
 
 outfile.close()

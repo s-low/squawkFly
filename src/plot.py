@@ -9,8 +9,8 @@ plt.style.use('ggplot')
 
 # FLAGS
 save = False
-animate_on = False
-stack = False
+animate_on = True
+stack = True
 
 if len(sys.argv) > 1:
 	if sys.argv[1] == 'w' or sys.argv[2] == 'w':
@@ -94,7 +94,7 @@ def animate(i, fig, counter):
 	if int(i) == int(max_frame-1):
 		x_set = []
 		y_set = []
-
+	plt.waitforbuttonpress()
 	return scat
 
 if animate_on:
