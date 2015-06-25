@@ -21,15 +21,12 @@ from kfilter import KFilter
 
 # KALMAN PARAMETERS
 init_dist = 80
-verify_distance = 60
+verify_distance = 40
 max_frame = 0
 new_trajectory = True
 
 def verified(corrected_point, next_frame_index):
 	next_frame = frame_array[next_frame_index]
-
-	# if len(next_frame["x"]) == 0:
-		# print "No points for comparison in next frame"
 
 	for point_index, point in enumerate(next_frame["x"]):
 		cx = float(next_frame["x"][point_index])
@@ -66,9 +63,12 @@ def build_trajectory(this_trajectory, kf, frame_index, p0, p1):
 	y = p1[1]
 
 	# predict and correct
+
+	# print "pre\n",np.asarray(kf.getPreState())
 	kf.update(x, y)
 	corrected = kf.getCorrected()
 	predicted = kf.getPredicted()
+	# print "post\n",np.asarray(kf.getPostState())
 
 	p2 = None
 	p_verification = verified(corrected, frame_index+1)
@@ -171,12 +171,14 @@ for frame_index, f0 in enumerate(frame_array):
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
 			
 			if sep < init_dist:
-				# print "\n-----INIT KALMAN-----"
-				# print "Initial pair in Frames: ",`frame_index`, `frame_index+1`
-				# print b0, b1, "SEP:", sep
 
 				# init kalman and try to build a single trajectory
 				kf = KFilter()
+				vx = xdiff
+				vy = ydiff
+
+				kf.setPostState(b1[0], b1[1], vx, vy)
+	
 				this_t = []
 				trajectory = build_trajectory(this_t, kf, frame_index+1, b0, b1)
 				
@@ -188,5 +190,7 @@ for ti, trajectory in enumerate(trajectories):
 	print "Found trajectory of length:", len(trajectory)
 	for point in trajectory:
 		outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
+
+print np.asarray(kf.getPostState())
 
 outfile.close()

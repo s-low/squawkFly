@@ -14,6 +14,7 @@ class KFilter(object):
 		errorCovariancePost=0.1
 		
 		self.kf = cv.CreateKalman(4, 2, 0)
+		print dir(self.kf)
 		self.state = cv.CreateMat(4, 1, cv.CV_32FC1)
 		self.proc_noise  = cv.CreateMat(4, 1, cv.CV_32FC1)
 		self.measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
@@ -24,8 +25,13 @@ class KFilter(object):
 				self.kf.transition_matrix[j,k] = 0
 			self.kf.transition_matrix[j,j] = 1
 
-		# self.kf.transition_matrix[0,2] = 1
-		# self.kf.transition_matrix[1,3] = 1
+		# | 1 0 1 0 | x  |   | x + vx |
+		# | 0 1 0 1 | y  | = | y + vy |
+		# | 0 0 1 0 | vx |   |   vx   |
+		# | 0 0 0 1 | vy |   |   vy   |
+
+		self.kf.transition_matrix[0,2] = 1 
+		self.kf.transition_matrix[1,3] = 1
 
 		cv.SetIdentity(self.kf.measurement_matrix)
 
@@ -42,6 +48,18 @@ class KFilter(object):
 
 		self.predicted = None
 		self.corrected = None
+
+	def getPreState(self):
+		return self.kf.state_pre
+
+	def getPostState(self):
+		return self.kf.state_post
+
+	def setPostState(self, x, y, vx, vy):
+		self.kf.state_post[0,0] = x
+		self.kf.state_post[1,0] = y
+		self.kf.state_post[2,0] = vx
+		self.kf.state_post[3,0] = vy
 
 	def update(self, x, y):
 		self.measurement[0,0] = x
