@@ -44,7 +44,6 @@ last_t = int(0)
 set_x = []
 set_y = []
 
-print ""
 for row in kalman:
 	t = int(row.split(' ')[0])
 	x = row.split(' ')[1]
@@ -53,19 +52,14 @@ for row in kalman:
 	if t == last_t:
 		set_x.append(x)
 		set_y.append(y)
-		print "add point", x, y
 
 	else:
 		ax.plot(set_x, set_y)
 		set_x = []
 		set_y = []
 		last_t = t
-		print "\nTRAJECTORY", `last_t`
 		set_x.append(x)
 		set_y.append(y)
-		print "add point", x, y
-
-print ""
 
 ax.plot(set_x, set_y)
 ax.plot(raw_x, raw_y, 'ro')
