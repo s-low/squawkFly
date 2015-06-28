@@ -10,6 +10,7 @@ cap = 0
 debugging = False
 tracking = True
 paused = False
+point_index = 0
 
 outfile = None
 
@@ -109,6 +110,7 @@ def morph(image):
 
 # search a frame for candidates
 def search(src, thresh):
+	global point_index
 	global outfile
 	global startOfFile
 	global time
@@ -135,13 +137,14 @@ def search(src, thresh):
 				# filter by squareness
 				x, y, w, h = cv2.boundingRect(contour)
 				if square(h, w) and circular(area, h, w):
+					point_index+= 1
 					cv2.rectangle(src,(x,y),(x+w,y+h),(0,0,255),2)
 					cx = x + float(w)/2.0
 					cy = -1 * (y + float(h)/2.0)
 					if not startOfFile:
 						outfile.write('\n')
 
-					outfile.write(`cx` + ' ' + `cy` + ' ' + `time`)
+					outfile.write(`cx` + ' ' + `cy` + ' ' + `time` + ' ' + `point_index`)
 					if startOfFile:
 						startOfFile = False
 

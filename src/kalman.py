@@ -39,7 +39,8 @@ def verified(corrected_point, next_frame_index):
 	for point_index, point in enumerate(next_frame["x"]):
 		cx = float(next_frame["x"][point_index])
 		cy = float(next_frame["y"][point_index])
-		c = (cx, cy)
+		c_pid = int(next_frame["pid"][point_index])
+		c = (cx, cy, c_pid)
 		
 		if point_is_near_point(corrected_point, c, verify_distance):
 			return c
@@ -130,6 +131,7 @@ def get_data(filename):
 	all_x = [row.split(' ')[0] for row in data]
 	all_y = [row.split(' ')[1] for row in data]
 	all_frames = [row.split(' ')[2] for row in data]
+	all_index =  [row.split(' ')[3] for row in data]
 
 	# now translate into frame array
 	max_frame = int(all_frames[-1])
@@ -139,15 +141,18 @@ def get_data(filename):
 	for i in range(0, max_frame+1):
 		frame_array[i]["x"] = []
 		frame_array[i]["y"] = []
+		frame_array[i]["pid"] = []
 
 	# for each recorded frame
 	for row in data:	
 		x = row.split(' ')[0]
 		y = row.split(' ')[1]
 		f = int(row.split(' ')[2])
+		p_id = row.split(' ')[3]
 
 		frame_array[f]["x"].append(x)
 		frame_array[f]["y"].append(y)
+		frame_array[f]["pid"].append(p_id)
 
 	return frame_array
 
@@ -166,21 +171,23 @@ for frame_index, f0 in enumerate(frame_array):
 	f1 = frame_array[frame_index + 1]
 	f2 = frame_array[frame_index + 2]
 
-	# FOR each candidate b in F0:
+	# FOR each point b in F0:
 	for b0_index, b0 in enumerate(f0["x"]):
 		
 		b0_frame = frame_index
-		b0_x = float(f0["x"][b0_index])
-		b0_y = float(f0["y"][b0_index])
-		b0 = (b0_x, b0_y)
+		b0_x  = float(f0["x"][b0_index])
+		b0_y  = float(f0["y"][b0_index])
+		b0_pid = int(f0["pid"][b0_index])
+		b0 = (b0_x, b0_y, b0_pid)
 
-		# FOR each candidate pair of b and b1:
+		# FOR each point pair of b and b1:
 		for b1_index, b1 in enumerate(f1["x"]):
 			
 			b1_frame = frame_index + 1
-			b1_x = float(f1["x"][b1_index])
-			b1_y = float(f1["y"][b1_index])
-			b1 = (b1_x, b1_y)
+			b1_x   = float(f1["x"][b1_index])
+			b1_y   = float(f1["y"][b1_index])
+			b1_pid = int(f1["pid"][b1_index])
+			b1 = (b1_x, b1_y, b1_pid)
 		
 			# IF separation between b and b+ is small
 			xdiff = abs(b0_x - b1_x)
@@ -212,7 +219,7 @@ for ti, trajectory in enumerate(trajectories):
 	if len(trajectory) > min_length:
 		count +=1
 		for point in trajectory:
-			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + "\n")
+			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + " " + `point[2]`+ "\n")
 
 print "Found",ti,"trajectories"
 print count,"are longer than",min_length,"points"
