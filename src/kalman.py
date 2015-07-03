@@ -214,12 +214,12 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 15
+min_length = 4
 for ti, trajectory in enumerate(trajectories):
 	if len(trajectory) > min_length:
 		count +=1
 		for point in trajectory:
-			outfile.write(`ti` + " " + `point[0]` +" "+ ` point[1]` + " " + `point[2]`+ "\n")
+			outfile.write(`count` + " " + `point[0]` +" "+ ` point[1]` + " " + `point[2]`+ "\n")
 
 print "Found",ti,"trajectories"
 print count,"are longer than",min_length,"points"
