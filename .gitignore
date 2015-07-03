@@ -1,3 +1,7 @@
+/src/tutorials/*
+
+kalman.cpp
+
 output.txt
 
 timed.txt
@@ -5,6 +9,16 @@ timed.txt
 motiontracking.cpp
 
 animate.py
+
+cheat.txt
+
+reduced_trajectories.txt
+
+kalman_points.txt
+
+*.pyc
+
+*.gif
 
 *.mp4
 

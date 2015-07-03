@@ -10,6 +10,7 @@ cap = 0
 debugging = False
 tracking = True
 paused = False
+point_index = 0
 
 outfile = None
 
@@ -26,6 +27,8 @@ def main():
 		sys.exit(0)
 
 	cap = cv2.VideoCapture(sys.argv[1])
+	print "Frame rate: " + `cap.get(5)`
+
 	outfile = open('output.txt', 'w')
 
 	# read three frames for initialisation
@@ -105,7 +108,9 @@ def morph(image):
 	ret, image = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
 	return image
 
+# search a frame for candidates
 def search(src, thresh):
+	global point_index
 	global outfile
 	global startOfFile
 	global time
@@ -128,17 +133,18 @@ def search(src, thresh):
 			area = cv2.contourArea(contour)
 			
 			# filter by size
-			if area < 1500 and area > 5:
+			if area < 1600 and area > 5:
 				# filter by squareness
 				x, y, w, h = cv2.boundingRect(contour)
 				if square(h, w) and circular(area, h, w):
+					point_index+= 1
 					cv2.rectangle(src,(x,y),(x+w,y+h),(0,0,255),2)
 					cx = x + float(w)/2.0
 					cy = -1 * (y + float(h)/2.0)
 					if not startOfFile:
 						outfile.write('\n')
 
-					outfile.write(`cx` + ' ' + `cy` + ' ' + `time`)
+					outfile.write(`cx` + ' ' + `cy` + ' ' + `time` + ' ' + `point_index`)
 					if startOfFile:
 						startOfFile = False
 

@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-
+import sys
 from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,8 +8,15 @@ import matplotlib.animation as animation
 plt.style.use('ggplot')
 
 # FLAGS
+save = False
 animate_on = True
 stack = True
+
+if len(sys.argv) > 1:
+	if sys.argv[1] == 'w' or sys.argv[2] == 'w':
+		save = True
+	if sys.argv[1] == 's' or sys.argv[2] == 's':
+		stack = True
 
 # DATA
 with open("output.txt") as datafile:
@@ -45,13 +52,17 @@ for row in data:
 # from that particular frame
 
 # set up the figure, the axis, and the plot element we want to animate
-fig = plt.figure()
+dpi = 113
+h = 800 / dpi
+w = 1280 / dpi
+fig = plt.figure(figsize=(w,h))
 
 ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Candidate Centroids", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
-counter = ax.text(710, -40, 'Frame:', fontsize=15)
+if animate_on:
+	counter = ax.text(710, -40, 'Frame:', fontsize=15)
 scat, = ax.plot([], [], 'ro')
 
 
@@ -83,12 +94,13 @@ def animate(i, fig, counter):
 	if int(i) == int(max_frame-1):
 		x_set = []
 		y_set = []
-
+	# plt.waitforbuttonpress()
 	return scat
 
 if animate_on:
 	anim = animation.FuncAnimation(fig, animate, fargs=(fig, counter), init_func=init, frames=max_frame, interval=40, blit=False)
-	# anim.save('animation1.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+	if save:
+		anim.save('animations/test.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 else:
 	scat.set_data(all_x, all_y)
 
