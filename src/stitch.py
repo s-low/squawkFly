@@ -14,16 +14,19 @@ data.pop(-1)
 # each point will be (tid,pid)
 tid_pid = []
 TID = 0
-PID = 1
+PID = 3
 
 for row in data:
-	tid_pid.append(list((row.split(' ')[0], row.split(' ')[3])))
+	tid_pid.append(list((row.split(' ')[0],row.split(' ')[1],row.split(' ')[2], row.split(' ')[3])))
 
 tid_list = []
 
 for point in tid_pid:
 	if point[TID] not in tid_list:
 		tid_list.append(point[TID])
+
+int_list = map(int, tid_list)
+max_tid = max(int_list)
 
 # for each trajectory
 for A in tid_list:
@@ -61,5 +64,12 @@ for A in tid_list:
 							if point[TID] == B:
 								point[TID] = A
 	
-
 # write the new data back to file
+outfile = open('stitched.txt', 'w')
+for counter in range(0, max_tid):	
+	for row in tid_pid:
+		if int(row[0]) == counter:
+			outfile.write(row[0] + " " + row[1] + " " + row[2] + " " + row[3]+ "\n")
+
+outfile.close()
+
