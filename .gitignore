@@ -12,6 +12,8 @@ animate.py
 
 cheat.txt
 
+reduced_trajectories.txt
+
 kalman_points.txt
 
 *.pyc
