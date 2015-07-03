@@ -94,7 +94,7 @@ def animate(i, fig, counter):
 	if int(i) == int(max_frame-1):
 		x_set = []
 		y_set = []
-	plt.waitforbuttonpress()
+	# plt.waitforbuttonpress()
 	return scat
 
 if animate_on:

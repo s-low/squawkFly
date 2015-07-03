@@ -16,7 +16,6 @@ import sys
 import cv2
 import cv2.cv as cv
 import numpy as np 
-from pykalman import KalmanFilter
 
 def verified(corrected_point, next_frame):
 	for point_index, point in enumerate(next_frame["x"]):

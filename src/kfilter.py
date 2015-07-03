@@ -8,13 +8,8 @@ import numpy as np
 class KFilter(object):
 
 	def __init__(self):
-
-		processNoiseCovariance=1e-4
-		measurementNoiseCovariance=1e-1
-		errorCovariancePost=0.1
 		
 		self.kf = cv.CreateKalman(4, 2, 0)
-		print dir(self.kf)
 		self.state = cv.CreateMat(4, 1, cv.CV_32FC1)
 		self.proc_noise  = cv.CreateMat(4, 1, cv.CV_32FC1)
 		self.measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
@@ -35,6 +30,7 @@ class KFilter(object):
 
 		cv.SetIdentity(self.kf.measurement_matrix)
 
+		# why these values.....
 		processNoiseCovariance = 1e-4
 		measurementNoiseCovariance = 1e-1
 		errorCovariancePost= 0.1
