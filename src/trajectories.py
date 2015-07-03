@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 # DATA
-with open("reduced_trajectories.txt") as datafile:
+with open(sys.argv[1]) as datafile:
 	kalman = datafile.read()
 	datafile.close()
 
