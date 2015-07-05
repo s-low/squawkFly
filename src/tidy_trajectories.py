@@ -7,7 +7,7 @@ TID = 0
 PID = 1
 count = 0
 
-with open("kalman_points.txt") as datafile:
+with open(sys.argv[1]) as datafile:
 	kalman = datafile.read()
 	datafile.close()
 

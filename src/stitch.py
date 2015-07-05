@@ -28,42 +28,55 @@ for point in tid_pid:
 int_list = map(int, tid_list)
 max_tid = max(int_list)
 
-# for each trajectory
-for A in tid_list:
-	# collect the points into a list
-	A_points = []
-	for point in tid_pid:
-		if point[TID] == A:
-			A_points.append(point[PID])
+def stitch(tid_list, tid_pid):
+	changed = False
+	# for each trajectory
+	for A in tid_list:
+		# collect the points into a list
+		A_points = []
+		for point in tid_pid:
+			if point[TID] == A:
+				A_points.append(point[PID])
 
-	# for each other trajectory
-	for B in tid_list:
-		# collect the trajectory into a list
-		if A!=B:
-			B_points = []
-			for point in tid_pid:
-				if point[TID] == B:
-					B_points.append(point[PID])
-			
-			if len(B_points) > 1 and len(A_points) > 1:
-			
+		# for each other trajectory
+		for B in tid_list:
+			# collect the trajectory into a list
+			if A != B:
+				B_points = []
+				for point in tid_pid:
+					if point[TID] == B:
+						B_points.append(point[PID])
 				
+				if len(B_points) > 1 and len(A_points) > 1:
+				
+					# if the last two points of A are the first two points of B
+					if A_points[-1] == B_points[1]:
+						if A_points[-2] == B_points[0]:
+							changed = True
+							print "MATCH between TIDS:", A, B
+							print A_points[-2], B_points[0]
+							print A_points[-1], B_points[1]
 
-				# if the last two points of A are the first two points of B
-				if A_points[-1] == B_points[1]:
-					if A_points[-2] == B_points[0]:
+							# change tid of B to match A and and remove the duplicate points 
+							del B_points[0:2]
 
-						print "MATCH between TIDS:", A, B
-						print A_points[-2], B_points[0]
-						print A_points[-1], B_points[1]
+							# can do this to the original data because compound stitches are allowed
+							for point in tid_pid:
+								if point[TID] == B and point[PID] in B_points:
+									point[TID] = A
+								elif point[TID] == B and point[PID] not in B_points:
+									point[0] = 1000
 
-						# change tid of B to match A and and remove the duplicate points 
-						del B_points[0:1]
-						# can do this to the original data because compound stitches are allowed
-						for point in tid_pid:
-							if point[TID] == B:
-								point[TID] = A
-	
+	if changed:
+		tid_list = []
+		tid_list.append('1')
+		tid_list.append('2')
+		stitch(tid_list, tid_pid)
+
+	return
+
+stitch(tid_list, tid_pid)
+
 # write the new data back to file
 outfile = open('stitched.txt', 'w')
 for counter in range(0, max_tid):	
