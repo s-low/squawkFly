@@ -5,20 +5,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
+min_length = 0
+if len(sys.argv) > 1:
+	min_length = int(sys.argv[1])
+
 # DATA
 with open("data_trajectories.txt") as datafile:
-	kalman = datafile.read()
+	trajectories = datafile.read()
 	datafile.close()
 
 with open("data_detections.txt") as datafile:
 	raw = datafile.read()
 	datafile.close()
 
-kalman = kalman.split('\n')
+trajectories = trajectories.split('\n')
 raw = raw.split('\n')
 
 # remove the newline at EOF
-kalman.pop(-1)
+trajectories.pop(-1)
 
 raw_x = [row.split(' ')[0] for row in raw]
 raw_y = [row.split(' ')[1] for row in raw]
@@ -30,20 +34,16 @@ fig = plt.figure(figsize=(w,h))
 
 # xlim=(400, 800), ylim=(-720,0)
 ax = plt.axes(xlim=(0, 1280), ylim=(-720,0))
-ax.set_title("Points from Kalman Filter", y = 1.03)
+ax.set_title("Points from trajectories Filter", y = 1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
 
-# scat, = ax.plot([], [], 'ro')
-# first_row = kalman[0]
-# first_t = first_row.split(' ')[0]
 ax.plot(raw_x, raw_y, 'k.')
-# print first_t
 last_t = int(0)
 set_x = []
 set_y = []
 
-for row in kalman:
+for row in trajectories:
 	t = int(row.split(' ')[0])
 	x = row.split(' ')[1]
 	y = row.split(' ')[2]
@@ -53,17 +53,18 @@ for row in kalman:
 		set_y.append(y)
 
 	else:
-
-		ax.plot(set_x, set_y,linewidth=2)
+		if len(set_x) > min_length:
+			ax.plot(set_x, set_y,linewidth=2)
 		set_x = []
 		set_y = []
 		last_t = t
 		set_x.append(x)
 		set_y.append(y)
 
-ax.plot(set_x, set_y,linewidth=2)
+if len(set_x) > min_length:
+	ax.plot(set_x, set_y,linewidth=2)
 
 
-# scat.set_kalman(all_x,all_y)
+# scat.set_trajectories(all_x,all_y)
 
 plt.show()
