@@ -18,7 +18,7 @@ PID = 3
 
 for row in data:
     tid_pid.append(list((row.split(' ')[0], row.split(' ')[1],
-                   row.split(' ')[2], row.split(' ')[3])))
+                         row.split(' ')[2], row.split(' ')[3])))
 
 tid_list = []
 

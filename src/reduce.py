@@ -89,5 +89,4 @@ for row in data:
 
 outfile.close()
 
-print ">", count,"/",num,"removed as trivial"
-
+print ">", count, "/", num, "removed as trivial"
