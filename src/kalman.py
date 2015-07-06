@@ -79,12 +79,12 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 	p_verification = verified(corrected, frame_index+1)
 
 	if p_verification is not False:
-		print ""
-		print "f:"+`frame_index-1`, p0
-		print "f:"+`frame_index`, p1
-		print "Predicted:",predicted
-		print "Corrected:",corrected
-		print "VERIFIED by f:"+`frame_index+1`,p_verification
+		# print ""
+		# print "f:"+`frame_index-1`, p0
+		# print "f:"+`frame_index`, p1
+		# print "Predicted:",predicted
+		# print "Corrected:",corrected
+		# print "VERIFIED by f:"+`frame_index+1`,p_verification
 
 		# if brand new, add the very first point too
 		if new_trajectory:
@@ -105,7 +105,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 		n_miss += 1
 		
 		if n_miss >= max_misses:
-			print "--------------END-----------------"
+			# print "--------------END-----------------"
 			n_miss = 0
 			new_trajectory = True
 			bridge = []
@@ -157,8 +157,8 @@ def get_data(filename):
 	return frame_array
 
 
-frame_array = get_data(sys.argv[1])
-outfile = open('kalman_points.txt', 'w')
+frame_array = get_data('data_detections.txt')
+outfile = open('data_trajectories.txt', 'w')
 trajectories = []
 
 # FOR each frame F0:
@@ -214,15 +214,16 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 4
+min_length = 15
 for ti, trajectory in enumerate(trajectories):
 	if len(trajectory) > min_length:
 		count +=1
 		for point in trajectory:
 			outfile.write(`count` + " " + `point[0]` +" "+ ` point[1]` + " " + `point[2]`+ "\n")
 
-print "Found",ti,"trajectories"
-print count,"are longer than",min_length,"points"
-print "Longest is",max_length,"long"
+print "> Found",ti,"trajectories"
+print ">",count,"are longer than",min_length,"points"
+print "> Longest is",max_length,"long"
+print "> written to data_trajectories.txt\n"
 
 outfile.close()

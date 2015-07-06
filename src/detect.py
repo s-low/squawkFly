@@ -29,7 +29,7 @@ def main():
 	cap = cv2.VideoCapture(sys.argv[1])
 	print "Frame rate: " + `cap.get(5)`
 
-	outfile = open('output.txt', 'w')
+	outfile = open('data_detections.txt', 'w')
 
 	# read three frames for initialisation
 	ret, frame0 = cap.read()
