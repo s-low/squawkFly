@@ -16,6 +16,8 @@ reduced_trajectories.txt
 
 kalman_points.txt
 
+data_*.txt
+
 *.pyc
 
 *.gif
