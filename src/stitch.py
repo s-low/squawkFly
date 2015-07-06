@@ -3,7 +3,7 @@
 import sys
 import numpy as np
 
-with open(sys.argv[1]) as datafile:
+with open("data_trajectories.txt") as datafile:
 	data = datafile.read()
 	datafile.close()
 
@@ -30,6 +30,7 @@ max_tid = max(int_list)
 
 def stitch(tid_list, tid_pid):
 	changed = False
+	
 	# for each trajectory
 	for A in tid_list:
 		# collect the points into a list
@@ -48,38 +49,38 @@ def stitch(tid_list, tid_pid):
 						B_points.append(point[PID])
 				
 				if len(B_points) > 1 and len(A_points) > 1:
-				
+
 					# if the last two points of A are the first two points of B
 					if A_points[-1] == B_points[1]:
 						if A_points[-2] == B_points[0]:
 							changed = True
-							print "MATCH between TIDS:", A, B
-							print A_points[-2], B_points[0]
-							print A_points[-1], B_points[1]
+							print "\n> MATCH between TIDS:", A, B
+							print ">",A_points[-2], B_points[0]
+							print ">",A_points[-1], B_points[1]
 
 							# change tid of B to match A and and remove the duplicate points 
+							print "> deleting points",B_points[0:2],"from",B
 							del B_points[0:2]
 
 							# can do this to the original data because compound stitches are allowed
+							print "> updating data with stitch"
 							for point in tid_pid:
 								if point[TID] == B and point[PID] in B_points:
 									point[TID] = A
 								elif point[TID] == B and point[PID] not in B_points:
 									point[0] = 1000
 
+	# HAVE THEIR BEEN ANY CHANGES TO THE DATA SET AT ALL?
+	print "\n> dataset changed:",changed
 	if changed:
-		tid_list = []
-		tid_list.append('1')
-		tid_list.append('2')
+		print "> Re-running..."
 		stitch(tid_list, tid_pid)
-
-	return
 
 stitch(tid_list, tid_pid)
 
 # write the new data back to file
-outfile = open('stitched.txt', 'w')
-for counter in range(0, max_tid):	
+outfile = open('data_trajectories.txt', 'w')
+for counter in range(0, max_tid+1):	
 	for row in tid_pid:
 		if int(row[0]) == counter:
 			outfile.write(row[0] + " " + row[1] + " " + row[2] + " " + row[3]+ "\n")

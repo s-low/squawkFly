@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 # DATA
-with open(sys.argv[1]) as datafile:
+with open("data_trajectories.txt") as datafile:
 	kalman = datafile.read()
 	datafile.close()
 
-with open("output.txt") as datafile:
+with open("data_detections.txt") as datafile:
 	raw = datafile.read()
 	datafile.close()
 
@@ -19,7 +19,6 @@ raw = raw.split('\n')
 
 # remove the newline at EOF
 kalman.pop(-1)
-
 
 raw_x = [row.split(' ')[0] for row in raw]
 raw_y = [row.split(' ')[1] for row in raw]
