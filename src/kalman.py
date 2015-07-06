@@ -15,7 +15,7 @@
 import sys
 import cv2
 import cv2.cv as cv
-import numpy as np 
+import numpy as np
 
 from kfilter import KFilter
 
@@ -28,7 +28,7 @@ max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 5
+max_misses = 6
 
 def verified(corrected_point, next_frame_index):
 	try:
@@ -41,7 +41,7 @@ def verified(corrected_point, next_frame_index):
 		cy = float(next_frame["y"][point_index])
 		c_pid = int(next_frame["pid"][point_index])
 		c = (cx, cy, c_pid)
-		
+
 		if point_is_near_point(corrected_point, c, verify_distance):
 			return c
 
@@ -49,7 +49,7 @@ def verified(corrected_point, next_frame_index):
 
 def point_is_near_point(point1, point2, dist):
 	x1 = point1[0]
-	y1 = point1[1]	
+	y1 = point1[1]
 	x2 = point2[0]
 	y2 = point2[1]
 
@@ -58,7 +58,7 @@ def point_is_near_point(point1, point2, dist):
 	sep = ((xdiff**2) + (ydiff**2)) ** 0.5
 	if sep < dist:
 		return True
-	else: 
+	else:
 		return False
 
 # given a valid pair of nearby points, try to build the next step in their trajectory
@@ -95,21 +95,21 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 		if len(bridge) != 0:
 			this_trajectory = this_trajectory + bridge
 			bridge = []
-		
+
 		# add verified point to trajectory + continue
 		this_trajectory.append(p1)
-		
+
 		build_trajectory(this_trajectory, bridge, kf, frame_index+1, p1, p_verification)
 
 	elif p_verification == False:
 		n_miss += 1
-		
+
 		if n_miss >= max_misses:
 			# print "--------------END-----------------"
 			n_miss = 0
 			new_trajectory = True
 			bridge = []
-		
+
 		elif n_miss < max_misses:
 			# keep predicting from the unverified corrected point
 			bridge.append(p1)
@@ -144,7 +144,7 @@ def get_data(filename):
 		frame_array[i]["pid"] = []
 
 	# for each recorded frame
-	for row in data:	
+	for row in data:
 		x = row.split(' ')[0]
 		y = row.split(' ')[1]
 		f = int(row.split(' ')[2])
@@ -163,7 +163,7 @@ trajectories = []
 
 # FOR each frame F0:
 for frame_index, f0 in enumerate(frame_array):
-	
+
 	# always need two frames of headroom
 	if frame_index == max_frame - 1:
 		break
@@ -173,7 +173,7 @@ for frame_index, f0 in enumerate(frame_array):
 
 	# FOR each point b in F0:
 	for b0_index, b0 in enumerate(f0["x"]):
-		
+
 		b0_frame = frame_index
 		b0_x  = float(f0["x"][b0_index])
 		b0_y  = float(f0["y"][b0_index])
@@ -182,18 +182,18 @@ for frame_index, f0 in enumerate(frame_array):
 
 		# FOR each point pair of b and b1:
 		for b1_index, b1 in enumerate(f1["x"]):
-			
+
 			b1_frame = frame_index + 1
 			b1_x   = float(f1["x"][b1_index])
 			b1_y   = float(f1["y"][b1_index])
 			b1_pid = int(f1["pid"][b1_index])
 			b1 = (b1_x, b1_y, b1_pid)
-		
+
 			# IF separation between b and b+ is small
 			xdiff = abs(b0_x - b1_x)
 			ydiff = abs(b0_y - b1_y)
 			sep = ((ydiff**2) + (xdiff**2)) ** 0.5
-			
+
 			if sep < init_dist:
 
 				# init kalman and try to build a single trajectory
@@ -202,11 +202,11 @@ for frame_index, f0 in enumerate(frame_array):
 				vy = ydiff
 
 				kf.setPostState(b1[0], b1[1], vx, vy)
-	
+
 				this_t = []
 				bridge = []
 				trajectory = build_trajectory(this_t, bridge, kf, frame_index+1, b0, b1)
-				
+
 				if len(trajectory) != 0:
 					trajectories.append(trajectory)
 					if len(trajectory) > max_length:
@@ -214,7 +214,7 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 15
+min_length = 5
 for ti, trajectory in enumerate(trajectories):
 	if len(trajectory) > min_length:
 		count +=1
