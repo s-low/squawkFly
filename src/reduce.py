@@ -34,7 +34,7 @@ num = len(tid_list)
 for A in tid_list:
 	
 	if A in trivial_tids:
-		break
+		continue
 
 	A_points = []
 	
@@ -46,7 +46,7 @@ for A in tid_list:
  	for B in tid_list:
 
  		if B in trivial_tids:
- 			break
+ 			continue
 
  		trivial = True
  		B_points = []
@@ -62,6 +62,7 @@ for A in tid_list:
 			if set(B_points).issubset(A_points):
 				count += 1
 				trivial_tids.append(B)
+				print B, B_points
 
 			# if every point from B was in A
 			# if trivial == True:
