@@ -69,8 +69,8 @@ def stitch(tid_list, tid_pid):
                             for point in tid_pid:
                                 if point[TID] == B and point[PID] in B_points:
                                     point[TID] = A
-                                elif point[TID] == B and
-                                point[PID] not in B_points:
+                                elif point[TID] == B and point[PID] \
+                                        not in B_points:
                                     point[0] = 1000
 
     # HAVE THEIR BEEN ANY CHANGES TO THE DATA SET AT ALL?

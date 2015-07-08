@@ -62,23 +62,12 @@ for A in tid_list:
             if set(B_points).issubset(A_points):
                 count += 1
                 trivial_tids.append(B)
-                print B, B_points
-
-            # if every point from B was in A
-            # if trivial == True:
-            #   count += 1
-            #   trivial_tids.append(B)
-                # print count, trivial_tids,"\n"
-                # print "\nTRIVIAL"
-                # print B
-                # print "included in"
-                # print A, A_points
 
 
 # write the remaining trajectories to a new file
 outfile = open('data_trajectories.txt', 'w')
 
-print "> length:", len(trivial_tids)
+print "> number found:", len(trivial_tids)
 print "> trivials:", trivial_tids
 
 for row in data:

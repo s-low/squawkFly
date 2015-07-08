@@ -28,7 +28,7 @@ max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 6
+max_misses = 5
 
 
 def verified(corrected_point, next_frame_index):
@@ -105,7 +105,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
         build_trajectory(
             this_trajectory, bridge, kf, frame_index + 1, p1, p_verification)
 
-    elif p_verification == False:
+    elif p_verification is False:
         n_miss += 1
 
         if n_miss >= max_misses:
@@ -222,12 +222,13 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 5
+min_length = 4
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
         for point in trajectory:
-            outfile.write(`count` + " " + `point[0]` + " " + ` point[1]` + " " + `point[2]`+ "\n")
+            outfile.write(str(count) + " " + str(point[0]) + " " +
+                          str(point[1]) + " " + str(point[2]) + "\n")
 
 print "> Found", ti, "trajectories"
 print ">", count, "are longer than", min_length, "points"
