@@ -22,8 +22,8 @@ pts2 = [[423, 192],  # t_l
         [287, 363],  # wide_l
         [973, 320]]  # wide_r
 
-pts1 = np.array(pts1, dtype='f4')
-pts2 = np.array(pts2, dtype='f4')
+pts1 = np.array(pts1, dtype='f8')
+pts2 = np.array(pts2, dtype='f8')
 
 f, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
 
@@ -32,3 +32,36 @@ pts1_r = pts1.reshape((pts1.shape[0] * 2, 1))
 pts2_r = pts2.reshape((pts2.shape[0] * 2, 1))
 
 ret, H1, H2 = cv2.stereoRectifyUncalibrated(pts1_r, pts2_r, f, (1280, 720))
+
+pts1 = np.array(pts1, dtype='f8')
+
+# print pts1
+# print H1
+
+# ---------------------------
+
+# size = 3, 3, 2
+# dst = np.zeros(size, dtype='f8')
+# print dst.dtype
+
+# dst = cv.fromarray(dst)
+# m = cv.fromarray(H1)
+# src = cv.fromarray(pts1)
+
+# print "src.type:", src.type
+# print "dst.type:", dst.type
+# print "m.rows:", m.rows
+# print "dst.channels:", dst.channels
+
+# dest = cv.createMat(r, c, cv.CV_32FC1)
+# src = cv.fromarray(your_np_array)
+# cv.Convert(src, dest)
+
+src = cv.CreateMat(8, 1, cv.CV_32FC2)
+dst = cv.CreateMat(8, 1, cv.CV_32FC2)
+m = cv.CreateMat(3, 3, cv.CV_32F)
+
+cv.PerspectiveTransform(src, dst, m)
+
+print np.asarray(src)
+print np.asarray(dst)
