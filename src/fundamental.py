@@ -1,39 +1,34 @@
 #!/usr/local/bin/python
 
 import cv2
+import cv2.cv as cv
 import numpy as np
 
-pts1 = [[245.77, 248.66, 263.39, 251.11, 249.88, 287.57, 240.93, 206.84],
-        [169.57, 105.82, 182.45, 146.54, 197.99, 137.11, 113.15, 171.57]]
+pts1 = [[423, 191],  # t_l
+        [840, 217],  # t_r
+        [422, 352],  # b_l
+        [838, 377],  # b_r
+        [325, 437],  # front_l
+        [744, 464],  # front_r
+        [288, 344],  # wide_l
+        [974, 388]]  # wide_r
 
-pts2 = [[267.07, 252.92, 254.22, 284.33, 236.82, 220.04, 255.90, 259.09],
-        [172.34, 105.02, 190.25, 145.10, 190.63, 135.11, 114.37, 165.9]]
+pts2 = [[423, 192],  # t_l
+        [841, 166],  # t_r
+        [422, 358],  # b_l
+        [839, 330],  # b_r
+        [518, 440],  # front_l
+        [934, 417],  # front_r
+        [287, 363],  # wide_l
+        [973, 320]]  # wide_r
 
-# this is the transposed equivalent
-pts1 = [[245.77, 169.57],
-        [248.66, 105.82],
-        [263.39, 182.45],
-        [251.11, 146.54],
-        [249.88, 197.99],
-        [287.57, 137.11],
-        [240.93, 113.15],
-        [206.84, 171.57]]
+pts1 = np.array(pts1, dtype='f4')
+pts2 = np.array(pts2, dtype='f4')
 
-pts2 = [[267.07, 172.34],
-        [252.92, 105.02],
-        [254.22, 190.25],
-        [284.33, 145.10],
-        [236.82, 190.63],
-        [220.04, 135.11],
-        [255.90, 114.37],
-        [259.09, 165.90]]
+f, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
 
-pts1 = np.int32(pts1)
-pts2 = np.int32(pts2)
+# reshape the array into twice it's length but only 1 wide
+pts1_r = pts1.reshape((pts1.shape[0] * 2, 1))
+pts2_r = pts2.reshape((pts2.shape[0] * 2, 1))
 
-x1_32 = np.array(pts1, dtype='f4')
-x2_32 = np.array(pts2, dtype='f4')
-
-retval, mask = cv2.findFundamentalMat(x1_32, x2_32, cv2.cv.CV_FM_8POINT)
-
-print retval
+ret, H1, H2 = cv2.stereoRectifyUncalibrated(pts1_r, pts2_r, f, (1280, 720))
