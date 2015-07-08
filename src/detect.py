@@ -9,7 +9,7 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 cap = 0
 debugging = False
 tracking = True
-paused = False
+paused = True
 point_index = 0
 
 outfile = None
@@ -63,8 +63,10 @@ def main():
             cv2.destroyWindow('Threshold Image')
 
         if paused:
-            cv2.waitKey()
-            pause()
+            key = cv2.waitKey()
+
+            if key == 112:
+                pause()
 
         # Next iteration
         ret, next_frame = cap.read()
@@ -138,12 +140,15 @@ def search(src, thresh):
             area = cv2.contourArea(contour)
 
             # filter by size
-            if area < 1600 and area > 5:
+            if area < 3000 and area > 5:
                 # filter by squareness
                 x, y, w, h = cv2.boundingRect(contour)
                 if square(h, w) and circular(area, h, w):
                     point_index += 1
                     cv2.rectangle(src, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                    cv2.putText(src, str(area), (x, y), cv2.FONT_HERSHEY_PLAIN,
+                                0.8, (255, 255, 255))
+
                     cx = x + float(w) / 2.0
                     cy = -1 * (y + float(h) / 2.0)
 
