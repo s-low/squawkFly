@@ -4,6 +4,9 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 
+lhs = cv2.imread('res/LHS.png', 0)
+rhs = cv2.imread('res/RHS.png', 0)
+
 pts1_raw = [[423, 191],  # t_l
             [840, 217],  # t_r
             [422, 352],  # b_l
@@ -31,7 +34,7 @@ f, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
 pts1_r = pts1.reshape((pts1.shape[0] * 2, 1))
 pts2_r = pts2.reshape((pts2.shape[0] * 2, 1))
 
-ret, H1, H2 = cv2.stereoRectifyUncalibrated(pts1_r, pts2_r, f, (1280, 720))
+ret, H1, H2 = cv2.stereoRectifyUncalibrated(pts1_r, pts2_r, f, (720, 1280))
 
 src1 = np.array(pts1, dtype='float32')
 src2 = np.array(pts2, dtype='float32')
@@ -42,3 +45,98 @@ src2 = np.array([src2])
 
 dst1 = cv2.perspectiveTransform(src1, H1)
 dst2 = cv2.perspectiveTransform(src2, H2)
+
+# two blank images
+img1 = np.full((720, 1280, 3), 255, np.uint8)
+img2 = np.full((720, 1280, 3), 255, np.uint8)
+
+l_tl = (pts1_raw[0][0], pts1_raw[0][1])
+l_tr = (pts1_raw[1][0], pts1_raw[1][1])
+l_bl = (pts1_raw[2][0], pts1_raw[2][1])
+l_br = (pts1_raw[3][0], pts1_raw[3][1])
+l_fl = (pts1_raw[4][0], pts1_raw[4][1])
+l_fr = (pts1_raw[5][0], pts1_raw[5][1])
+l_wl = (pts1_raw[6][0], pts1_raw[6][1])
+l_wr = (pts1_raw[7][0], pts1_raw[7][1])
+
+r_tl = (pts2_raw[0][0], pts2_raw[0][1])
+r_tr = (pts2_raw[1][0], pts2_raw[1][1])
+r_bl = (pts2_raw[2][0], pts2_raw[2][1])
+r_br = (pts2_raw[3][0], pts2_raw[3][1])
+r_fl = (pts2_raw[4][0], pts2_raw[4][1])
+r_fr = (pts2_raw[5][0], pts2_raw[5][1])
+r_wl = (pts2_raw[6][0], pts2_raw[6][1])
+r_wr = (pts2_raw[7][0], pts2_raw[7][1])
+
+cv2.line(img1, pt1=l_tl, pt2=l_tr, color=(0, 0, 0))
+cv2.line(img1, pt1=l_tr, pt2=l_br, color=(0, 0, 0))
+cv2.line(img1, pt1=l_tl, pt2=l_bl, color=(0, 0, 0))
+cv2.line(img1, pt1=l_bl, pt2=l_br, color=(0, 0, 0))
+
+cv2.line(img1, pt1=r_tl, pt2=r_tr, color=(0, 0, 255))
+cv2.line(img1, pt1=r_tr, pt2=r_br, color=(0, 0, 255))
+cv2.line(img1, pt1=r_tl, pt2=r_bl, color=(0, 0, 255))
+cv2.line(img1, pt1=r_bl, pt2=r_br, color=(0, 0, 255))
+
+for row in pts1_raw:
+    x_curr = row[0]
+    y_curr = row[1]
+    cv2.circle(img1, (x_curr, y_curr), radius=4, color=(0, 0, 0), thickness=-1)
+
+    # if x_prev != 0:
+    #     cv2.line(img1, pt1=(x_prev, y_prev), pt2=(x_curr, y_curr),
+    #              color=(0, 0, 0))
+    # x_prev = x_curr
+    # y_prev = y_curr
+
+# for row in pts2_raw:
+#     x = row[0]
+#     y = row[1]
+#     cv2.circle(img1, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
+
+for row in dst1[0]:
+    x = row[0]
+    y = row[1]
+    cv2.circle(img2, center=(x, y), radius=4, color=(0, 0, 0), thickness=-1)
+
+for row in dst2[0]:
+    x = row[0]
+    y = row[1]
+    cv2.circle(img2, center=(x, y), radius=4, color=(0, 0, 255), thickness=-1)
+
+l_tl = (dst1[0][0][0], dst1[0][0][1])
+l_tr = (dst1[0][1][0], dst1[0][1][1])
+l_bl = (dst1[0][2][0], dst1[0][2][1])
+l_br = (dst1[0][3][0], dst1[0][3][1])
+l_fl = (dst1[0][4][0], dst1[0][4][1])
+l_fr = (dst1[0][5][0], dst1[0][5][1])
+l_wl = (dst1[0][6][0], dst1[0][6][1])
+l_wr = (dst1[0][7][0], dst1[0][7][1])
+
+r_tl = (dst2[0][0][0], dst2[0][0][1])
+r_tr = (dst2[0][1][0], dst2[0][1][1])
+r_bl = (dst2[0][2][0], dst2[0][2][1])
+r_br = (dst2[0][3][0], dst2[0][3][1])
+r_fl = (dst2[0][4][0], dst2[0][4][1])
+r_fr = (dst2[0][5][0], dst2[0][5][1])
+r_wl = (dst2[0][6][0], dst2[0][6][1])
+r_wr = (dst2[0][7][0], dst2[0][7][1])
+
+cv2.line(img2, pt1=l_tl, pt2=l_tr, color=(0, 0, 0))
+cv2.line(img2, pt1=l_tr, pt2=l_br, color=(0, 0, 0))
+cv2.line(img2, pt1=l_tl, pt2=l_bl, color=(0, 0, 0))
+cv2.line(img2, pt1=l_bl, pt2=l_br, color=(0, 0, 0))
+
+cv2.line(img2, pt1=r_tl, pt2=r_tr, color=(0, 0, 255))
+cv2.line(img2, pt1=r_tr, pt2=r_br, color=(0, 0, 255))
+cv2.line(img2, pt1=r_tl, pt2=r_bl, color=(0, 0, 255))
+cv2.line(img2, pt1=r_bl, pt2=r_br, color=(0, 0, 255))
+
+show = True
+while show:
+    # cv2.imshow('LHS', lhs)
+    # cv2.imshow('RHS', rhs)
+    cv2.imshow('Original', img1)
+    cv2.imshow('Rectified', img2)
+    cv2.waitKey()
+    show = False
