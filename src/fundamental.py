@@ -43,12 +43,28 @@ H2 = np.array(H2, dtype='float32')
 src1 = np.array([src1])  # this is HUGE thing - adds an extra channel
 src2 = np.array([src2])
 
+# transform the points such that their epilines are parallel with x axis
 dst1 = cv2.perspectiveTransform(src1, H1)
 dst2 = cv2.perspectiveTransform(src2, H2)
+
+# get the new epilines for the transformed points:
+f, mask = cv2.findFundamentalMat(dst1, dst2, cv2.RANSAC)
+
+lines1 = cv2.computeCorrespondEpilines(dst1.reshape(-1, 1, 2), 2, f)
+lines1 = lines1.reshape(-1, 3)
+
+lines2 = cv2.computeCorrespondEpilines(dst2.reshape(-1, 1, 2), 1, f)
+lines2 = lines2.reshape(-1, 3)
+print lines2
 
 # two blank images
 img1 = np.full((720, 1280, 3), 255, np.uint8)
 img2 = np.full((720, 1280, 3), 255, np.uint8)
+
+for r in lines2:
+    x0, y0 = map(int, [0, -r[2] / r[1]])
+    x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
+    cv2.line(img2, (x0, y0), (x1, y1), (255, 0, 0), 1)
 
 l_tl = (pts1_raw[0][0], pts1_raw[0][1])
 l_tr = (pts1_raw[1][0], pts1_raw[1][1])
@@ -72,27 +88,31 @@ cv2.line(img1, pt1=l_tl, pt2=l_tr, color=(0, 0, 0))
 cv2.line(img1, pt1=l_tr, pt2=l_br, color=(0, 0, 0))
 cv2.line(img1, pt1=l_tl, pt2=l_bl, color=(0, 0, 0))
 cv2.line(img1, pt1=l_bl, pt2=l_br, color=(0, 0, 0))
+cv2.line(img1, pt1=l_bl, pt2=l_fl, color=(0, 0, 0))
+cv2.line(img1, pt1=l_br, pt2=l_fr, color=(0, 0, 0))
+cv2.line(img1, pt1=l_fr, pt2=l_fl, color=(0, 0, 0))
+cv2.line(img1, pt1=l_wr, pt2=l_br, color=(0, 0, 0))
+cv2.line(img1, pt1=l_wl, pt2=l_bl, color=(0, 0, 0))
 
 cv2.line(img1, pt1=r_tl, pt2=r_tr, color=(0, 0, 255))
 cv2.line(img1, pt1=r_tr, pt2=r_br, color=(0, 0, 255))
 cv2.line(img1, pt1=r_tl, pt2=r_bl, color=(0, 0, 255))
 cv2.line(img1, pt1=r_bl, pt2=r_br, color=(0, 0, 255))
+cv2.line(img1, pt1=r_bl, pt2=r_fl, color=(0, 0, 255))
+cv2.line(img1, pt1=r_br, pt2=r_fr, color=(0, 0, 255))
+cv2.line(img1, pt1=r_fr, pt2=r_fl, color=(0, 0, 255))
+cv2.line(img1, pt1=r_wr, pt2=r_br, color=(0, 0, 255))
+cv2.line(img1, pt1=r_wl, pt2=r_bl, color=(0, 0, 255))
 
 for row in pts1_raw:
     x_curr = row[0]
     y_curr = row[1]
     cv2.circle(img1, (x_curr, y_curr), radius=4, color=(0, 0, 0), thickness=-1)
 
-    # if x_prev != 0:
-    #     cv2.line(img1, pt1=(x_prev, y_prev), pt2=(x_curr, y_curr),
-    #              color=(0, 0, 0))
-    # x_prev = x_curr
-    # y_prev = y_curr
-
-# for row in pts2_raw:
-#     x = row[0]
-#     y = row[1]
-#     cv2.circle(img1, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
+for row in pts2_raw:
+    x = row[0]
+    y = row[1]
+    cv2.circle(img1, (x, y), radius=4, color=(0, 0, 255), thickness=-1)
 
 for row in dst1[0]:
     x = row[0]
@@ -126,17 +146,27 @@ cv2.line(img2, pt1=l_tl, pt2=l_tr, color=(0, 0, 0))
 cv2.line(img2, pt1=l_tr, pt2=l_br, color=(0, 0, 0))
 cv2.line(img2, pt1=l_tl, pt2=l_bl, color=(0, 0, 0))
 cv2.line(img2, pt1=l_bl, pt2=l_br, color=(0, 0, 0))
+cv2.line(img2, pt1=l_bl, pt2=l_fl, color=(0, 0, 0))
+cv2.line(img2, pt1=l_br, pt2=l_fr, color=(0, 0, 0))
+cv2.line(img2, pt1=l_fr, pt2=l_fl, color=(0, 0, 0))
+cv2.line(img2, pt1=l_wr, pt2=l_br, color=(0, 0, 0))
+cv2.line(img2, pt1=l_wl, pt2=l_bl, color=(0, 0, 0))
 
 cv2.line(img2, pt1=r_tl, pt2=r_tr, color=(0, 0, 255))
 cv2.line(img2, pt1=r_tr, pt2=r_br, color=(0, 0, 255))
 cv2.line(img2, pt1=r_tl, pt2=r_bl, color=(0, 0, 255))
 cv2.line(img2, pt1=r_bl, pt2=r_br, color=(0, 0, 255))
+cv2.line(img2, pt1=r_bl, pt2=r_fl, color=(0, 0, 255))
+cv2.line(img2, pt1=r_br, pt2=r_fr, color=(0, 0, 255))
+cv2.line(img2, pt1=r_fr, pt2=r_fl, color=(0, 0, 255))
+cv2.line(img2, pt1=r_wr, pt2=r_br, color=(0, 0, 255))
+cv2.line(img2, pt1=r_wl, pt2=r_bl, color=(0, 0, 255))
 
 show = True
 while show:
     # cv2.imshow('LHS', lhs)
     # cv2.imshow('RHS', rhs)
-    cv2.imshow('Original', img1)
+    # cv2.imshow('Original', img1)
     cv2.imshow('Rectified', img2)
     cv2.waitKey()
     show = False
