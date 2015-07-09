@@ -7,6 +7,7 @@ import numpy as np
 lhs = cv2.imread('res/LHS.png', 0)
 rhs = cv2.imread('res/RHS.png', 0)
 
+# 1 = RHS
 pts1_raw = [[423, 191],  # t_l
             [840, 217],  # t_r
             [422, 352],  # b_l
@@ -16,6 +17,7 @@ pts1_raw = [[423, 191],  # t_l
             [288, 344],  # wide_l
             [974, 388]]  # wide_r
 
+# 2 = LHS
 pts2_raw = [[423, 192],  # t_l
             [841, 166],  # t_r
             [422, 358],  # b_l
@@ -29,6 +31,12 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 f, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
+
+lines1 = cv2.computeCorrespondEpilines(pts1.reshape(-1, 1, 2), 2, f)
+lines1 = lines1.reshape(-1, 3)
+
+lines2 = cv2.computeCorrespondEpilines(pts2.reshape(-1, 1, 2), 1, f)
+lines2 = lines2.reshape(-1, 3)
 
 # reshape the array into twice it's length but only 1 wide
 pts1_r = pts1.reshape((pts1.shape[0] * 2, 1))
@@ -50,18 +58,32 @@ dst2 = cv2.perspectiveTransform(src2, H2)
 # get the new epilines for the transformed points:
 f, mask = cv2.findFundamentalMat(dst1, dst2, cv2.RANSAC)
 
-lines1 = cv2.computeCorrespondEpilines(dst1.reshape(-1, 1, 2), 2, f)
-lines1 = lines1.reshape(-1, 3)
+rect_lines1 = cv2.computeCorrespondEpilines(dst1.reshape(-1, 1, 2), 2, f)
+rect_lines1 = rect_lines1.reshape(-1, 3)
 
-lines2 = cv2.computeCorrespondEpilines(dst2.reshape(-1, 1, 2), 1, f)
-lines2 = lines2.reshape(-1, 3)
-print lines2
+rect_lines2 = cv2.computeCorrespondEpilines(dst2.reshape(-1, 1, 2), 1, f)
+rect_lines2 = rect_lines2.reshape(-1, 3)
 
 # two blank images
 img1 = np.full((720, 1280, 3), 255, np.uint8)
 img2 = np.full((720, 1280, 3), 255, np.uint8)
 
+for r in lines1:
+    x0, y0 = map(int, [0, -r[2] / r[1]])
+    x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
+    cv2.line(lhs, (x0, y0), (x1, y1), (0, 0, 0), 1)
+
 for r in lines2:
+    x0, y0 = map(int, [0, -r[2] / r[1]])
+    x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
+    cv2.line(rhs, (x0, y0), (x1, y1), (0, 0, 0), 1)
+
+for r in lines2:
+    x0, y0 = map(int, [0, -r[2] / r[1]])
+    x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
+    cv2.line(img1, (x0, y0), (x1, y1), (255, 0, 0), 1)
+
+for r in rect_lines2:
     x0, y0 = map(int, [0, -r[2] / r[1]])
     x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
     cv2.line(img2, (x0, y0), (x1, y1), (255, 0, 0), 1)
@@ -164,9 +186,9 @@ cv2.line(img2, pt1=r_wl, pt2=r_bl, color=(0, 0, 255))
 
 show = True
 while show:
-    # cv2.imshow('LHS', lhs)
-    # cv2.imshow('RHS', rhs)
-    # cv2.imshow('Original', img1)
-    cv2.imshow('Rectified', img2)
+    cv2.imshow('LHS', lhs)
+    cv2.imshow('RHS', rhs)
+    cv2.imshow('Original with LHS epilines', img1)
+    cv2.imshow('Rectified with LHS epilines', img2)
     cv2.waitKey()
     show = False
