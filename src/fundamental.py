@@ -4,6 +4,23 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 
+
+def P_from_F(F):
+    w, u, v = cv2.SVDecomp(F)
+    e = (u[0][2], u[1][2], u[2][2])
+    P = -1 * (contract_eps(e) * F)
+
+    e_mat = [[e[0]], [e[1]], [e[2]]]
+
+    ret = np.hstack((P, e_mat))
+    print "CAMERA MATRIX:\n", ret
+    return ret
+
+
+def contract_eps(X):
+    Y = [[0, X[2], -X[1]], [-X[2], 0, X[0]], [X[1], -X[0], 0]]
+    return Y
+
 lhs = cv2.imread('res/LHS.png', 0)
 rhs = cv2.imread('res/RHS.png', 0)
 
@@ -31,6 +48,8 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 f, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
+
+P = P_from_F(f)
 
 lines1 = cv2.computeCorrespondEpilines(pts1.reshape(-1, 1, 2), 2, f)
 lines1 = lines1.reshape(-1, 3)
@@ -129,7 +148,8 @@ cv2.line(img1, pt1=r_wl, pt2=r_bl, color=(0, 0, 255))
 for row in pts1_raw:
     x_curr = row[0]
     y_curr = row[1]
-    cv2.circle(img1, (x_curr, y_curr), radius=4, color=(0, 0, 0), thickness=-1)
+    cv2.circle(img1, (x_curr, y_curr), radius=4, color=(0, 0, 0),
+               thickness=-1)
 
 for row in pts2_raw:
     x = row[0]
@@ -144,7 +164,8 @@ for row in dst1[0]:
 for row in dst2[0]:
     x = row[0]
     y = row[1]
-    cv2.circle(img2, center=(x, y), radius=4, color=(0, 0, 255), thickness=-1)
+    cv2.circle(img2, center=(x, y), radius=4, color=(0, 0, 255),
+               thickness=-1)
 
 l_tl = (dst1[0][0][0], dst1[0][0][1])
 l_tr = (dst1[0][1][0], dst1[0][1][1])
