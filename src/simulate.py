@@ -7,24 +7,46 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 plt.style.use('ggplot')
 
-# This is a test script for extracting the camera parameters with OpenCV
+
+def setupCameraMatrix(cameraMatrix, focalLength, cx, cy):
+    cameraMatrix[0][0] = focalLength
+    cameraMatrix[1][1] = focalLength
+    cameraMatrix[2][2] = 1
+    cameraMatrix[0][2] = cx
+    cameraMatrix[1][2] = cy
+
+
+# object points
+objectPoints = np.zeros((9, 3))
+objectPoints[0] = [40, 40, 50]
+objectPoints[1] = [50, 40, 50]
+objectPoints[2] = [60, 40, 50]
+objectPoints[3] = [40, 50, 50]
+objectPoints[4] = [50, 50, 50]
+objectPoints[5] = [60, 50, 50]
+objectPoints[6] = [40, 60, 50]
+objectPoints[7] = [50, 60, 50]
+objectPoints[8] = [60, 60, 50]
+
+# image points given camera intrinsics and extrinsics
+rvec = (0, 0, 0)
+tvec = (0, 0, 0)
+distCoeffs = (0, 0, 0, 3)
+cameraMatrix = np.zeros((3, 3))
+setupCameraMatrix(cameraMatrix, 50, 50, 50)
+print cameraMatrix
+
+imagePoints, jacobian = cv2.projectPoints(
+    objectPoints, rvec, tvec, cameraMatrix, distCoeffs)
+
+print imagePoints
+
+# Plotting of the system
 a = np.zeros((100, 100, 100))
 
-# a simulated calibration checkerboard
-data = np.zeros((9, 3))
-data[0] = [40, 40, 50]
-data[1] = [50, 40, 50]
-data[2] = [60, 40, 50]
-data[3] = [40, 50, 50]
-data[4] = [50, 50, 50]
-data[5] = [60, 50, 50]
-data[6] = [40, 60, 50]
-data[7] = [50, 60, 50]
-data[8] = [60, 60, 50]
-
-all_x = [row[0] for row in data]
-all_y = [row[1] for row in data]
-all_z = [row[2] for row in data]
+all_x = [row[0] for row in objectPoints]
+all_y = [row[1] for row in objectPoints]
+all_z = [row[2] for row in objectPoints]
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

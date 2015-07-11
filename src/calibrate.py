@@ -31,7 +31,7 @@ for image in images:
         objpoints.append(objp)
 
         # corners = cv2.cornerSubPix(
-            # gray, corners, (11, 11), (-1, -1), criteria)
+        # gray, corners, (11, 11), (-1, -1), criteria)
         imgpoints.append(corners)
 
         # Draw and display the corners
@@ -50,5 +50,5 @@ for i in xrange(len(objpoints)):
     error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
     mean_error += error
 
+print "camera matrix: \n", mtx
 print "average reprojection error: ", mean_error / len(objpoints)
-print mtx
