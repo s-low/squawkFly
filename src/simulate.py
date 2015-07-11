@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import math
 import cv2
 import cv2.cv as cv
 import numpy as np
@@ -40,7 +41,6 @@ def plotSimulation(objectPoints):
 
 
 def plotImagePoints(imagePoints):
-    print imagePoints
 
     all_x = [point[0][0] for point in imagePoints]
     all_y = [point[0][1] for point in imagePoints]
@@ -50,6 +50,17 @@ def plotImagePoints(imagePoints):
     # plt.axis([0, 200, 0, 200])
     plt.show()
 
+
+def createRotationX(theta):
+    theta = math.radians(theta)
+    rmatx = np.zeros((3, 3))
+    rmatx[0][0] = 1
+    rmatx[1][1] = math.cos(theta)
+    rmatx[1][2] = -math.sin(theta)
+    rmatx[2][1] = math.sin(theta)
+    rmatx[2][2] = math.cos(theta)
+    print rmatx
+    return rmatx
 
 # object points
 obj_pts = np.zeros((9, 3))
@@ -64,7 +75,15 @@ obj_pts[7] = [50, 60, 50]
 obj_pts[8] = [60, 60, 50]
 
 # image points given camera intrinsics and extrinsics
-rvec = (0.1, 0.1, 0)  # rotation relative to the frame
+# rmat = createRotationX(45)
+# rmaty = np.zeros((3, 3))
+# rmatz = np.zeros((3, 3))
+
+# r = (r_x.r_y).r_z
+# rmat = np.dot(np.dot(rmatx, rmaty), rmatz)
+# rvec = cv2.Rodrigues(rmat)
+
+rvec = (0.5, 0.5, 0)  # rotation relative to the frame
 tvec = (0, 0, 0)  # translation relative to the frame
 distCoeffs = (0, 0, 0, 0)
 cameraMatrix = np.zeros((3, 3))
