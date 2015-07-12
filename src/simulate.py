@@ -84,22 +84,26 @@ setupCameraMatrix(calibMatrix, focalLength, 0, 0)
 # projections into image planes with the camera in different poses
 distCoeffs = (0, 0, 0, 0)
 
-tvec = (0, 30, 50)
+tvec = (0, 0, 50)
 rvec = (0, 0, 0)
 img_pts1, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
-tvec = (30, 0, 70)
-rvec = (0.5, 0, 0)
+print img_pts1
+
+tvec = (0, 0, 50)
+rvec = (0, 0.5, 0)
 img_pts2, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
-tvec = (0, 0, 40)
-rvec = (0, 0.5, 0)
+print img_pts2
+
+tvec = (0, 0, 100)
+rvec = (0, 0, 0)
 img_pts3, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
-tvec = (0, 10, 30)
+tvec = (0, 0, 30)
 rvec = (0.5, 0.5, 0)
 img_pts4, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
@@ -137,13 +141,3 @@ ret, calib_mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     obj_pts_list, img_pts_list, (30, 30), None, None)
 
 print calib_mtx
-
-# retval,
-# cameraMatrix1,
-# distCoeffs1,
-# cameraMatrix2,
-# distCoeffs2,
-# R, T, E, F = cv2.stereoCalibrate(objectPoints=, imagePoints1=, imagePoints2=,
-#                                  imageSize=(,), cameraMatrix1=, distCoeffs1=,
-#                                  cameraMatrix2=, distCoeffs2=,
-#                                  criteria=, flags=)

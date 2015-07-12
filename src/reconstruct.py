@@ -129,31 +129,7 @@ def LinearTriangulation(P1, u1, P2, u2):
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
     return X
 
-# Mat_ LinearLSTriangulation(Point3d u,       //homogenous image point (u,v,1)
-#                    Matx34d P,       //camera 1 matrix
-#                    Point3d u1,      //homogenous image point in 2nd camera
-#                    Matx34d P1       //camera 2 matrix
-#                                    )
-# {
-#     //build matrix A for homogenous equation system Ax = 0
-#     //assume X = (x,y,z,1), for Linear-LS method
-#     //which turns it into a AX = B system, where A is 4x3, X is 3x1 and B is 4x1
-#     Matx43d A(u.x*P(2,0)-P(0,0),    u.x*P(2,1)-P(0,1),      u.x*P(2,2)-P(0,2),
-#           u.y*P(2,0)-P(1,0),    u.y*P(2,1)-P(1,1),      u.y*P(2,2)-P(1,2),
-#           u1.x*P1(2,0)-P1(0,0), u1.x*P1(2,1)-P1(0,1),   u1.x*P1(2,2)-P1(0,2),
-#           u1.y*P1(2,0)-P1(1,0), u1.y*P1(2,1)-P1(1,1),   u1.y*P1(2,2)-P1(1,2)
-#               );
-#     Mat_ B = (Mat_(4,1) <<    -(u.x*P(2,3)    -P(0,3)),
-#                       -(u.y*P(2,3)  -P(1,3)),
-#                       -(u1.x*P1(2,3)    -P1(0,3)),
-#                       -(u1.y*P1(2,3)    -P1(1,3)));
-
-#     Mat_ X;
-#     solve(A,B,X,DECOMP_SVD);
-
-#     return X;
-# }
-
+# TEST DATA
 # 1 = RHS
 pts1_raw = [[423, 191],  # t_l
             [840, 217],  # t_r
@@ -177,7 +153,7 @@ pts2_raw = [[423, 192],  # t_l
 pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
-# given calibrated cameras
+# Given camera CALIBRATION MATRICES
 K1 = CalibMatrix(50, 0, 0)
 K2 = CalibMatrix(50, 0, 0)
 
