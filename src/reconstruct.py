@@ -3,6 +3,12 @@
 import cv2
 import cv2.cv as cv
 import numpy as np
+from collections import namedtuple
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+plt.style.use('ggplot')
+
+Point = namedtuple("Point", "x y")
 
 
 def CalibMatrix(focalLength, cx, cy):
@@ -69,27 +75,59 @@ def CameraMatrix(R, t):
     return P
 
 
-def LinearTriangulation(u1, P1, u2, P2):
+def plot3D(objectPoints):
+    # Plotting of the system
+    print "PLOT"
+    print objectPoints[0]
+
+    all_x = [point[0] for point in objectPoints]
+    all_y = [point[1] for point in objectPoints]
+    all_z = [point[2] for point in objectPoints]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(all_x, all_y, all_z, zdir='z')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    plt.show()
+
+
+def LinearTriangulation(P1, u1, P2, u2):
     # Ax = 0
-    A = np.zeros((3, 4), dtype='float32')
-    A[0][0] = u1.x * P1(2, 0) - P1(0, 0)
-    A[0][1] = u1.x * P1(2, 1) - P1(0, 1)
-    A[0][2] = u1.x * P1(2, 2) - P1(0, 2)
+    A = np.zeros((4, 3), dtype='float32')
+    B = np.zeros((4, 1), dtype='float32')
+    X = np.zeros((3, 1), dtype='float32')
 
-    A[1][0] = u1.y * P1(2, 0) - P1(1, 0)
-    A[1][1] = u1.y * P1(2, 1) - P1(1, 1)
-    A[1][2] = u1.y * P1(2, 2) - P1(1, 2)
+    A[0][0] = u1.x * P1[2][0] - P1[0][0]
+    A[0][1] = u1.x * P1[2][1] - P1[0][1]
+    A[0][2] = u1.x * P1[2][2] - P1[0][2]
 
-    A[2][0] = u2.x * P2(2, 0) - P2(0, 0)
-    A[2][1] = u2.x * P2(2, 1) - P2(0, 1)
-    A[2][2] = u2.x * P2(2, 2) - P2(0, 2)
+    A[1][0] = u1.y * P1[2][0] - P1[1][0]
+    A[1][1] = u1.y * P1[2][1] - P1[1][1]
+    A[1][2] = u1.y * P1[2][2] - P1[1][2]
 
-    A[3][0] = u2.y * P2(2, 0) - P2(1, 0)
-    A[3][1] = u2.y * P2(2, 1) - P2(1, 1)
-    A[3][2] = u2.y * P2(2, 2) - P2(1, 2)
+    A[2][0] = u2.x * P2[2][0] - P2[0][0]
+    A[2][1] = u2.x * P2[2][1] - P2[0][1]
+    A[2][2] = u2.x * P2[2][2] - P2[0][2]
 
-    print A
-    # B = np.zeros((4,3))
+    A[3][0] = u2.y * P2[2][0] - P2[1][0]
+    A[3][1] = u2.y * P2[2][1] - P2[1][1]
+    A[3][2] = u2.y * P2[2][2] - P2[1][2]
+
+    # print "A:\n", A
+
+    B[0][0] = -(u1.x * P1[2][3] - P1[0][3])
+    B[0][0] = -(u1.y * P1[2][3] - P1[1][3])
+    B[0][0] = -(u2.x * P2[2][3] - P2[0][3])
+    B[3][0] = -(u2.y * P2[2][3] - P2[1][3])
+
+    # print "B:\n", B
+    X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
+    return X
 
 # Mat_ LinearLSTriangulation(Point3d u,       //homogenous image point (u,v,1)
 #                    Matx34d P,       //camera 1 matrix
@@ -151,7 +189,7 @@ print "Fundamental:\n", F
 E = K2.T * F * K1  # where 1 corresponds to the camera with P1 = [I|0]
 print "Essential:\n", E
 
-# Get the CAMERA MATRICES from E
+# Find CAMERA MATRICES from E
 # where one of them has P1 = [I|0] get the second camera matrix P2 = [R|t]
 # this relies on Hartley and Zisserman sec 9.6
 
@@ -165,6 +203,19 @@ P2 = CameraMatrix(R, t)
 print "P1:\n", P1
 print "P2:\n", P2
 
-# LinearTriangulation(P1)
-
 # triangulate the points (don't use cv2.triangulatePoints)
+points3d = []
+
+for i in range(0, len(pts1_raw)):
+    x1 = pts1_raw[i][0]
+    y1 = pts1_raw[i][0]
+    x2 = pts2_raw[i][0]
+    y2 = pts2_raw[i][0]
+
+    u1 = Point(x1, y1)
+    u2 = Point(x2, y2)
+
+    X = LinearTriangulation(P1, u1, P2, u2)
+    points3d.append(X[1])
+
+plot3D(points3d)
