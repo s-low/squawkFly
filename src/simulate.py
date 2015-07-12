@@ -9,12 +9,12 @@ from mpl_toolkits.mplot3d import Axes3D
 plt.style.use('ggplot')
 
 
-def setupCameraMatrix(cameraMatrix, focalLength, cx, cy):
-    cameraMatrix[0][0] = focalLength
-    cameraMatrix[1][1] = focalLength
-    cameraMatrix[2][2] = 1
-    cameraMatrix[0][2] = cx
-    cameraMatrix[1][2] = cy
+def setupCameraMatrix(calibMatrix, focalLength, cx, cy):
+    calibMatrix[0][0] = focalLength
+    calibMatrix[1][1] = focalLength
+    calibMatrix[2][2] = 1
+    calibMatrix[0][2] = cx
+    calibMatrix[1][2] = cy
 
 
 def plotSimulation(objectPoints):
@@ -75,44 +75,49 @@ obj_pts[7] = np.array([50, 60, 0], dtype='float32')
 obj_pts[8] = np.array([60, 60, 0], dtype='float32')
 
 # camera matrix
-cameraMatrix = np.zeros((3, 3))
+calibMatrix = np.zeros((3, 3))
 focalLength = 10
 cx = 0
 cy = 0
-setupCameraMatrix(cameraMatrix, focalLength, 0, 0)
+setupCameraMatrix(calibMatrix, focalLength, 0, 0)
 
 # projections into image planes with the camera in different poses
 distCoeffs = (0, 0, 0, 0)
 
 tvec = (0, 30, 50)
-rvec1 = (0, 0, 0)
+rvec = (0, 0, 0)
 img_pts1, jacobian = cv2.projectPoints(
-    obj_pts, rvec1, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 tvec = (30, 0, 70)
-rvec2 = (0.5, 0, 0)
+rvec = (0.5, 0, 0)
 img_pts2, jacobian = cv2.projectPoints(
-    obj_pts, rvec2, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 tvec = (0, 0, 40)
-rvec3 = (0, 0.5, 0)
+rvec = (0, 0.5, 0)
 img_pts3, jacobian = cv2.projectPoints(
-    obj_pts, rvec3, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 tvec = (0, 10, 30)
-rvec4 = (0.5, 0.5, 0)
+rvec = (0.5, 0.5, 0)
 img_pts4, jacobian = cv2.projectPoints(
-    obj_pts, rvec4, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 tvec = (10, 0, 90)
-rvec5 = (1, 0.5, 1)
+rvec = (1, 0.5, 1)
 img_pts5, jacobian = cv2.projectPoints(
-    obj_pts, rvec5, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 tvec = (5, 0, 50)
-rvec6 = (0.5, 1, 1)
+rvec = (0.5, 1, 1)
 img_pts6, jacobian = cv2.projectPoints(
-    obj_pts, rvec6, tvec, cameraMatrix, distCoeffs)
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
+
+tvec = (0, 0, 40)
+rvec = (0.1, 0.1, 0.1)
+img_pts7, jacobian = cv2.projectPoints(
+    obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
 # plot resulting imagePoints
 plotSimulation(obj_pts)
@@ -122,15 +127,16 @@ plotImagePoints(img_pts3)
 plotImagePoints(img_pts4)
 plotImagePoints(img_pts5)
 plotImagePoints(img_pts6)
+plotImagePoints(img_pts7)
 
 # calibrate camera expects a list of arrays such as these
 obj_pts_list = [obj_pts, obj_pts, obj_pts, obj_pts, obj_pts, obj_pts]
 img_pts_list = [img_pts1, img_pts2, img_pts3, img_pts4, img_pts5, img_pts6]
 
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+ret, calib_mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     obj_pts_list, img_pts_list, (30, 30), None, None)
 
-print mtx
+print calib_mtx
 
 # retval,
 # cameraMatrix1,
