@@ -11,7 +11,8 @@ import glob
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-# prepare object points (x,y,z): (0,0,0), (1,0,0) ....,(6,5,0)
+# prepare (3D) object points (x,y,z): (0,0,0), (1,0,0) ....,(6,5,0)
+# using unit squares initially
 objp = np.zeros((6 * 7, 3), np.float32)
 # just a shortcut to the desired coords
 objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
