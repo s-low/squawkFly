@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
@@ -11,17 +12,17 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 
-def CalibMatrix(focalLength, cx, cy):
-    cameraMatrix = np.zeros((3, 3), dtype='float32')
-    cameraMatrix[0][0] = focalLength
-    cameraMatrix[1][1] = focalLength
-    cameraMatrix[2][2] = 1
-    cameraMatrix[0][2] = cx
-    cameraMatrix[1][2] = cy
-    return cameraMatrix
+def CalibArray(focalLength, cx, cy):
+    calibArray = np.zeros((3, 3), dtype='float32')
+    calibArray[0][0] = focalLength
+    calibArray[1][1] = focalLength
+    calibArray[2][2] = 1
+    calibArray[0][2] = cx
+    calibArray[1][2] = cy
+    return calibArray
 
 
-def initSVDmatrices():
+def initSVDarrays():
     W = np.zeros((3, 3), dtype='float32')
     W_inv = np.zeros((3, 3), dtype='float32')
 
@@ -47,7 +48,7 @@ def initSVDmatrices():
     return W, W_inv
 
 
-def BoringCameraMatrix():
+def BoringCameraArray():
     P = np.zeros((3, 4), dtype='float32')
     P[0][0] = 1
     P[1][1] = 1
@@ -55,21 +56,21 @@ def BoringCameraMatrix():
     return P
 
 
-def CameraMatrix(R, t):
+def CameraArray(R, t):
     P = np.zeros((3, 4), dtype='float32')
-    P[0][0] = R[0][0]
-    P[0][1] = R[0][1]
-    P[0][2] = R[0][2]
+    P[0][0] = R[0, 0]
+    P[0][1] = R[0, 1]
+    P[0][2] = R[0, 2]
     P[0][3] = t[0]
 
-    P[1][0] = R[1][0]
-    P[1][1] = R[1][1]
-    P[1][2] = R[1][2]
+    P[1][0] = R[1, 0]
+    P[1][1] = R[1, 1]
+    P[1][2] = R[1, 2]
     P[1][3] = t[1]
 
-    P[2][0] = R[2][0]
-    P[2][1] = R[2][1]
-    P[2][2] = R[2][2]
+    P[2][0] = R[2, 0]
+    P[2][1] = R[2, 1]
+    P[2][2] = R[2, 2]
     P[2][3] = t[2]
 
     return P
@@ -78,7 +79,6 @@ def CameraMatrix(R, t):
 def plot3D(objectPoints):
     # Plotting of the system
     print "PLOT"
-    print objectPoints[0]
 
     all_x = [point[0] for point in objectPoints]
     all_y = [point[1] for point in objectPoints]
@@ -97,7 +97,7 @@ def plot3D(objectPoints):
 
 
 def LinearTriangulation(P1, u1, P2, u2):
-    # Ax = 0
+
     A = np.zeros((4, 3), dtype='float32')
     B = np.zeros((4, 1), dtype='float32')
     X = np.zeros((3, 1), dtype='float32')
@@ -154,27 +154,37 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 # Given camera CALIBRATION MATRICES
-K1 = CalibMatrix(50, 0, 0)
-K2 = CalibMatrix(50, 0, 0)
+K1 = np.mat(CalibArray(10, 0, 0))
+K2 = np.mat(CalibArray(10, 0, 0))
 
 # Find FUNDAMENTAL MATRIX from point correspondences
 F, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
 print "Fundamental:\n", F
 
 # turn it into the ESSENTIAL MATRIX using calibration matrices K1/K2
-E = K2.T * F * K1  # where 1 corresponds to the camera with P1 = [I|0]
+E = K2.T * np.mat(F) * K1  # where 1 corresponds to the camera with P1 = [I|0]
 print "Essential:\n", E
 
 # Find CAMERA MATRICES from E
 # where one of them has P1 = [I|0] get the second camera matrix P2 = [R|t]
 # this relies on Hartley and Zisserman sec 9.6
 
-W, W_inv = initSVDmatrices()
-w_, u, v = cv2.SVDecomp(E)
-R = u * W * v.T  # HZ 9.19
+W, W_inv = initSVDarrays()
+
+s, u, vt = cv2.SVDecomp(E)
+
+if np.linalg.det(np.mat(u)) < 0:
+    u *= -1.0
+if np.linalg.det(np.mat(vt)) < 0:
+    vt *= -1.0
+
+R = np.mat(u) * np.mat(W) * np.mat(vt)   # HZ 9.19 (may need to check all four)
+print "R:\n", R
 t = u[:, 2]      # translation is third col of U
-P1 = BoringCameraMatrix()
-P2 = CameraMatrix(R, t)
+print "t:\n", t
+
+P1 = BoringCameraArray()
+P2 = CameraArray(R, t)
 
 print "P1:\n", P1
 print "P2:\n", P2
