@@ -3,6 +3,7 @@
 # Calibration test script. Retrieve camera matrix based on a checkerboard
 # pattern.
 
+import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
@@ -21,32 +22,30 @@ objpoints = []  # 3d points in real space
 imgpoints = []  # 2d points in image plane
 
 images = glob.glob('res/lgg3/*.png')
-
+count = 0
 for image in images:
-    print "new image"
     img = cv2.imread(image)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow('current', gray)
-    # cv2.waitKey()
-    ret, corners = cv2.findChessboardCorners(gray, (9, 6), None)
+    ret, corners = cv2.findChessboardCorners(
+        gray, (9, 6),
+        flags=cv.CV_CALIB_CB_FILTER_QUADS | cv.CV_CALIB_CB_ADAPTIVE_THRESH)
 
     # If found, add object points, image points (after refining them)
     if ret is True:
-        print "found corners"
+        count += 1
         objpoints.append(objp)
 
-        # corners = cv2.cornerSubPix(
-        # gray, corners, (11, 11), (-1, -1), criteria)
+        cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         imgpoints.append(corners)
 
         # Draw and display the corners
         cv2.drawChessboardCorners(img, (9, 6), corners, ret)
-        cv2.imshow('sucess', img)
-        cv2.waitKey()
+        cv2.imshow('success', img)
 
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-    objpoints, imgpoints, (1280, 800), None, None)
-# gray.shape[::-1]
+        cv2.waitKey(500)
+
+err, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    objpoints, imgpoints, gray.shape[::-1], None, None)
 
 mean_error = 0
 for i in xrange(len(objpoints)):
@@ -55,5 +54,8 @@ for i in xrange(len(objpoints)):
     error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
     mean_error += error
 
-print "camera matrix: \n", mtx
-print "average reprojection error: ", mean_error / len(objpoints)
+np.set_printoptions(precision=3, suppress=True)
+print count, "/", len(images), "successful detections"
+print "calibration matrix: \n", mtx
+print "avg returned reprojection error:", err
+print "avg calculated projection error: ", mean_error / len(objpoints)
