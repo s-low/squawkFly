@@ -154,8 +154,8 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 # Given camera CALIBRATION MATRICES
-K1 = np.mat(CalibArray(10, 0, 0))
-K2 = np.mat(CalibArray(10, 0, 0))
+K1 = np.mat(CalibArray(993, 655, 371))  # d5000
+K2 = np.mat(CalibArray(1091, 644, 412))  # g3
 
 # Find FUNDAMENTAL MATRIX from point correspondences
 F, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC)
