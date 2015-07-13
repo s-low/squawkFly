@@ -46,15 +46,13 @@ def run():
 
     # Find FUNDAMENTAL MATRIX from point correspondences
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
-    print "Fundamental:\n", F
-
+    print "> Fundamental:\n", F
     testFundamental(F, pts1, pts2)
-    sys.exit()
 
     # turn it into the ESSENTIAL MATRIX using calibration matrices K1/K2
     # where 1 corresponds to the camera with P1 = [I|0]
     E = K2.T * np.mat(F) * K1
-    print "Essential:\n", E
+    print "> Essential:\n", E
 
     # Find CAMERA MATRICES from E
     # where one of them has P1 = [I|0] get the second camera matrix P2 = [R|t]
@@ -67,19 +65,21 @@ def run():
     # HZ 9.19 (may need to check all four)
     R1 = np.mat(u) * np.mat(W) * np.mat(vt)
     R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
-    t1 = u[:, 2]      # translation is third col of U
+    t1 = u[:, 2]
     t2 = -1 * u[:, 2]
 
-    print "R:\n", R1, R2
-    print "t:\n", t1, t2
+    print "> R1:\n", R1
+    print "> R2:\n", R2
+    print "> t1:\n", t1
+    print "> t2:\n", t2
 
-    R = R2
-    t = t2
+    R = R1
+    t = t1
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
 
-    print "P1:\n", P1
-    print "P2:\n", P2
+    print "> P1:\n", P1
+    print "> P2:\n", P2
 
     # triangulate the points (don't use cv2.triangulatePoints)
     points3d = []
@@ -97,17 +97,40 @@ def run():
         points3d.append(X[1])
 
     plot3D(points3d)
+    reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d)
 
 
 def testFundamental(F, pts1, pts2):
     # check that xFx = 0
-    pts1 = cv2.convertPointsToHomogeneous(src=pts1)
-    pts2 = cv2.convertPointsToHomogeneous(src=pts2)
+    pts1 = cv2.convertPointsToHomogeneous(pts1)
+    pts2 = cv2.convertPointsToHomogeneous(pts2)
     err = 0
     for i in range(0, len(pts1)):
         err += np.mat(pts1[i]) * np.mat(F) * np.mat(pts2[i].T)
 
-    print "avg px error in xFx:", err / len(pts1)
+    print "> avg px error in xFx:", err / len(pts1)
+
+
+# used for checking the triangulation
+def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
+
+    new = np.zeros((len(points3d), 4))
+    for i, point in enumerate(points3d):
+        new[i][0] = point[0]
+        new[i][1] = point[1]
+        new[i][2] = point[2]
+        new[i][3] = 1
+
+    # for each 3d point
+    for i, X in enumerate(new):
+        # project into each camera with retrieved P matrices
+        xp1 = P1 * np.mat(X).T
+        xp2 = P2 * np.mat(X).T
+
+        # and get the orginally measured points
+        x1 = pts1[i]
+        x2 = pts2[i]
+
 
 
 def CalibArray(focalLength, cx, cy):
@@ -175,10 +198,11 @@ def CameraArray(R, t):
 
 
 def plot3D(objectPoints):
+
     # Plotting of the system
-    print "PLOT"
-    for point in objectPoints:
-        print point[0], point[1], point[2]
+    print "> plotting data:"
+    # for point in objectPoints:
+    #     print point[0], point[1], point[2]
 
     all_x = [point[0] for point in objectPoints]
     all_y = [point[1] for point in objectPoints]
@@ -262,6 +286,5 @@ def IterativeLinearTriangulation(P1, u1, P2, u2):
     # print "B:\n", B
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
     return X
-
 
 run()
