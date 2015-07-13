@@ -9,7 +9,7 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 cap = 0
 debugging = False
 tracking = True
-paused = True
+paused = False
 point_index = 0
 
 outfile = None

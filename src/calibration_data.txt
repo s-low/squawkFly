@@ -1,0 +1,24 @@
+d5000:
+
+21 / 21 successful detections
+
+[[ 993.089    0.     655.044]
+ [   0.     995.879  371.232]
+ [   0.       0.       1.   ]]
+
+avg returned reprojection error: 0.739034484664
+avg calculated projection error:  0.0931427930274
+
+---------------------------------------------------
+
+G3:
+
+10 / 13 successful detections
+
+calibration matrix:
+[[ 1091.228     0.      643.93 ]
+ [    0.     1091.159   412.837]
+ [    0.        0.        1.   ]]
+
+avg returned reprojection error: 0.791319375073
+avg calculated projection error:  0.10057009029
