@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
+np.set_printoptions(suppress=True)
 
 
 def run():
@@ -52,12 +53,13 @@ def run():
 
     # transform point correspondences to normalized image coordinates
     # apply the inverse of the calibration matrices to them
-    npts1 = normalise(pts1, K1)
-    npts2 = normalise(pts2, K2)
+    npts1 = normalise_homogenise(pts1, K1)
+    npts2 = normalise_homogenise(pts2, K2)
 
     # compute ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
     E = K2.T * np.mat(F) * K1
     print "\n> Essential:\n", E
+    testEssentialReln(E, npts1, npts2)
 
     # Find CAMERA MATRICES from E (HZ 9.6.2)
     # P1 = [I|0] and P2 = [R|t]
@@ -69,6 +71,7 @@ def run():
     diag = np.mat(np.diag([1, 1, 0]))
     E_new = np.mat(u) * diag * np.mat(vt)
     print "\n> E_new = u * diag(1,1,0) * vt:\n", E_new
+    testEssentialReln(E_new, npts1, npts2)
 
     # decompose the second, strictly essential matrix (very unsure about this)
     w2, u2, vt2 = cv2.SVDecomp(E_new)
@@ -117,26 +120,41 @@ def run():
 
 def testFundamentalReln(F, pts1, pts2):
     # check that xFx = 0
+
     pts1 = cv2.convertPointsToHomogeneous(pts1)
     pts2 = cv2.convertPointsToHomogeneous(pts2)
     err = 0
     for i in range(0, len(pts1)):
-        err += np.mat(pts1[i]) * np.mat(F) * np.mat(pts2[i].T)
+        err += np.mat(pts1[i]) * np.mat(F) * np.mat(pts2[i]).T
 
-    print "\n> avg px error in xFx:", err[0, 0] / len(pts1)
-
-# convert a set of (x, y) image points to normalised image coords
+    print "> avg px error in xFx:", err[0, 0] / len(pts1)
 
 
-def normalise(pts, K):
+def testEssentialReln(E, nh_pts1, nh_pts2):
+    # check that x'Ex = 0 for normalised coordinates x, x'
+    err = 0
+    m = np.mat(nh_pts1[0])
+    E = np.mat(E)
+    m1 = np.mat(nh_pts2[0]).T
+
+    for i in range(0, len(nh_pts1)):
+        err += np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T
+
+    print "> avg normalised px error in x'Ex:", err[0, 0] / len(nh_pts1)
+
+
+# convert a set of (x, y) image points to normalised, homogenous image coords
+def normalise_homogenise(pts, K):
     np.set_printoptions(suppress=True)
     pts = cv2.convertPointsToHomogeneous(pts)
     K_inv = np.linalg.inv(K)
-    npts = np.zeros((len(pts), 2))
+
+    npts = np.zeros((len(pts), 3))
     for i, x in enumerate(pts):
         xn = K_inv * x.T
         npts[i][0] = xn[0]
         npts[i][1] = xn[1]
+        npts[i][2] = xn[2]
     return npts
 
 # used for checking the triangulation
@@ -283,27 +301,21 @@ def LinearTriangulation(P1, u1, P2, u2):
     return X
 
 
-def IterativeLinearTriangulation(P1, u1, P2, u2):
+# def IterativeLinearTriangulation(P1, u1, P2, u2):
 
-    wi = 1
-    wi1 = 1
-    X = np.zeros((4, 1), dtype='float32')
+#     wi = 1
+#     wi1 = 1
+#     X = np.zeros((4, 1), dtype='float32')
 
-    for i in range(0, 10):
-        X_ = LinearTriangulation(P1, u1, P2, u2)
-        X(0) = X_(0)
-        X(1) = X_(1)
-        X(2) = X_(2)
-        X(3) = 1
+#     for i in range(0, 10):
+#         X_ = LinearTriangulation(P1, u1, P2, u2)
+#         X(0) = X_(0)
+#         X(1) = X_(1)
+#         X(2) = X_(2)
+#         X(3) = 1
 
-        #calculate weightings
-        p2x = 
-
-
-
-
-
-
+# calculate weightings
+# p2x =
 
 
 run()
