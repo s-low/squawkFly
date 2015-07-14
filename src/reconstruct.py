@@ -46,31 +46,48 @@ def run():
 
     # Find FUNDAMENTAL MATRIX from point correspondences
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
-    print "> Fundamental:\n", F
-    testFundamental(F, pts1, pts2)
+    print "\n> Fundamental:\n", F
 
-    # turn it into the ESSENTIAL MATRIX using calibration matrices K1/K2
-    # where 1 corresponds to the camera with P1 = [I|0]
+    testFundamentalReln(F, pts1, pts2)
+
+    # transform point correspondences to normalized image coordinates
+    # apply the inverse of the calibration matrices to them
+    npts1 = normalise(pts1, K1)
+    npts2 = normalise(pts2, K2)
+
+    # compute ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
     E = K2.T * np.mat(F) * K1
-    print "> Essential:\n", E
+    print "\n> Essential:\n", E
 
-    # Find CAMERA MATRICES from E
-    # where one of them has P1 = [I|0] get the second camera matrix P2 = [R|t]
-    # this relies on Hartley and Zisserman sec 9.6
+    # Find CAMERA MATRICES from E (HZ 9.6.2)
+    # P1 = [I|0] and P2 = [R|t]
+    w, u, vt = cv2.SVDecomp(E)
+    # w - singular values
+    # u - left singular vectors
+    # vt - transposed right singular vectors
+    print "\n> singular values:\n", w
 
+    # a matrix is only essential if two of it's singular values are equal
+    # and the third is zero
+    diag = np.mat(np.diag([1, 1, 0]))
+    E_new = np.mat(u) * diag * np.mat(vt)
+    print "\n> E_new = u * diag(1,1,0) * vt:\n", E_new
+
+    # decompose the second, strictly essential matrix (very unsure about this)
+    w2, u2, vt2 = cv2.SVDecomp(E_new)
+
+    # HZ 9.19 (need to check all four pairings):
+    # rotation
     W, W_inv = initSVDarrays()
+    R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
+    R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
+    # translation
+    t1 = u2[:, 2]
+    t2 = -1 * u2[:, 2]
 
-    s, u, vt = cv2.SVDecomp(E)
-
-    # HZ 9.19 (may need to check all four)
-    R1 = np.mat(u) * np.mat(W) * np.mat(vt)
-    R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
-    t1 = u[:, 2]
-    t2 = -1 * u[:, 2]
-
-    print "> R1:\n", R1
+    print "\n> R1:\n", R1
     print "> R2:\n", R2
-    print "> t1:\n", t1
+    print "\n> t1:\n", t1
     print "> t2:\n", t2
 
     R = R1
@@ -78,8 +95,8 @@ def run():
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
 
-    print "> P1:\n", P1
-    print "> P2:\n", P2
+    print "\n> P1:\n", P1
+    print "\n> P2:\n", P2
 
     # triangulate the points (don't use cv2.triangulatePoints)
     points3d = []
@@ -100,7 +117,7 @@ def run():
     reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d)
 
 
-def testFundamental(F, pts1, pts2):
+def testFundamentalReln(F, pts1, pts2):
     # check that xFx = 0
     pts1 = cv2.convertPointsToHomogeneous(pts1)
     pts2 = cv2.convertPointsToHomogeneous(pts2)
@@ -108,10 +125,25 @@ def testFundamental(F, pts1, pts2):
     for i in range(0, len(pts1)):
         err += np.mat(pts1[i]) * np.mat(F) * np.mat(pts2[i].T)
 
-    print "> avg px error in xFx:", err / len(pts1)
+    print "\n> avg px error in xFx:", err[0, 0] / len(pts1)
 
+# convert a set of (x, y) image points to normalised image coords
+
+
+def normalise(pts, K):
+    np.set_printoptions(suppress=True)
+    pts = cv2.convertPointsToHomogeneous(pts)
+    K_inv = np.linalg.inv(K)
+    npts = np.zeros((len(pts), 2))
+    for i, x in enumerate(pts):
+        xn = K_inv * x.T
+        npts[i][0] = xn[0]
+        npts[i][1] = xn[1]
+    return npts
 
 # used for checking the triangulation
+
+
 def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
 
     new = np.zeros((len(points3d), 4))
@@ -130,7 +162,6 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
         # and get the orginally measured points
         x1 = pts1[i]
         x2 = pts2[i]
-
 
 
 def CalibArray(focalLength, cx, cy):
@@ -200,7 +231,7 @@ def CameraArray(R, t):
 def plot3D(objectPoints):
 
     # Plotting of the system
-    print "> plotting data:"
+    print "\n> plotting data:"
     # for point in objectPoints:
     #     print point[0], point[1], point[2]
 
