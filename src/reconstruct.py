@@ -45,7 +45,7 @@ def run():
     K2 = np.mat(CalibArray(1091, 644, 412))  # g3
 
     # Find FUNDAMENTAL MATRIX from point correspondences
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT, 90)
     print "\n> Fundamental:\n", F
 
     testFundamentalReln(F, pts1, pts2)
@@ -62,9 +62,6 @@ def run():
     # Find CAMERA MATRICES from E (HZ 9.6.2)
     # P1 = [I|0] and P2 = [R|t]
     w, u, vt = cv2.SVDecomp(E)
-    # w - singular values
-    # u - left singular vectors
-    # vt - transposed right singular vectors
     print "\n> singular values:\n", w
 
     # a matrix is only essential if two of it's singular values are equal
@@ -75,6 +72,7 @@ def run():
 
     # decompose the second, strictly essential matrix (very unsure about this)
     w2, u2, vt2 = cv2.SVDecomp(E_new)
+    print "\n> singular values:\n", w2
 
     # HZ 9.19 (need to check all four pairings):
     # rotation
@@ -287,35 +285,25 @@ def LinearTriangulation(P1, u1, P2, u2):
 
 def IterativeLinearTriangulation(P1, u1, P2, u2):
 
-    A = np.zeros((4, 3), dtype='float32')
-    B = np.zeros((4, 1), dtype='float32')
-    X = np.zeros((3, 1), dtype='float32')
+    wi = 1
+    wi1 = 1
+    X = np.zeros((4, 1), dtype='float32')
 
-    A[0][0] = u1.x * P1[2][0] - P1[0][0]
-    A[0][1] = u1.x * P1[2][1] - P1[0][1]
-    A[0][2] = u1.x * P1[2][2] - P1[0][2]
+    for i in range(0, 10):
+        X_ = LinearTriangulation(P1, u1, P2, u2)
+        X(0) = X_(0)
+        X(1) = X_(1)
+        X(2) = X_(2)
+        X(3) = 1
 
-    A[1][0] = u1.y * P1[2][0] - P1[1][0]
-    A[1][1] = u1.y * P1[2][1] - P1[1][1]
-    A[1][2] = u1.y * P1[2][2] - P1[1][2]
+        #calculate weightings
+        p2x = 
 
-    A[2][0] = u2.x * P2[2][0] - P2[0][0]
-    A[2][1] = u2.x * P2[2][1] - P2[0][1]
-    A[2][2] = u2.x * P2[2][2] - P2[0][2]
 
-    A[3][0] = u2.y * P2[2][0] - P2[1][0]
-    A[3][1] = u2.y * P2[2][1] - P2[1][1]
-    A[3][2] = u2.y * P2[2][2] - P2[1][2]
 
-    # print "A:\n", A
 
-    B[0][0] = -(u1.x * P1[2][3] - P1[0][3])
-    B[0][0] = -(u1.y * P1[2][3] - P1[1][3])
-    B[0][0] = -(u2.x * P2[2][3] - P2[0][3])
-    B[3][0] = -(u2.y * P2[2][3] - P2[1][3])
 
-    # print "B:\n", B
-    X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
-    return X
+
+
 
 run()
