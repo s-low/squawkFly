@@ -14,46 +14,101 @@ Point = namedtuple("Point", "x y")
 np.set_printoptions(suppress=True)
 
 
+def initWarrays():
+    W = np.zeros((3, 3), dtype='float32')
+    W_inv = np.zeros((3, 3), dtype='float32')
+
+    W[0][0] = 0  # HZ 9.13
+    W[0][1] = -1
+    W[0][2] = 0
+    W[1][0] = 1
+    W[1][1] = 0
+    W[1][2] = 0
+    W[2][0] = 0
+    W[2][1] = 0
+    W[2][2] = 1
+
+    W_inv[0][0] = 0  # HZ 9.13
+    W_inv[0][1] = 1
+    W_inv[0][2] = 0
+    W_inv[1][0] = -1
+    W_inv[1][1] = 0
+    W_inv[1][2] = 0
+    W_inv[2][0] = 0
+    W_inv[2][1] = 0
+    W_inv[2][2] = 1
+    return W, W_inv
+
+
+def CalibArray(focalLength, cx, cy):
+    calibArray = np.zeros((3, 3), dtype='float32')
+    calibArray[0][0] = focalLength
+    calibArray[1][1] = focalLength
+    calibArray[2][2] = 1
+    calibArray[0][2] = cx
+    calibArray[1][2] = cy
+    return calibArray
+
+
+# Convert a set of (x, y) to normalised homogenous coords K_inv(x, y, z, 1)
+def normalise_homogenise(pts, K):
+    np.set_printoptions(suppress=True)
+    pts = cv2.convertPointsToHomogeneous(pts)
+    K_inv = np.linalg.inv(K)
+
+    npts = np.zeros((len(pts), 3))
+    for i, x in enumerate(pts):
+        xn = K_inv * x.T
+        npts[i][0] = xn[0]
+        npts[i][1] = xn[1]
+        npts[i][2] = xn[2]
+    return npts
+
+# Calibration matrices:
+K1 = np.mat(CalibArray(993, 640, 360))  # d5000
+K2 = np.mat(CalibArray(1091, 640, 360))  # g3
+
+# 1 / RHS / d5000
+pts1_raw = [[726, 267],
+            [761, 266],
+            [715, 463],
+            [749, 461],
+            [667, 432],
+            [677, 256],
+            [971, 465],
+            [448, 383],
+            [1035, 531],
+            [572, 165]]
+
+# 2 / LHS / G3
+pts2_raw = [[664, 391],
+            [684, 379],
+            [660, 587],
+            [685, 571],
+            [554, 554],
+            [550, 365],
+            [924, 536],
+            [229, 554],
+            [1179, 646],
+            [342, 260]]
+
+# Image coords: (x, y)
+pts1 = np.array(pts1_raw, dtype='float32')
+pts2 = np.array(pts2_raw, dtype='float32')
+
+# Normalised homogenous image coords: (x, y, 1)
+npts1 = normalise_homogenise(pts1, K1)
+npts2 = normalise_homogenise(pts2, K2)
+
+# Arrays FOR Rt computation
+W, W_inv = initWarrays()  # HZ 9.13
+
+
 def run():
-    # 1 = RHS d5000
-    pts1_raw = [[726, 267],
-                [761, 266],
-                [715, 463],
-                [749, 461],
-                [667, 432],
-                [677, 256],
-                [971, 465],
-                [448, 383],
-                [1035, 531],
-                [572, 165]]
-
-    # 2 = LHS G3
-    pts2_raw = [[664, 391],
-                [684, 379],
-                [660, 587],
-                [685, 571],
-                [554, 554],
-                [550, 365],
-                [924, 536],
-                [229, 554],
-                [1179, 646],
-                [342, 260]]
-
-    pts1 = np.array(pts1_raw, dtype='float32')
-    pts2 = np.array(pts2_raw, dtype='float32')
-
-    # CALIBRATION MATRICES:
-    K1 = np.mat(CalibArray(993, 640, 360))  # d5000
-    K2 = np.mat(CalibArray(1091, 640, 360))  # g3
-
     # FUNDAMENTAL MATRIX:
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT, 90)
     print "\n> Fundamental:\n", F
     testFundamentalReln(F, pts1, pts2)
-
-    # NORMALISED IMAGE COORDS
-    npts1 = normalise_homogenise(pts1, K1)
-    npts2 = normalise_homogenise(pts2, K2)
 
     # ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
     E = K2.T * np.mat(F) * K1
@@ -62,65 +117,71 @@ def run():
     w, u, vt = cv2.SVDecomp(E)
     print "\n> Singular values:\n", w
 
-    # CONSTRAINED ESSENTIAL MATRIX
+    # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
     diag = np.mat(np.diag([1, 1, 0]))
-    E_new = np.mat(u) * diag * np.mat(vt)
-    print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_new
-    testEssentialReln(E_new, npts1, npts2)
-
-    w2, u2, vt2 = cv2.SVDecomp(E_new)
+    E_prime = np.mat(u) * diag * np.mat(vt)
+    print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
+    testEssentialReln(E_prime, npts1, npts2)
+    w2, u2, vt2 = cv2.SVDecomp(E_prime)
     print "\n> Singular values:\n", w2
 
     # CAMERA MATRICES from E (or E_new?) (HZ 9.6.2)
-    # P1 = [I|0] and P2 = [R|t]
-    W, W_inv = initWarrays()  # HZ 9.13
-
-    R1 = np.mat(u) * np.mat(W) * np.mat(vt)
-    R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
-    t1 = u[:, 2]
-    t2 = -1 * u[:, 2]
+    R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
+    R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
+    t1 = u2[:, 2]
+    t2 = -1 * u2[:, 2]
 
     # enforce positive depth combination of Rt
-    if testRtCombo(R1, t1, pts1_raw, pts2_raw):
+    if testRtCombo(R1, t1, npts1, npts2):
+        print "\n> RT: R1 t1"
         R = R1
         t = t1
 
-    elif testRtCombo(R1, t2, pts1_raw, pts2_raw):
+    elif testRtCombo(R1, t2, npts1, npts2):
+        print "\n> RT: R1 t2"
         R = R1
         t = t2
 
-    elif testRtCombo(R2, t1, pts1_raw, pts2_raw):
-        R = R1
+    elif testRtCombo(R2, t1, npts1, npts2):
+        print "\n> RT: R2 t1"
+        R = R2
+        t = t1
+
+    elif testRtCombo(R2, t2, npts1, npts2):
+        print "\n> RT: R2 t2"
+        R = R2
         t = t2
 
-    elif testRtCombo(R2, t2, pts1_raw, pts2_raw):
-        R = R1
-        t = t2
+    else:
+        print "ERROR: No positive depth Rt combination"
+        sys.exit()
 
     # CAMERA MATRICES
-    P1 = BoringCameraArray()
-    P2 = CameraArray(R, t)
+    P1 = BoringCameraArray()  # I|0
+    P2 = CameraArray(R, t)    # Rt
 
     print "\n> P1:\n", P1
     print "\n> P2:\n", P2
 
-    # TRIANGULATION
+    # TRIANGULATION (in normalised coords)
     points3d = []
 
-    for i in range(0, len(pts1_raw)):
-        x1 = pts1_raw[i][0]
-        y1 = pts1_raw[i][0]
-        x2 = pts2_raw[i][0]
-        y2 = pts2_raw[i][0]
+    # npt is (x, y, 1)
+    for i in range(0, len(npts1)):
+        x1 = npts1[i][0]
+        y1 = npts1[i][0]
+        x2 = npts2[i][0]
+        y2 = npts2[i][0]
 
         u1 = Point(x1, y1)
         u2 = Point(x2, y2)
 
         X = LinearTriangulation(P1, u1, P2, u2)
+        # X = IterativeLinearTriangulation(P1, u1, P2, u2)
         points3d.append(X[1])
 
     plot3D(points3d)
-    reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d)
+    reprojectionError(K1, P1, K2, P2, npts1, npts2, points3d)
 
 
 def testFundamentalReln(F, pts1, pts2):
@@ -148,31 +209,16 @@ def testEssentialReln(E, nh_pts1, nh_pts2):
     print "> avg normalised px error in x'Ex:", err[0, 0] / len(nh_pts1)
 
 
-# convert a set of (x, y) image points to normalised, homogenous image coords
-def normalise_homogenise(pts, K):
-    np.set_printoptions(suppress=True)
-    pts = cv2.convertPointsToHomogeneous(pts)
-    K_inv = np.linalg.inv(K)
-
-    npts = np.zeros((len(pts), 3))
-    for i, x in enumerate(pts):
-        xn = K_inv * x.T
-        npts[i][0] = xn[0]
-        npts[i][1] = xn[1]
-        npts[i][2] = xn[2]
-    return npts
-
-
-def testRtCombo(R, t, pts1_raw, pts2_raw):
+def testRtCombo(R, t, pts1, pts2):
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
     points3d = []
 
-    for i in range(0, len(pts1_raw)):
-        x1 = pts1_raw[i][0]
-        y1 = pts1_raw[i][0]
-        x2 = pts2_raw[i][0]
-        y2 = pts2_raw[i][0]
+    for i in range(0, len(pts1)):
+        x1 = pts1[i][0]
+        y1 = pts1[i][0]
+        x2 = pts2[i][0]
+        y2 = pts2[i][0]
 
         u1 = Point(x1, y1)
         u2 = Point(x2, y2)
@@ -193,7 +239,6 @@ def inFrontOfBothCameras(pts1, pts2, R, t):
     pts2 = cv2.convertPointsToHomogeneous(pts2)
 
     for first, second in zip(pts1, pts2):
-        print second.shape, t.shape
 
         A = (np.mat(R[0, :]) - (second[0] * np.mat(R[2, :]))) * np.mat(t)
         B = np.dot(R[0, :] - second[0] * R[2, :], second)
@@ -236,44 +281,8 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
 
         total += dist1 + dist2
 
-    print "\n> avg reprojection error in triangulation:", \
+    print "\n> avg normalised reprojection error in triangulation:", \
         total / (2 * len(points3d))
-
-
-def CalibArray(focalLength, cx, cy):
-    calibArray = np.zeros((3, 3), dtype='float32')
-    calibArray[0][0] = focalLength
-    calibArray[1][1] = focalLength
-    calibArray[2][2] = 1
-    calibArray[0][2] = cx
-    calibArray[1][2] = cy
-    return calibArray
-
-
-def initWarrays():
-    W = np.zeros((3, 3), dtype='float32')
-    W_inv = np.zeros((3, 3), dtype='float32')
-
-    W[0][0] = 0  # HZ 9.13
-    W[0][1] = -1
-    W[0][2] = 0
-    W[1][0] = 1
-    W[1][1] = 0
-    W[1][2] = 0
-    W[2][0] = 0
-    W[2][1] = 0
-    W[2][2] = 1
-
-    W_inv[0][0] = 0  # HZ 9.13
-    W_inv[0][1] = 1
-    W_inv[0][2] = 0
-    W_inv[1][0] = -1
-    W_inv[1][1] = 0
-    W_inv[1][2] = 0
-    W_inv[2][0] = 0
-    W_inv[2][1] = 0
-    W_inv[2][2] = 1
-    return W, W_inv
 
 
 def BoringCameraArray():
@@ -329,6 +338,7 @@ def plot3D(objectPoints):
 
 def LinearTriangulation(P1, u1, P2, u2):
 
+    # points u are normalised (x, y)
     A = np.zeros((4, 3), dtype='float32')
     B = np.zeros((4, 1), dtype='float32')
     X = np.zeros((3, 1), dtype='float32')
@@ -359,7 +369,7 @@ def LinearTriangulation(P1, u1, P2, u2):
 
 
 def IterativeLinearTriangulation(P1, u1, P2, u2):
-    EPSILON = 5
+    EPSILON = 2
 
     # weightings
     wi1 = 1
