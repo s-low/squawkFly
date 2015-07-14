@@ -55,13 +55,13 @@ def normalise_homogenise(pts, K):
     pts = cv2.convertPointsToHomogeneous(pts)
     K_inv = np.linalg.inv(K)
 
-    npts = np.zeros((len(pts), 3))
+    n_pts = np.zeros((len(pts), 3))
     for i, x in enumerate(pts):
         xn = K_inv * x.T
-        npts[i][0] = xn[0]
-        npts[i][1] = xn[1]
-        npts[i][2] = xn[2]
-    return npts
+        n_pts[i][0] = xn[0]
+        n_pts[i][1] = xn[1]
+        n_pts[i][2] = xn[2]
+    return n_pts
 
 # Calibration matrices:
 K1 = np.mat(CalibArray(993, 640, 360))  # d5000
@@ -96,8 +96,8 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
-npts1 = normalise_homogenise(pts1, K1)
-npts2 = normalise_homogenise(pts2, K2)
+norm_pts1 = normalise_homogenise(pts1, K1)
+norm_pts2 = normalise_homogenise(pts2, K2)
 
 # Arrays FOR Rt computation
 W, W_inv = initWarrays()  # HZ 9.13
@@ -111,52 +111,16 @@ def run():
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
 
     # CONSTRAINED ESSENTIAL MATRIX
-    # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
-    E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt, npts1, npts2)
+    E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt)
 
     # CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
-    R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
-    R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
-    t1 = u2[:, 2]
-    t2 = -1 * u2[:, 2]
-
-    # enforce positive depth combination of Rt
-    if testRtCombo(R1, t1, npts1, npts2):
-        print "\n> RT: R1 t1"
-        R = R1
-        t = t1
-
-    elif testRtCombo(R1, t2, npts1, npts2):
-        print "\n> RT: R1 t2"
-        R = R1
-        t = t2
-
-    elif testRtCombo(R2, t1, npts1, npts2):
-        print "\n> RT: R2 t1"
-        R = R2
-        t = t1
-
-    elif testRtCombo(R2, t2, npts1, npts2):
-        print "\n> RT: R2 t2"
-        R = R2
-        t = t2
-
-    else:
-        print "ERROR: No positive depth Rt combination"
-        sys.exit()
-
-    # NORMALISED CAMERA MATRICES P = [Rt]
-    P1 = BoringCameraArray()  # I|0
-    P2 = CameraArray(R, t)    # Rt
+    P1, P2 = getNormalisedPMatrices(E_prime, u2, vt2)
     P1_mat = np.mat(P1)
     P2_mat = np.mat(P2)
 
     # FULL PROJECTION MATRICES (with K) P = K[Rt]
     KP1 = K1 * P1_mat
     KP2 = K2 * P2_mat
-
-    print "\n> P1:\n", P1
-    print "\n> P2:\n", P2
 
     # TRIANGULATION
     points3d = triangulateLS(KP1, KP2, pts1, pts2)
@@ -177,24 +141,66 @@ def getFundamentalMatrix(pts1, pts2):
 def getEssentialMatrix(F, K1, K2):
     E = K2.T * np.mat(F) * K1
     print "\n> Essential:\n", E
-    testEssentialReln(E, npts1, npts2)
+    testEssentialReln(E, norm_pts1, norm_pts2)
 
     w, u, vt = cv2.SVDecomp(E)
     print "\n> Singular values:\n", w
     return E, w, u, vt
 
 
-def getConstrainedEssentialMatrix(u, vt, npts1, npts2):
+# https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
+def getConstrainedEssentialMatrix(u, vt):
     diag = np.mat(np.diag([1, 1, 0]))
 
     E_prime = np.mat(u) * diag * np.mat(vt)
     print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
-    testEssentialReln(E_prime, npts1, npts2)
+    testEssentialReln(E_prime, norm_pts1, norm_pts2)
 
     w2, u2, vt2 = cv2.SVDecomp(E_prime)
     print "\n> Singular values:\n", w2
 
     return E_prime, w2, u2, vt2
+
+
+def getNormalisedPMatrices(E, u, vt):
+    R1 = np.mat(u) * np.mat(W) * np.mat(vt)
+    R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
+    t1 = u[:, 2]
+    t2 = -1 * u[:, 2]
+
+    # enforce positive depth combination of Rt
+    if testRtCombo(R1, t1, norm_pts1, norm_pts2):
+        print "\n> RT: R1 t1"
+        R = R1
+        t = t1
+
+    elif testRtCombo(R1, t2, norm_pts1, norm_pts2):
+        print "\n> RT: R1 t2"
+        R = R1
+        t = t2
+
+    elif testRtCombo(R2, t1, norm_pts1, norm_pts2):
+        print "\n> RT: R2 t1"
+        R = R2
+        t = t1
+
+    elif testRtCombo(R2, t2, norm_pts1, norm_pts2):
+        print "\n> RT: R2 t2"
+        R = R2
+        t = t2
+
+    else:
+        print "ERROR: No positive depth Rt combination"
+        sys.exit()
+
+    # NORMALISED CAMERA MATRICES P = [Rt]
+    P1 = BoringCameraArray()  # I|0
+    P2 = CameraArray(R, t)    # Rt
+
+    print "\n> P1:\n", P1
+    print "\n> P2:\n", P2
+
+    return P1, P2
 
 
 def triangulateLS(KP1, KP2, pts1, pts2):
@@ -360,7 +366,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
 
         total += dist1 + dist2
 
-    print "\n> avg reprojection error in triangulation:", \
+    print "\n> avg reprojection error:", \
         total / (2 * len(points3d))
 
 
