@@ -89,14 +89,10 @@ rvec = (0, 0, 0)
 img_pts1, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
 
-print img_pts1
-
 tvec = (0, 0, 50)
 rvec = (0, 0.5, 0)
 img_pts2, jacobian = cv2.projectPoints(
     obj_pts, rvec, tvec, calibMatrix, distCoeffs)
-
-print img_pts2
 
 tvec = (0, 0, 100)
 rvec = (0, 0, 0)
@@ -140,4 +136,4 @@ img_pts_list = [img_pts1, img_pts2, img_pts3, img_pts4, img_pts5, img_pts6]
 ret, calib_mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     obj_pts_list, img_pts_list, (30, 30), None, None)
 
-print calib_mtx
+print "> calib_matrix:\n", calib_mtx
