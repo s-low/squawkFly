@@ -52,7 +52,6 @@ def CalibArray(focalLength, cx, cy):
 
 # Convert a set of (x, y) to normalised homogenous coords K_inv(x, y, z, 1)
 def normalise_homogenise(pts, K):
-    np.set_printoptions(suppress=True)
     pts = cv2.convertPointsToHomogeneous(pts)
     K_inv = np.linalg.inv(K)
 
@@ -106,7 +105,7 @@ W, W_inv = initWarrays()  # HZ 9.13
 
 def run():
     # FUNDAMENTAL MATRIX:
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT, 90)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
     print "\n> Fundamental:\n", F
     testFundamentalReln(F, pts1, pts2)
 
@@ -125,7 +124,7 @@ def run():
     w2, u2, vt2 = cv2.SVDecomp(E_prime)
     print "\n> Singular values:\n", w2
 
-    # CAMERA MATRICES from E (or E_new?) (HZ 9.6.2)
+    # CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
     R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
     R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
     t1 = u2[:, 2]
@@ -156,52 +155,96 @@ def run():
         print "ERROR: No positive depth Rt combination"
         sys.exit()
 
-    # CAMERA MATRICES
+    # NORMALISED CAMERA MATRICES P = [Rt]
     P1 = BoringCameraArray()  # I|0
     P2 = CameraArray(R, t)    # Rt
+    P1_mat = np.mat(P1)
+    P2_mat = np.mat(P2)
+
+    # FULL PROJECTION MATRICES (with K) P = K[Rt]
+    KP1 = K1 * P1_mat
+    KP2 = K2 * P2_mat
 
     print "\n> P1:\n", P1
     print "\n> P2:\n", P2
 
-    # TRIANGULATION (in normalised coords)
+    # points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
+    # points4d = points4d.T
+    # print "\n> cv2.triangulatePoints:\n"
+    # for point in points4d:
+    #     k = 1 / point[3]
+    #     point = point * k
+    #     print point
+
+    # TRIANGULATION
     points3d = []
 
-    # npt is (x, y, 1)
-    for i in range(0, len(npts1)):
-        x1 = npts1[i][0]
-        y1 = npts1[i][0]
-        x2 = npts2[i][0]
-        y2 = npts2[i][0]
+    for i in range(0, len(pts1)):
+        x1 = pts1[i][0]
+        y1 = pts1[i][0]
+        x2 = pts2[i][0]
+        y2 = pts2[i][0]
 
         u1 = Point(x1, y1)
         u2 = Point(x2, y2)
 
-        X = LinearTriangulation(P1, u1, P2, u2)
-        # X = IterativeLinearTriangulation(P1, u1, P2, u2)
+        X = LinearTriangulation(KP1, u1, KP2, u2)
         points3d.append(X[1])
 
     plot3D(points3d)
-    reprojectionError(K1, P1, K2, P2, npts1, npts2, points3d)
+    reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
+
+
+# supply P1 and P2 as MAT
+def LinearTriangulation(P1, u1, P2, u2):
+
+    # points u are normalised (x, y)
+    A = np.zeros((4, 3), dtype='float32')
+    B = np.zeros((4, 1), dtype='float32')
+    X = np.zeros((3, 1), dtype='float32')
+
+    A[0][0] = u1.x * P1[2, 0] - P1[0, 0]
+    A[0][1] = u1.x * P1[2, 1] - P1[0, 1]
+    A[0][2] = u1.x * P1[2, 2] - P1[0, 2]
+
+    A[1][0] = u1.y * P1[2, 0] - P1[1, 0]
+    A[1][1] = u1.y * P1[2, 1] - P1[1, 1]
+    A[1][2] = u1.y * P1[2, 2] - P1[1, 2]
+
+    A[2][0] = u2.x * P2[2, 0] - P2[0, 0]
+    A[2][1] = u2.x * P2[2, 1] - P2[0, 1]
+    A[2][2] = u2.x * P2[2, 2] - P2[0, 2]
+
+    A[3][0] = u2.y * P2[2, 0] - P2[1, 0]
+    A[3][1] = u2.y * P2[2, 1] - P2[1, 1]
+    A[3][2] = u2.y * P2[2, 2] - P2[1, 2]
+
+    B[0][0] = -(u1.x * P1[2, 3] - P1[0, 3])
+    B[0][0] = -(u1.y * P1[2, 3] - P1[1, 3])
+    B[0][0] = -(u2.x * P2[2, 3] - P2[0, 3])
+    B[3][0] = -(u2.y * P2[2, 3] - P2[1, 3])
+
+    X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
+    return X
 
 
 def testFundamentalReln(F, pts1, pts2):
-    # check that xFx = 0
-
+    # check that xFx = 0 for homog coords x x'
+    F = np.mat(F)
     pts1 = cv2.convertPointsToHomogeneous(pts1)
     pts2 = cv2.convertPointsToHomogeneous(pts2)
     err = 0
+
     for i in range(0, len(pts1)):
-        err += np.mat(pts1[i]) * np.mat(F) * np.mat(pts2[i]).T
+        err += np.mat(pts1[i]) * F * np.mat(pts2[i]).T
 
     print "> avg px error in xFx:", err[0, 0] / len(pts1)
 
 
 def testEssentialReln(E, nh_pts1, nh_pts2):
-    # check that x'Ex = 0 for normalised coordinates x, x'
+    # check that x'Ex = 0 for normalised, homog coords x x'
     err = 0
-    m = np.mat(nh_pts1[0])
     E = np.mat(E)
-    m1 = np.mat(nh_pts2[0]).T
 
     for i in range(0, len(nh_pts1)):
         err += np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T
@@ -254,8 +297,8 @@ def inFrontOfBothCameras(pts1, pts2, R, t):
             return False
 
 
-# used for checking the triangulation
-def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
+# used for checking the triangulation - provide UNNORMALISED DATA
+def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
 
     new = np.zeros((len(points3d), 4))
     for i, point in enumerate(points3d):
@@ -267,9 +310,14 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
 
     # for each 3d point
     for i, X in enumerate(new):
-        # project into each camera with retrieved P matrices
-        xp1 = P1 * np.mat(X).T
-        xp2 = P2 * np.mat(X).T
+        # x_2d = K * P * X_3d
+        xp1 = K1 * P1_mat * np.mat(X).T
+        xp2 = K2 * P2_mat * np.mat(X).T
+
+        # normalise the projected (homogenous) coordinates
+        # (x,y,1) = (xz,yz,z) / z
+        xp1 = xp1 / xp1[2]
+        xp2 = xp2 / xp2[2]
 
         # and get the orginally measured points
         x1 = pts1[i]
@@ -281,7 +329,7 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
 
         total += dist1 + dist2
 
-    print "\n> avg normalised reprojection error in triangulation:", \
+    print "\n> avg reprojection error in triangulation:", \
         total / (2 * len(points3d))
 
 
@@ -336,38 +384,6 @@ def plot3D(objectPoints):
     plt.show()
 
 
-def LinearTriangulation(P1, u1, P2, u2):
-
-    # points u are normalised (x, y)
-    A = np.zeros((4, 3), dtype='float32')
-    B = np.zeros((4, 1), dtype='float32')
-    X = np.zeros((3, 1), dtype='float32')
-
-    A[0][0] = u1.x * P1[2][0] - P1[0][0]
-    A[0][1] = u1.x * P1[2][1] - P1[0][1]
-    A[0][2] = u1.x * P1[2][2] - P1[0][2]
-
-    A[1][0] = u1.y * P1[2][0] - P1[1][0]
-    A[1][1] = u1.y * P1[2][1] - P1[1][1]
-    A[1][2] = u1.y * P1[2][2] - P1[1][2]
-
-    A[2][0] = u2.x * P2[2][0] - P2[0][0]
-    A[2][1] = u2.x * P2[2][1] - P2[0][1]
-    A[2][2] = u2.x * P2[2][2] - P2[0][2]
-
-    A[3][0] = u2.y * P2[2][0] - P2[1][0]
-    A[3][1] = u2.y * P2[2][1] - P2[1][1]
-    A[3][2] = u2.y * P2[2][2] - P2[1][2]
-
-    B[0][0] = -(u1.x * P1[2][3] - P1[0][3])
-    B[0][0] = -(u1.y * P1[2][3] - P1[1][3])
-    B[0][0] = -(u2.x * P2[2][3] - P2[0][3])
-    B[3][0] = -(u2.y * P2[2][3] - P2[1][3])
-
-    X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
-    return X
-
-
 def IterativeLinearTriangulation(P1, u1, P2, u2):
     EPSILON = 2
 
@@ -402,26 +418,26 @@ def IterativeLinearTriangulation(P1, u1, P2, u2):
         wi2 = p2x2
 
         # reweight equations and solve
-        A[0][0] = (u1.x * P1[2][0] - P1[0][0]) / wi1
-        A[0][1] = (u1.x * P1[2][1] - P1[0][1]) / wi1
-        A[0][2] = (u1.x * P1[2][2] - P1[0][2]) / wi1
+        A[0][0] = (u1.x * P1[2, 0] - P1[0, 0]) / wi1
+        A[0][1] = (u1.x * P1[2, 1] - P1[0, 1]) / wi1
+        A[0][2] = (u1.x * P1[2, 2] - P1[0, 2]) / wi1
 
-        A[1][0] = (u1.y * P1[2][0] - P1[1][0]) / wi1
-        A[1][1] = (u1.y * P1[2][1] - P1[1][1]) / wi1
-        A[1][2] = (u1.y * P1[2][2] - P1[1][2]) / wi1
+        A[1][0] = (u1.y * P1[2, 0] - P1[1, 0]) / wi1
+        A[1][1] = (u1.y * P1[2, 1] - P1[1, 1]) / wi1
+        A[1][2] = (u1.y * P1[2, 2] - P1[1, 2]) / wi1
 
-        A[2][0] = (u2.x * P2[2][0] - P2[0][0]) / wi2
-        A[2][1] = (u2.x * P2[2][1] - P2[0][1]) / wi2
-        A[2][2] = (u2.x * P2[2][2] - P2[0][2]) / wi2
+        A[2][0] = (u2.x * P2[2, 0] - P2[0, 0]) / wi2
+        A[2][1] = (u2.x * P2[2, 1] - P2[0, 1]) / wi2
+        A[2][2] = (u2.x * P2[2, 2] - P2[0, 2]) / wi2
 
-        A[3][0] = (u2.y * P2[2][0] - P2[1][0]) / wi2
-        A[3][1] = (u2.y * P2[2][1] - P2[1][1]) / wi2
-        A[3][2] = (u2.y * P2[2][2] - P2[1][2]) / wi2
+        A[3][0] = (u2.y * P2[2, 0] - P2[1, 0]) / wi2
+        A[3][1] = (u2.y * P2[2, 1] - P2[1, 1]) / wi2
+        A[3][2] = (u2.y * P2[2, 2] - P2[1, 2]) / wi2
 
-        B[0][0] = -(u1.x * P1[2][3] - P1[0][3])
-        B[0][0] = -(u1.y * P1[2][3] - P1[1][3])
-        B[0][0] = -(u2.x * P2[2][3] - P2[0][3])
-        B[3][0] = -(u2.y * P2[2][3] - P2[1][3])
+        B[0][0] = -(u1.x * P1[2, 3] - P1[0, 3])
+        B[0][0] = -(u1.y * P1[2, 3] - P1[1, 3])
+        B[0][0] = -(u2.x * P2[2, 3] - P2[0, 3])
+        B[3][0] = -(u2.y * P2[2, 3] - P2[1, 3])
 
         X_ = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
         X[0] = X_[0]

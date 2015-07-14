@@ -1,0 +1,5 @@
+The current algorithm
+
+Begin with:
+	- Set of (x,y) point correspondences in two images
+	- The calibration matrices K1 and K2 for the two cameras
