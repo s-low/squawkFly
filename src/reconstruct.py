@@ -42,56 +42,43 @@ def run():
     pts1 = np.array(pts1_raw, dtype='float32')
     pts2 = np.array(pts2_raw, dtype='float32')
 
-    # Given camera CALIBRATION MATRICES
+    # CALIBRATION MATRICES:
     K1 = np.mat(CalibArray(993, 640, 360))  # d5000
     K2 = np.mat(CalibArray(1091, 640, 360))  # g3
 
-    # Find FUNDAMENTAL MATRIX from point correspondences
+    # FUNDAMENTAL MATRIX:
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT, 90)
     print "\n> Fundamental:\n", F
     testFundamentalReln(F, pts1, pts2)
 
-    # transform point correspondences to normalized image coordinates
-    # apply the inverse of the calibration matrices to them
+    # NORMALISED IMAGE COORDS
     npts1 = normalise_homogenise(pts1, K1)
     npts2 = normalise_homogenise(pts2, K2)
 
-    # compute ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
+    # ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
     E = K2.T * np.mat(F) * K1
     print "\n> Essential:\n", E
     testEssentialReln(E, npts1, npts2)
-
-    # Find CAMERA MATRICES from E (HZ 9.6.2)
-    # P1 = [I|0] and P2 = [R|t]
     w, u, vt = cv2.SVDecomp(E)
-    print "\n> singular values:\n", w
+    print "\n> Singular values:\n", w
 
-    # a matrix is only essential if two of it's singular values are equal
-    # and the third is zero
+    # CONSTRAINED ESSENTIAL MATRIX
     diag = np.mat(np.diag([1, 1, 0]))
     E_new = np.mat(u) * diag * np.mat(vt)
-    print "\n> E_new = u * diag(1,1,0) * vt:\n", E_new
+    print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_new
     testEssentialReln(E_new, npts1, npts2)
 
-    # decompose the second, strictly essential matrix (very unsure about this)
     w2, u2, vt2 = cv2.SVDecomp(E_new)
-    print "\n> singular values:\n", w2
+    print "\n> Singular values:\n", w2
 
-    # HZ 9.19 (need to check all four pairings):
-    W, W_inv = initWarrays()
+    # CAMERA MATRICES from E (or E_new?) (HZ 9.6.2)
+    # P1 = [I|0] and P2 = [R|t]
+    W, W_inv = initWarrays()  # HZ 9.13
 
-    R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
-    t1 = u2[:, 2]
-    # inFrontOfBothCameras(pts1, pts2, R1, t1)
-
-    R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
-    t1 = u2[:, 2]
-    t2 = -1 * u2[:, 2]
-
-    print "\n> R1:\n", R1
-    print "> R2:\n", R2
-    print "\n> t1:\n", t1
-    print "> t2:\n", t2
+    R1 = np.mat(u) * np.mat(W) * np.mat(vt)
+    R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
+    t1 = u[:, 2]
+    t2 = -1 * u[:, 2]
 
     # enforce positive depth combination of Rt
     if testRtCombo(R1, t1, pts1_raw, pts2_raw):
@@ -320,7 +307,7 @@ def CameraArray(R, t):
 def plot3D(objectPoints):
 
     # Plotting of the system
-    print "\n> plotting data:"
+    print "\n> Triangulated data:"
     for point in objectPoints:
         print point[0], point[1], point[2]
 
