@@ -4,6 +4,7 @@ import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
+import math
 from collections import namedtuple
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -77,11 +78,13 @@ def run():
     print "\n> singular values:\n", w2
 
     # HZ 9.19 (need to check all four pairings):
-    # rotation
-    W, W_inv = initSVDarrays()
+    W, W_inv = initWarrays()
+
     R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
+    t1 = u2[:, 2]
+    # inFrontOfBothCameras(pts1, pts2, R1, t1)
+
     R2 = np.mat(u2) * np.mat(W.T) * np.mat(vt2)
-    # translation
     t1 = u2[:, 2]
     t2 = -1 * u2[:, 2]
 
@@ -90,15 +93,31 @@ def run():
     print "\n> t1:\n", t1
     print "> t2:\n", t2
 
-    R = R1
-    t = t1
+    # enforce positive depth combination of Rt
+    if testRtCombo(R1, t1, pts1_raw, pts2_raw):
+        R = R1
+        t = t1
+
+    elif testRtCombo(R1, t2, pts1_raw, pts2_raw):
+        R = R1
+        t = t2
+
+    elif testRtCombo(R2, t1, pts1_raw, pts2_raw):
+        R = R1
+        t = t2
+
+    elif testRtCombo(R2, t2, pts1_raw, pts2_raw):
+        R = R1
+        t = t2
+
+    # CAMERA MATRICES
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
 
     print "\n> P1:\n", P1
     print "\n> P2:\n", P2
 
-    # triangulate the points (don't use cv2.triangulatePoints)
+    # TRIANGULATION
     points3d = []
 
     for i in range(0, len(pts1_raw)):
@@ -111,10 +130,7 @@ def run():
         u2 = Point(x2, y2)
 
         X = LinearTriangulation(P1, u1, P2, u2)
-        print X
-        Xit = IterativeLinearTriangulation(P1, u1, P2, u2)
-        print Xit
-        points3d.append(Xit)
+        points3d.append(X[1])
 
     plot3D(points3d)
     reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d)
@@ -159,9 +175,54 @@ def normalise_homogenise(pts, K):
         npts[i][2] = xn[2]
     return npts
 
+
+def testRtCombo(R, t, pts1_raw, pts2_raw):
+    P1 = BoringCameraArray()
+    P2 = CameraArray(R, t)
+    points3d = []
+
+    for i in range(0, len(pts1_raw)):
+        x1 = pts1_raw[i][0]
+        y1 = pts1_raw[i][0]
+        x2 = pts2_raw[i][0]
+        y2 = pts2_raw[i][0]
+
+        u1 = Point(x1, y1)
+        u2 = Point(x2, y2)
+
+        X = LinearTriangulation(P1, u1, P2, u2)
+        points3d.append(X[1])
+
+    for point in points3d:
+        if point[2] < 0:
+            return False
+
+    return True
+
+
+def inFrontOfBothCameras(pts1, pts2, R, t):
+    print "\n> testing Rt combination:"
+    pts1 = cv2.convertPointsToHomogeneous(pts2)
+    pts2 = cv2.convertPointsToHomogeneous(pts2)
+
+    for first, second in zip(pts1, pts2):
+        print second.shape, t.shape
+
+        A = (np.mat(R[0, :]) - (second[0] * np.mat(R[2, :]))) * np.mat(t)
+        B = np.dot(R[0, :] - second[0] * R[2, :], second)
+
+        first_z = A / B
+
+        first_3d_point = np.array(
+            [first[0] * first_z, second[0] * first_z, first_z])
+
+        second_3d_point = np.dot(R.T, first_3d_point) - np.dot(R.T, t)
+
+        if first_3d_point[2] < 0 or second_3d_point[2] < 0:
+            return False
+
+
 # used for checking the triangulation
-
-
 def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
 
     new = np.zeros((len(points3d), 4))
@@ -170,6 +231,7 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
         new[i][1] = point[1]
         new[i][2] = point[2]
         new[i][3] = 1
+    total = 0
 
     # for each 3d point
     for i, X in enumerate(new):
@@ -180,6 +242,15 @@ def reprojectionError(K1, P1, K2, P2, pts1, pts2, points3d):
         # and get the orginally measured points
         x1 = pts1[i]
         x2 = pts2[i]
+
+        # difference between them is:
+        dist1 = math.hypot(xp1[0] - x1[0], xp1[1] - x1[1])
+        dist2 = math.hypot(xp2[0] - x2[0], xp2[1] - x2[1])
+
+        total += dist1 + dist2
+
+    print "\n> avg reprojection error in triangulation:", \
+        total / (2 * len(points3d))
 
 
 def CalibArray(focalLength, cx, cy):
@@ -192,7 +263,7 @@ def CalibArray(focalLength, cx, cy):
     return calibArray
 
 
-def initSVDarrays():
+def initWarrays():
     W = np.zeros((3, 3), dtype='float32')
     W_inv = np.zeros((3, 3), dtype='float32')
 
@@ -250,8 +321,8 @@ def plot3D(objectPoints):
 
     # Plotting of the system
     print "\n> plotting data:"
-    # for point in objectPoints:
-    #     print point[0], point[1], point[2]
+    for point in objectPoints:
+        print point[0], point[1], point[2]
 
     all_x = [point[0] for point in objectPoints]
     all_y = [point[1] for point in objectPoints]
