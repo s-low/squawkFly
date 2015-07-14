@@ -105,24 +105,14 @@ W, W_inv = initWarrays()  # HZ 9.13
 
 def run():
     # FUNDAMENTAL MATRIX:
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
-    print "\n> Fundamental:\n", F
-    testFundamentalReln(F, pts1, pts2)
+    F = getFundamentalMatrix(pts1, pts2)
 
     # ESSENTIAL MATRIX from F, K1, K2 (HZ 9.12)
-    E = K2.T * np.mat(F) * K1
-    print "\n> Essential:\n", E
-    testEssentialReln(E, npts1, npts2)
-    w, u, vt = cv2.SVDecomp(E)
-    print "\n> Singular values:\n", w
+    E, w, u, vt = getEssentialMatrix(F, K1, K2)
 
+    # CONSTRAINED ESSENTIAL MATRIX
     # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
-    diag = np.mat(np.diag([1, 1, 0]))
-    E_prime = np.mat(u) * diag * np.mat(vt)
-    print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
-    testEssentialReln(E_prime, npts1, npts2)
-    w2, u2, vt2 = cv2.SVDecomp(E_prime)
-    print "\n> Singular values:\n", w2
+    E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt, npts1, npts2)
 
     # CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
     R1 = np.mat(u2) * np.mat(W) * np.mat(vt2)
@@ -168,15 +158,46 @@ def run():
     print "\n> P1:\n", P1
     print "\n> P2:\n", P2
 
-    # points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
-    # points4d = points4d.T
-    # print "\n> cv2.triangulatePoints:\n"
-    # for point in points4d:
-    #     k = 1 / point[3]
-    #     point = point * k
-    #     print point
-
     # TRIANGULATION
+    points3d = triangulateLS(KP1, KP2, pts1, pts2)
+    # points4d = triangulateCV(KP1, KP2, pts1, pts2)
+
+    # PLOTTING
+    plot3D(points3d)
+    reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
+
+
+def getFundamentalMatrix(pts1, pts2):
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    print "\n> Fundamental:\n", F
+    testFundamentalReln(F, pts1, pts2)
+    return F
+
+
+def getEssentialMatrix(F, K1, K2):
+    E = K2.T * np.mat(F) * K1
+    print "\n> Essential:\n", E
+    testEssentialReln(E, npts1, npts2)
+
+    w, u, vt = cv2.SVDecomp(E)
+    print "\n> Singular values:\n", w
+    return E, w, u, vt
+
+
+def getConstrainedEssentialMatrix(u, vt, npts1, npts2):
+    diag = np.mat(np.diag([1, 1, 0]))
+
+    E_prime = np.mat(u) * diag * np.mat(vt)
+    print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
+    testEssentialReln(E_prime, npts1, npts2)
+
+    w2, u2, vt2 = cv2.SVDecomp(E_prime)
+    print "\n> Singular values:\n", w2
+
+    return E_prime, w2, u2, vt2
+
+
+def triangulateLS(KP1, KP2, pts1, pts2):
     points3d = []
 
     for i in range(0, len(pts1)):
@@ -191,8 +212,7 @@ def run():
         X = LinearTriangulation(KP1, u1, KP2, u2)
         points3d.append(X[1])
 
-    plot3D(points3d)
-    reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
+    return points3d
 
 
 # supply P1 and P2 as MAT
@@ -226,6 +246,17 @@ def LinearTriangulation(P1, u1, P2, u2):
 
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
     return X
+
+
+def triangulateCV(KP1, KP2, pts1, pts2):
+    points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
+    points4d = points4d.T
+    print "\n> cv2.triangulatePoints:\n"
+    for point in points4d:
+        k = 1 / point[3]
+        point = point * k
+
+    return points4d
 
 
 def testFundamentalReln(F, pts1, pts2):
