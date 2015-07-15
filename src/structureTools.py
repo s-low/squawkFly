@@ -24,9 +24,9 @@ def normalise_homogenise(pts, K):
 
     for i, x in enumerate(pts):
         x_normed = K_inv * x.T
-        n_pts[i][0] = xnormed[0]
-        n_pts[i][1] = xnormed[1]
-        n_pts[i][2] = xnormed[2]
+        n_pts[i][0] = x_normed[0]
+        n_pts[i][1] = x_normed[1]
+        n_pts[i][2] = x_normed[2]
 
     return n_pts
 
