@@ -127,6 +127,9 @@ pts2 = np.array(pts2_raw, dtype='float32')
 norm_pts1 = struc.normalise_homogenise(pts1, K1)
 norm_pts2 = struc.normalise_homogenise(pts2, K2)
 
+inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
+inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
+
 # Arrays FOR Rt computation
 W, W_inv = struc.initWarrays()  # HZ 9.13
 
@@ -134,6 +137,8 @@ W, W_inv = struc.initWarrays()  # HZ 9.13
 def run():
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
+    # E_test = getFundamentalMatrix(inhomog_norm_pts1, inhomog_norm_pts2)
+    # print "\n> Essential test:\n", E_test
 
     # ESSENTIAL MATRIX (HZ 9.12)
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
@@ -141,7 +146,11 @@ def run():
     # CONSTRAINED ESSENTIAL MATRIX
     E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt)
 
-    # PROJECTION/CAMERA MATRICES from E or E_prime (HZ 9.6.2)
+    # scale = E[0, 0] / E_prime[0, 0]
+    # E_prime = E_prime * scale
+    # print "\n> scaled:\n", E_prime
+
+    # PROJECTION/CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
     P1, P2 = getNormalisedPMatrices(E, u, vt)
     P1_mat = np.mat(P1)
     P2_mat = np.mat(P2)
@@ -242,9 +251,9 @@ def triangulateLS(P1, P2, pts1, pts2):
 
     for i in range(0, len(pts1)):
         x1 = pts1[i][0]
-        y1 = pts1[i][0]
+        y1 = pts1[i][1]
         x2 = pts2[i][0]
-        y2 = pts2[i][0]
+        y2 = pts2[i][1]
 
         p1 = Point(x1, y1)
         p2 = Point(x2, y2)
@@ -270,40 +279,43 @@ def triangulateCV(KP1, KP2, pts1, pts2):
 def testFundamentalReln(F, pts1, pts2):
     # check that xFx = 0 for homog coords x x'
     F = np.mat(F)
+    is_singular(F)
+
     pts1 = cv2.convertPointsToHomogeneous(pts1)
     pts2 = cv2.convertPointsToHomogeneous(pts2)
+
     err = 0
-    total = 0
     for i in range(0, len(pts1)):
-        # total += abs(pts1[i][0, 0]) + abs(pts1[i][0, 1]) + \
-            # abs(pts2[i][0, 0]) + abs(pts2[i][0, 1])
         err += abs(np.mat(pts1[i]) * F * np.mat(pts2[i]).T)
 
-    # avg = total / (4 * len(pts1))
     err = err[0, 0] / len(pts1)
-    # per = (err / avg) * 100
-    print "> avg error in xFx:", err
-    # print "> typical x value is", avg
-    # print "> typical %2.2f%% error" % per
+    print "> avg error in x'Fx:", err
+
+    # nb: x' must lie on line Fx according to x'Fx = 0. could test/show this.
+    # lines1 = cv2.computeCorrespondEpilines(pts2, 2, F)
+
+
+def is_singular(a):
+    det = np.linalg.det(a)
+    s = not is_invertible(a)
+    print "> Singular:", s
+
+
+def is_invertible(a):
+    return a.shape[0] == a.shape[1] and np.linalg.matrix_rank(a) == a.shape[0]
 
 
 def testEssentialReln(E, nh_pts1, nh_pts2):
     # check that x'Ex = 0 for normalised, homog coords x x'
-    err = 0
-    total = 0
     E = np.mat(E)
+    is_singular(E)
 
+    err = 0
     for i in range(0, len(nh_pts1)):
-        total += abs(nh_pts1[i][0]) + abs(nh_pts1[i][1]) + \
-            abs(nh_pts2[i][0]) + abs(nh_pts2[i][1])
-        err += np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T
+        err += abs(np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T)
 
-    avg = total / (4 * len(nh_pts1))
     err = err[0, 0] / len(nh_pts1)
-    per = (err / avg) * 100
-    print "> avg normalised px error in x'Ex:", err
-    print "> typical x value is", avg
-    print "> typical %2.2f%% error" % per
+    print "> avg error in x'Ex = 0:", err
 
 
 def testRtCombo(R, t, pts1, pts2):
@@ -374,7 +386,9 @@ def BoringCameraArray():
     return P
 
 
+# P = [R|t]
 def CameraArray(R, t):
+    # just tack t on as a column to the end of R
     P = np.zeros((3, 4), dtype='float32')
     P[0][0] = R[0, 0]
     P[0][1] = R[0, 1]
@@ -397,9 +411,9 @@ def CameraArray(R, t):
 def plot3D(objectPoints):
 
     # Plotting of the system
-    print "\n> Triangulated data:"
-    for point in objectPoints:
-        print point[0], point[1], point[2]
+    # print "\n> Triangulated data:"
+    # for point in objectPoints:
+    #     print point[0], point[1], point[2]
 
     all_x = [point[0] for point in objectPoints]
     all_y = [point[1] for point in objectPoints]
