@@ -3,7 +3,7 @@
 import sys
 import numpy as np
 
-with open("data_trajectories.txt") as datafile:
+with open("data/data_trajectories.txt") as datafile:
     data = datafile.read()
     datafile.close()
 
@@ -82,7 +82,7 @@ def stitch(tid_list, tid_pid):
 stitch(tid_list, tid_pid)
 
 # write the new data back to file
-outfile = open('data_trajectories.txt', 'w')
+outfile = open('data/data_trajectories.txt', 'w')
 for counter in range(0, max_tid + 1):
     for row in tid_pid:
         if int(row[0]) == counter:

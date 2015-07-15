@@ -10,11 +10,11 @@ if len(sys.argv) > 1:
     min_length = int(sys.argv[1])
 
 # DATA
-with open("data_trajectories.txt") as datafile:
+with open("data/data_trajectories.txt") as datafile:
     trajectories = datafile.read()
     datafile.close()
 
-with open("data_detections.txt") as datafile:
+with open("data/data_detections.txt") as datafile:
     raw = datafile.read()
     datafile.close()
 

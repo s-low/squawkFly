@@ -20,7 +20,7 @@ if len(sys.argv) > 1:
 
 
 # DATA
-filename = "data_detections.txt"
+filename = "data/data_detections.txt"
 
 if len(sys.argv) > 1:
     filename = sys.argv[1]
@@ -111,8 +111,8 @@ if animate_on:
         fig, counter), init_func=init, frames=max_frame,
         interval=40, blit=False)
     if save:
-        anim.save(
-            'animations/test.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+        anim.save('../res/animations/test.mp4', fps=30,
+                  extra_args=['-vcodec', 'libx264'])
 else:
     scat.set_data(all_x, all_y)
 

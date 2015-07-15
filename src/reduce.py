@@ -7,7 +7,7 @@ TID = 0
 PID = 1
 count = 0
 
-with open("data_trajectories.txt") as datafile:
+with open("data/data_trajectories.txt") as datafile:
     kalman = datafile.read()
     datafile.close()
 
@@ -65,7 +65,7 @@ for A in tid_list:
 
 
 # write the remaining trajectories to a new file
-outfile = open('data_trajectories.txt', 'w')
+outfile = open('data/data_trajectories.txt', 'w')
 
 print "> number found:", len(trivial_tids)
 print "> trivials:", trivial_tids

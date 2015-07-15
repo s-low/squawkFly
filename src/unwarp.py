@@ -13,12 +13,12 @@ K = np.array(
 d = np.array([0.006, 0.558, 0, 0, 0])
 
 # read one of your images
-img = cv2.imread("res/g3/11.png")
+img = cv2.imread("../res/g3/11.png")
 h, w = img.shape[:2]
 
 # undistort
 newcamera, roi = cv2.getOptimalNewCameraMatrix(K, d, (w, h), 0)
 newimg = cv2.undistort(img, K, d, None, newcamera)
 
-cv2.imwrite("res/g3/original.jpg", img)
-cv2.imwrite("res/g3/undistorted.jpg", newimg)
+cv2.imwrite("../res/g3/original.jpg", img)
+cv2.imwrite("../res/g3/undistorted.jpg", newimg)

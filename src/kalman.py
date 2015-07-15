@@ -164,8 +164,8 @@ def get_data(filename):
     return frame_array
 
 
-frame_array = get_data('data_detections.txt')
-outfile = open('data_trajectories.txt', 'w')
+frame_array = get_data('data/data_detections.txt')
+outfile = open('data/data_trajectories.txt', 'w')
 trajectories = []
 
 # FOR each frame F0:
