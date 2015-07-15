@@ -10,6 +10,22 @@ avg returned reprojection error: 0.739034484664
 avg calculated projection error:  0.0931427930274
 
 ---------------------------------------------------
+d5000_2:
+
+54 / 54 successful detections
+
+calibration matrix:
+[[ 1005.099     0.      642.518]
+ [    0.     1005.783   363.692]
+ [    0.        0.        1.   ]]
+
+distortion:
+[[-0.101  0.138 -0.    -0.001 -0.308]]
+
+avg returned reprojection error: 0.600290357093
+avg calculated projection error:  0.0761068207993
+
+--------------------------------------------------
 
 G3:
 
@@ -20,5 +36,26 @@ calibration matrix:
  [    0.     1091.159   412.837]
  [    0.        0.        1.   ]]
 
+distortion:
+[[ 0.006  0.558  0.001  0.002 -2.227]]
+
 avg returned reprojection error: 0.791319375073
 avg calculated projection error:  0.10057009029
+
+
+---------------------------------------------------
+
+gopro
+
+40 / 41 successful detections
+
+calibration matrix:
+[[ 601.807    0.     644.338]
+ [   0.     602.441  353.515]
+ [   0.       0.       1.   ]]
+
+distortion:
+[[-0.371  0.195 -0.     0.001 -0.061]]
+
+avg returned reprojection error: 0.491073459484
+avg calculated projection error:  0.0555853398398
