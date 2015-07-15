@@ -21,7 +21,7 @@ objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 objpoints = []  # 3d points in real space
 imgpoints = []  # 2d points in image plane
 
-images = glob.glob('res/d5000/*.png')
+images = glob.glob('res/g3/*.png')
 count = 0
 for image in images:
     img = cv2.imread(image)
@@ -57,5 +57,6 @@ for i in xrange(len(objpoints)):
 np.set_printoptions(precision=3, suppress=True)
 print count, "/", len(images), "successful detections"
 print "calibration matrix: \n", mtx
+print "distortion:\n", dist
 print "avg returned reprojection error:", err
 print "avg calculated projection error: ", mean_error / len(objpoints)

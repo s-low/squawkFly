@@ -74,7 +74,7 @@ def run():
     E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt)
 
     # PROJECTION/CAMERA MATRICES from E or E_prime (HZ 9.6.2)
-    P1, P2 = getNormalisedPMatrices(E_prime, u2, vt2)
+    P1, P2 = getNormalisedPMatrices(E, u, vt)
     P1_mat = np.mat(P1)
     P2_mat = np.mat(P2)
 
@@ -88,7 +88,7 @@ def run():
 
     # PLOTTING
     plot3D(points3d)
-    # reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
+    reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
 
 
 def getFundamentalMatrix(pts1, pts2):
