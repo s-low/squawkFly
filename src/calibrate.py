@@ -21,7 +21,7 @@ objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 objpoints = []  # 3d points in real space
 imgpoints = []  # 2d points in image plane
 
-images = glob.glob('res/g3/*.png')
+images = glob.glob('res/d5000_2/*.png')
 count = 0
 for image in images:
     img = cv2.imread(image)

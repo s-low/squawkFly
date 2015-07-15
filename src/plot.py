@@ -9,17 +9,23 @@ plt.style.use('ggplot')
 
 # FLAGS
 save = False
-animate_on = True
+animate_on = False
 stack = True
 
 if len(sys.argv) > 1:
-    if sys.argv[1] == 'w' or sys.argv[2] == 'w':
+    if sys.argv[1] == 'w':
         save = True
-    if sys.argv[1] == 's' or sys.argv[2] == 's':
+    if sys.argv[1] == 's':
         stack = True
 
+
 # DATA
-with open("data_detections.txt") as datafile:
+filename = "data_detections.txt"
+
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+
+with open(filename) as datafile:
     data = datafile.read()
     datafile.close()
 

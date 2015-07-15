@@ -9,7 +9,7 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 cap = 0
 debugging = False
 tracking = True
-paused = False
+paused = True
 point_index = 0
 
 outfile = None
@@ -140,7 +140,7 @@ def search(src, thresh):
             area = cv2.contourArea(contour)
 
             # filter by size
-            if area < 3000 and area > 5:
+            if area < 100000 and area > 5:
                 # filter by squareness
                 x, y, w, h = cv2.boundingRect(contour)
                 if square(h, w) and circular(area, h, w):
