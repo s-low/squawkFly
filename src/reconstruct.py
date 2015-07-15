@@ -18,8 +18,8 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 # Calibration matrices:
-K1 = np.mat(struc.CalibArray(602, 640, 360))  # d5000
-K2 = np.mat(struc.CalibArray(1005, 640, 360))  # g3
+K1 = np.mat(struc.CalibArray(602, 640, 360))  # gopro
+K2 = np.mat(struc.CalibArray(1005, 640, 360))  # d5000
 
 # 1 / RHS / gopro
 pts1_raw = [[537.0, -289.5],
@@ -275,16 +275,16 @@ def testFundamentalReln(F, pts1, pts2):
     err = 0
     total = 0
     for i in range(0, len(pts1)):
-        total += abs(pts1[i][0, 0]) + abs(pts1[i][0, 1]) + \
-            abs(pts2[i][0, 0]) + abs(pts2[i][0, 1])
-        err += np.mat(pts1[i]) * F * np.mat(pts2[i]).T
+        # total += abs(pts1[i][0, 0]) + abs(pts1[i][0, 1]) + \
+            # abs(pts2[i][0, 0]) + abs(pts2[i][0, 1])
+        err += abs(np.mat(pts1[i]) * F * np.mat(pts2[i]).T)
 
-    avg = total / (4 * len(pts1))
+    # avg = total / (4 * len(pts1))
     err = err[0, 0] / len(pts1)
-    per = (err / avg) * 100
-    print "> avg px error in xFx:", err
-    print "> typical x value is", avg
-    print "> typical %2.2f%% error" % per
+    # per = (err / avg) * 100
+    print "> avg error in xFx:", err
+    # print "> typical x value is", avg
+    # print "> typical %2.2f%% error" % per
 
 
 def testEssentialReln(E, nh_pts1, nh_pts2):
