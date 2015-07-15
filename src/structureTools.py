@@ -14,17 +14,20 @@ def CalibArray(focalLength, cx, cy):
     return calibArray
 
 
-# Convert a set of (x, y) to normalised homogenous coords K_inv(x, y, z, 1)
+# Convert a set of (x, y) to homogenous coords (x, y, 1)
+# then normalise: K_inv(x, y, 1)
 def normalise_homogenise(pts, K):
     pts = cv2.convertPointsToHomogeneous(pts)
     K_inv = np.linalg.inv(K)
 
     n_pts = np.zeros((len(pts), 3))
+
     for i, x in enumerate(pts):
-        xn = K_inv * x.T
-        n_pts[i][0] = xn[0]
-        n_pts[i][1] = xn[1]
-        n_pts[i][2] = xn[2]
+        x_normed = K_inv * x.T
+        n_pts[i][0] = xnormed[0]
+        n_pts[i][1] = xnormed[1]
+        n_pts[i][2] = xnormed[2]
+
     return n_pts
 
 
