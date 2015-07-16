@@ -246,11 +246,11 @@ def testFundamentalReln(F, pts1, pts2):
     pts2_epi = pts2.reshape(-1, 1, 2)
 
     # lines computed from pts1
-    lines1 = cv2.computeCorrespondEpilines(pts1_epi, 2, F)
+    lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
     lines1 = lines1.reshape(-1, 3)
 
     # lines computed frmo pts2
-    lines2 = cv2.computeCorrespondEpilines(pts2_epi, 1, F)
+    lines2 = cv2.computeCorrespondEpilines(pts2_epi, 2, F)
     lines2 = lines2.reshape(-1, 3)
 
     # overlay lines1 on pts2

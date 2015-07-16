@@ -140,7 +140,7 @@ def search(src, thresh):
             area = cv2.contourArea(contour)
 
             # filter by size
-            if area < 100000 and area > 5:
+            if area < 3000 and area > 5:
                 # filter by squareness
                 x, y, w, h = cv2.boundingRect(contour)
                 if square(h, w) and circular(area, h, w):
