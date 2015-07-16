@@ -14,6 +14,7 @@ def LinearTriangulation(P1, p1, P2, p2):
     B = np.zeros((4, 1), dtype='float32')
     X = np.zeros((3, 1), dtype='float32')
 
+    # top two rows for point 1
     A[0][0] = p1.x * P1[2, 0] - P1[0, 0]
     A[0][1] = p1.x * P1[2, 1] - P1[0, 1]
     A[0][2] = p1.x * P1[2, 2] - P1[0, 2]
@@ -22,6 +23,7 @@ def LinearTriangulation(P1, p1, P2, p2):
     A[1][1] = p1.y * P1[2, 1] - P1[1, 1]
     A[1][2] = p1.y * P1[2, 2] - P1[1, 2]
 
+    # repeat for point 2
     A[2][0] = p2.x * P2[2, 0] - P2[0, 0]
     A[2][1] = p2.x * P2[2, 1] - P2[0, 1]
     A[2][2] = p2.x * P2[2, 2] - P2[0, 2]
@@ -30,6 +32,9 @@ def LinearTriangulation(P1, p1, P2, p2):
     A[3][1] = p2.y * P2[2, 1] - P2[1, 1]
     A[3][2] = p2.y * P2[2, 2] - P2[1, 2]
 
+    # print "A:\n", A
+
+    # AX = B
     B[0][0] = -(p1.x * P1[2, 3] - P1[0, 3])
     B[0][0] = -(p1.y * P1[2, 3] - P1[1, 3])
     B[0][0] = -(p2.x * P2[2, 3] - P2[0, 3])

@@ -223,6 +223,7 @@ for frame_index, f0 in enumerate(frame_array):
 print ""
 count = 0
 min_length = 4
+ti = 0
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1

@@ -159,6 +159,9 @@ def run():
     KP1 = K1 * P1_mat
     KP2 = K2 * P2_mat
 
+    print "\n> KP1:\n", KP1
+    print "\n> KP2:\n", KP2
+
     # TRIANGULATION
     points3d = triangulateLS(KP1, KP2, pts1, pts2)
     # points4d = triangulateCV(KP1, KP2, pts1, pts2)
@@ -169,7 +172,8 @@ def run():
 
 
 def getFundamentalMatrix(pts1, pts2):
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_RANSAC, 10)
+
     print "\n> Fundamental:\n", F
     testFundamentalReln(F, pts1, pts2)
     return F
@@ -250,8 +254,11 @@ def triangulateLS(P1, P2, pts1, pts2):
     points3d = []
 
     for i in range(0, len(pts1)):
+
+        print pts1[i], pts2[i]
         x1 = pts1[i][0]
         y1 = pts1[i][1]
+
         x2 = pts2[i][0]
         y2 = pts2[i][1]
 
@@ -259,6 +266,8 @@ def triangulateLS(P1, P2, pts1, pts2):
         p2 = Point(x2, y2)
 
         X = tri.LinearTriangulation(P1, p1, P2, p2)
+
+        # print X[1], "\n"
         points3d.append(X[1])
 
     return points3d
