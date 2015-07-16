@@ -18,32 +18,46 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 # Calibration matrices:
-K1 = np.mat(struc.CalibArray(1091, 640, -360))  # g3
-K2 = np.mat(struc.CalibArray(1005, 640, -360))  # d5000
+K1 = np.mat(struc.CalibArray(5, 5, 5))  # g3
+K2 = np.mat(struc.CalibArray(5, 5, 5))  # d5000
 
-# 1 / RHS / g3
-pts1_raw = [[664, -391],
-            [684, -379],
-            [660, -587],
-            [685, -571],
-            [554, -554],
-            [550, -365],
-            [924, -536],
-            [229, -554],
-            [1179, -646],
-            [342, -260]]
+# simulated projection data with project.py
 
-# 2 / LHS / g3
-pts2_raw = [[726, -267],
-            [761, -266],
-            [715, -463],
-            [749, -461],
-            [667, -432],
-            [677, -256],
-            [971, -465],
-            [448, -383],
-            [1035, -531],
-            [572, -165]]
+# data_3d = [[0, 0, 0],
+#                [10, 10, 10],
+#                [20, 20, 20],
+#                [30, 30, 30],
+#                [40, 40, 40],
+#                [50, 50, 50],
+#                [60, 40, 40],
+#                [70, 30, 30],
+#                [80, 20, 20],
+#                [90, 10, 10],
+#                [100, 0, 0]]
+
+pts1_raw = [[5.0, 5.0],
+            [6.25, 6.25],
+            [7.0, 7.0],
+            [7.5, 7.5],
+            [7.85, 7.85714293],
+            [8.12, 8.125],
+            [9.28, 7.85714293],
+            [10.83, 7.5],
+            [13.00, 7.0],
+            [16.25, 6.25],
+            [21.66, 5.00]]
+
+pts2_raw = [[5., 6.875],
+            [6.23262691, 7.61429834],
+            [7.11896372, 8.14590073],
+            [7.78696489, 8.54655075],
+            [8.30845928, 8.85933018],
+            [8.72688103, 9.11028957],
+            [9.9604845, 9.08724403],
+            [11.71813202, 9.05440903],
+            [14.42380333, 9.00386333],
+            [19.12773895, 8.91598797],
+            [29.33972359, 8.72521496]]
 
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
@@ -173,6 +187,8 @@ def getValidRtCombo(R1, R2, t1, t2):
         print "ERROR: No positive depth Rt combination"
         sys.exit()
 
+    print "R:\n", R
+    print "t:\n", t
     return R, t
 
 
@@ -181,7 +197,6 @@ def triangulateLS(P1, P2, pts1, pts2):
 
     for i in range(0, len(pts1)):
 
-        print pts1[i], pts2[i]
         x1 = pts1[i][0]
         y1 = pts1[i][1]
 
@@ -193,7 +208,6 @@ def triangulateLS(P1, P2, pts1, pts2):
 
         X = tri.LinearTriangulation(P1, p1, P2, p2)
 
-        # print X[1], "\n"
         points3d.append(X[1])
 
     return points3d
@@ -288,6 +302,9 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
         new[i][3] = 1
     total = 0
 
+    reprojected1 = []
+    reprojected2 = []
+
     # for each 3d point
     for i, X in enumerate(new):
         # x_2d = K * P * X_3d
@@ -298,6 +315,9 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
         # (x,y,1) = (xz,yz,z) / z
         xp1 = xp1 / xp1[2]
         xp2 = xp2 / xp2[2]
+
+        reprojected1.append(xp1)
+        reprojected2.append(xp2)
 
         # and get the orginally measured points
         x1 = pts1[i]
@@ -311,6 +331,31 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
 
     print "\n> avg reprojection error:", \
         total / (2 * len(points3d))
+
+    plotReprojection(reprojected1, reprojected2, pts1, pts2)
+
+
+def plotReprojection(proj1, proj2, meas1, meas2):
+
+    proj1_x = [point[0] for point in proj1]
+    proj1_y = [point[1] for point in proj1]
+
+    meas1_x = [point[0] for point in meas1]
+    meas1_y = [point[1] for point in meas1]
+
+    plt.scatter(proj1_x, proj1_y, color='r')
+    plt.scatter(meas1_x, meas1_y, color='b')
+    plt.show()
+
+    proj2_x = [point[0] for point in proj2]
+    proj2_y = [point[1] for point in proj2]
+
+    meas2_x = [point[0] for point in meas2]
+    meas2_y = [point[1] for point in meas2]
+
+    plt.scatter(proj2_x, proj2_y, color='r')
+    plt.scatter(meas2_x, meas2_y, color='b')
+    plt.show()
 
 
 def BoringCameraArray():
@@ -346,13 +391,13 @@ def CameraArray(R, t):
 def plot3D(objectPoints):
 
     # Plotting of the system
-    # print "\n> Triangulated data:"
-    # for point in objectPoints:
-    #     print point[0], point[1], point[2]
+    print "\n> Triangulated data:"
+    for point in objectPoints:
+        print point[0], point[1], point[2]
 
-    all_x = [100 * point[0] for point in objectPoints]
-    all_y = [100 * point[1] for point in objectPoints]
-    all_z = [100 * point[2] for point in objectPoints]
+    all_x = [point[0] for point in objectPoints]
+    all_y = [point[1] for point in objectPoints]
+    all_z = [point[2] for point in objectPoints]
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
