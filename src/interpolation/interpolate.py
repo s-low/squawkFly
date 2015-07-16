@@ -5,9 +5,17 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 
-frame_length_ms = 33
+try:
+    filename = sys.argv[1]
+    frame_rate = int(sys.argv[2])
+except IndexError:
+    print "Usage: ./interpolate <file> <framerate>"
+    sys.exit()
 
-with open('data_sparse.txt') as datafile:
+frame_length_ms = int(1000 / frame_rate)
+
+
+with open(filename) as datafile:
     data = datafile.read()
     datafile.close()
 
@@ -55,10 +63,15 @@ for i in range(0, len(points) - 1):
         interpolated_points.append(new_point)
         print new_point
 
-    outfile = open('data_interpolated.txt', 'w')
+    outfile = open('data_out.txt', 'w')
+    startOfFile = True
 
     for p in interpolated_points:
-        p_string = str(p[0]) + ' ' + str(p[1]) + ' ' + str(p[2]) + ' ' + '1\n'
+        if not startOfFile:
+            outfile.write('\n')
+
+        p_string = str(p[0]) + ' ' + str(p[1]) + ' ' + str(p[2]) + ' ' + '1'
         outfile.write(p_string)
+        startOfFile = False
 
     outfile.close()
