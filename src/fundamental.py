@@ -21,8 +21,8 @@ def contract_eps(X):
     Y = [[0, X[2], -X[1]], [-X[2], 0, X[0]], [X[1], -X[0], 0]]
     return Y
 
-lhs = cv2.imread('res/LHS.png', 0)
-rhs = cv2.imread('res/RHS.png', 0)
+lhs = cv2.imread('../res/LHS.png', 0)
+rhs = cv2.imread('../res/RHS.png', 0)
 
 # 1 = RHS
 pts1_raw = [[423, 191],  # t_l
@@ -97,7 +97,7 @@ for r in lines2:
     x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
     cv2.line(rhs, (x0, y0), (x1, y1), (0, 0, 0), 1)
 
-for r in lines2:
+for r in rect_lines1:
     x0, y0 = map(int, [0, -r[2] / r[1]])
     x1, y1 = map(int, [1280, -(r[2] + r[0] * 1280) / r[1]])
     cv2.line(img1, (x0, y0), (x1, y1), (255, 0, 0), 1)

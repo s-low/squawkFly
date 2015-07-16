@@ -18,8 +18,8 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 # Calibration matrices:
-K1 = np.mat(struc.CalibArray(5, 5, 5))  # g3
-K2 = np.mat(struc.CalibArray(5, 5, 5))  # d5000
+K1 = np.mat(struc.CalibArray(5, 5, 5))
+K2 = np.mat(struc.CalibArray(5, 5, 5))
 
 # simulated projection data with project.py
 
@@ -47,7 +47,7 @@ pts1_raw = [[5.0, 5.0],
             [16.25, 6.25],
             [21.66, 5.00]]
 
-pts2_raw = [[5., 6.875],
+pts2_raw = [[5.0, 6.875],
             [6.23262691, 7.61429834],
             [7.11896372, 8.14590073],
             [7.78696489, 8.54655075],
@@ -77,8 +77,6 @@ W, W_inv = struc.initWarrays()  # HZ 9.13
 def run():
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
-    # E_test = getFundamentalMatrix(inhomog_norm_pts1, inhomog_norm_pts2)
-    # print "\n> Essential test:\n", E_test
 
     # ESSENTIAL MATRIX (HZ 9.12)
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
@@ -111,7 +109,10 @@ def run():
     reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
 
 
+# get the Fundamental matrix by the normalised eight point algorithm
 def getFundamentalMatrix(pts1, pts2):
+
+    # raw 8-point algorithm
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
 
     print "\n> Fundamental:\n", F
@@ -230,18 +231,63 @@ def testFundamentalReln(F, pts1, pts2):
     F = np.mat(F)
     is_singular(F)
 
-    pts1 = cv2.convertPointsToHomogeneous(pts1)
-    pts2 = cv2.convertPointsToHomogeneous(pts2)
+    pts1_hom = cv2.convertPointsToHomogeneous(pts1)
+    pts2_hom = cv2.convertPointsToHomogeneous(pts2)
 
     err = 0
-    for i in range(0, len(pts1)):
-        err += abs(np.mat(pts1[i]) * F * np.mat(pts2[i]).T)
+    for i in range(0, len(pts1_hom)):
+        err += abs(np.mat(pts1_hom[i]) * F * np.mat(pts2_hom[i]).T)
 
-    err = err[0, 0] / len(pts1)
+    err = err[0, 0] / len(pts1_hom)
     print "> avg error in x'Fx:", err
 
-    # nb: x' must lie on line Fx according to x'Fx = 0. could test/show this.
-    # lines1 = cv2.computeCorrespondEpilines(pts2, 2, F)
+    # test the epilines
+    pts1_epi = pts1.reshape(-1, 1, 2)
+    pts2_epi = pts2.reshape(-1, 1, 2)
+
+    # lines computed from pts1
+    lines1 = cv2.computeCorrespondEpilines(pts1_epi, 2, F)
+    lines1 = lines1.reshape(-1, 3)
+
+    # lines computed frmo pts2
+    lines2 = cv2.computeCorrespondEpilines(pts2_epi, 1, F)
+    lines2 = lines2.reshape(-1, 3)
+
+    # overlay lines1 on pts2
+    fig = plt.figure('Epilines of set 1 on image 2')
+    for r in lines1:
+        a, b, c = r[0], r[1], r[2]
+        x = np.linspace(-100, 100, 5)
+        y = ((-c) - (a * x)) / b
+        plt.plot(x, y)
+
+    x = []
+    y = []
+    for p in pts2:
+        x.append(p[0])
+        y.append(p[1])
+
+    plt.plot(x, y, 'r.')
+
+    plt.show()
+
+    # overlay lines2 on pts1
+    fig = plt.figure('Epilines of set 2 on image 1')
+    for r in lines2:
+        a, b, c = r[0], r[1], r[2]
+        x = np.linspace(-100, 100, 5)
+        y = ((-c) - (a * x)) / b
+        plt.plot(x, y)
+
+    x = []
+    y = []
+    for p in pts1:
+        x.append(p[0])
+        y.append(p[1])
+
+    plt.plot(x, y, 'r.')
+
+    plt.show()
 
 
 def is_singular(a):
@@ -329,8 +375,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
 
         total += dist1 + dist2
 
-    print "\n> avg reprojection error:", \
-        total / (2 * len(points3d))
+    print "\n> avg reprojection error:", total / (2 * len(points3d))
 
     plotReprojection(reprojected1, reprojected2, pts1, pts2)
 
@@ -343,6 +388,7 @@ def plotReprojection(proj1, proj2, meas1, meas2):
     meas1_x = [point[0] for point in meas1]
     meas1_y = [point[1] for point in meas1]
 
+    fig = plt.figure('Reprojection of Reconstruction onto Image 1')
     plt.scatter(proj1_x, proj1_y, color='r')
     plt.scatter(meas1_x, meas1_y, color='b')
     plt.show()
@@ -353,6 +399,7 @@ def plotReprojection(proj1, proj2, meas1, meas2):
     meas2_x = [point[0] for point in meas2]
     meas2_y = [point[1] for point in meas2]
 
+    fig = plt.figure('Reprojection of Reconstruction onto Image 2')
     plt.scatter(proj2_x, proj2_y, color='r')
     plt.scatter(meas2_x, meas2_y, color='b')
     plt.show()
@@ -391,15 +438,15 @@ def CameraArray(R, t):
 def plot3D(objectPoints):
 
     # Plotting of the system
-    print "\n> Triangulated data:"
-    for point in objectPoints:
-        print point[0], point[1], point[2]
+    # print "\n> Triangulated data:"
+    # for point in objectPoints:
+    #     print point[0], point[1], point[2]
 
     all_x = [point[0] for point in objectPoints]
     all_y = [point[1] for point in objectPoints]
     all_z = [point[2] for point in objectPoints]
 
-    fig = plt.figure()
+    fig = plt.figure('3D Reconstruction (Scale ambiguity)')
     ax = fig.add_subplot(111, projection='3d')
 
     ax.scatter(all_x, all_y, all_z, zdir='z')
