@@ -1,5 +1,8 @@
 d5000:
 
+24.00fps
+41.67ms
+
 21 / 21 successful detections
 
 [[ 993.089    0.     655.044]
@@ -46,6 +49,9 @@ avg calculated projection error:  0.10057009029
 ---------------------------------------------------
 
 gopro
+
+29.97fps
+33.37ms
 
 40 / 41 successful detections
 

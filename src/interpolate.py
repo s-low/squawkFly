@@ -42,7 +42,7 @@ for i in range(0, len(points) - 1):
 
     frames_between = n[2] - p[2]
     ms_between = frames_between * frame_length_ms
-    num_between = int(ms_between / 10)
+    num_between = int(ms_between / 20)
 
     diff_x = n[0] - p[0]
     diff_y = n[1] - p[1]
