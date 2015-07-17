@@ -24,15 +24,20 @@ def plot3D(data_3d, name='3D Plot'):
 
 # can provide an optional second set of data
 def plot2D(pts1, pts2=[], name='2D Plot'):
+    onlyoneset = False
     x1 = [p[0] for p in pts1]
     y1 = [p[1] for p in pts1]
 
-    x2 = [p[0] for p in pts2]
-    y2 = [p[1] for p in pts2]
+    try:
+        x2 = [p[0] for p in pts2]
+        y2 = [p[1] for p in pts2]
+    except IndexError:
+        onlyoneset = True
 
     fig = plt.figure(name)
     plt.scatter(x1, y1, color='r')
-    plt.scatter(x2, y2, color='b')
+    if not onlyoneset:
+        plt.scatter(x2, y2, color='b')
     plt.show()
 
 

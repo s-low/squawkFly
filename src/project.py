@@ -3,6 +3,7 @@
 import cv2
 import cv2.cv as cv
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import structureTools as struc
@@ -29,14 +30,23 @@ def main():
     K = struc.CalibArray(5, 5, 5)
     distCoeffs = (0, 0, 0, 0)
 
+    rt2 = math.sqrt(2)
+
+    # 45 cc about z
+    rotation = np.mat([[1 / rt2, -1 / rt2, 0],
+                       [1 / rt2, 1 / rt2, 0],
+                       [0, 0, 1]])
+
+    dst, jacobian = cv2.Rodrigues(src=rotation)
+
     # projections into image planes with the camera in different poses
-    tvec = (0, 0, 30)
-    rvec = (0, 0, 0)
+    tvec = (120, 0, 120)
+    rvec = dst
     img_pts1, jacobian = cv2.projectPoints(
         data_3d, rvec, tvec, K, distCoeffs)
 
-    tvec = (0, 15, 40)
-    rvec = (0, 0.2, 0)
+    tvec = (50, 0, 60)
+    rvec = (0, 0, 0)
     img_pts2, jacobian = cv2.projectPoints(
         data_3d, rvec, tvec, K, distCoeffs)
 

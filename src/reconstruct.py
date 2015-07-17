@@ -23,42 +23,78 @@ K1 = np.mat(struc.CalibArray(5, 5, 5))
 K2 = np.mat(struc.CalibArray(5, 5, 5))
 
 # simulated projection data with project.py
+def getSimulationData(folder):
+    path = 'simulation_data/' + str(folder) + '/'
+    pts1 = []
+    pts2 = []
+    original_3Ddata = []
 
-original_3Ddata = [[0, 0, 0],
-                   [10, 10, 10],
-                   [20, 20, 20],
-                   [30, 30, 30],
-                   [40, 40, 40],
-                   [50, 50, 50],
-                   [60, 40, 40],
-                   [70, 30, 30],
-                   [80, 20, 20],
-                   [90, 10, 10],
-                   [100, 0, 0]]
+    with open(path + 'pts1.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
 
-pts1_raw = [[5.0, 5.0],
-            [6.25, 6.25],
-            [7.0, 7.0],
-            [7.5, 7.5],
-            [7.85, 7.85714293],
-            [8.12, 8.125],
-            [9.28, 7.85714293],
-            [10.83, 7.5],
-            [13.00, 7.0],
-            [16.25, 6.25],
-            [21.66, 5.00]]
+    data = data.split('\n')
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        pts1.append([x, y])
 
-pts2_raw = [[5.0, 6.875],
-            [6.23262691, 7.61429834],
-            [7.11896372, 8.14590073],
-            [7.78696489, 8.54655075],
-            [8.30845928, 8.85933018],
-            [8.72688103, 9.11028957],
-            [9.9604845, 9.08724403],
-            [11.71813202, 9.05440903],
-            [14.42380333, 9.00386333],
-            [19.12773895, 8.91598797],
-            [29.33972359, 8.72521496]]
+    with open(path + 'pts2.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
+
+    data = data.split('\n')
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        pts2.append([x, y])
+
+    with open(path + '3d.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
+
+    data = data.split('\n')
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        z = float(row.split()[1])
+        original_3Ddata.append([x, y, z])
+
+    return original_3Ddata, pts1, pts2
+
+
+try:
+    sim = sys.argv[1]
+except IndexError:
+    sim = 1
+
+original_3Ddata, pts1_raw, pts2_raw = getSimulationData(sim)
+
+
+# pts1_raw = [[5.0, 5.0],
+#             [6.25, 6.25],
+#             [7.0, 7.0],
+#             [7.5, 7.5],
+#             [7.85, 7.85714293],
+#             [8.12, 8.125],
+#             [9.28, 7.85714293],
+#             [10.83, 7.5],
+#             [13.00, 7.0],
+#             [16.25, 6.25],
+# [21.66, 5.00]]
+
+# pts2_raw = [[5.0, 6.875],
+#             [6.23262691, 7.61429834],
+#             [7.11896372, 8.14590073],
+#             [7.78696489, 8.54655075],
+#             [8.30845928, 8.85933018],
+#             [8.72688103, 9.11028957],
+#             [9.9604845, 9.08724403],
+#             [11.71813202, 9.05440903],
+#             [14.42380333, 9.00386333],
+#             [19.12773895, 8.91598797],
+#             [29.33972359, 8.72521496]]
+
 
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
@@ -78,6 +114,8 @@ W, W_inv = struc.initWarrays()  # HZ 9.13
 
 def run():
     plot.plot3D(original_3Ddata, 'Original 3D Data')
+    plot.plot2D(pts1_raw, 'First image')
+    plot.plot2D(pts2_raw, 'Second image')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
@@ -93,7 +131,7 @@ def run():
     # print "\n> scaled:\n", E_prime
 
     # PROJECTION/CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
-    P1, P2 = getNormalisedPMatrices(E, u, vt)
+    P1, P2 = getNormalisedPMatrices(u, vt)
     P1_mat = np.mat(P1)
     P2_mat = np.mat(P2)
 
@@ -110,7 +148,7 @@ def run():
 
     # PLOTTING
     plot.plot3D(points3d, '3D Reconstruction (Scale ambiguity)')
-    reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
+    reprojectionError(K1, P1_mat, K2, P2_mat, points3d)
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
@@ -124,11 +162,11 @@ def getFundamentalMatrix(pts1, pts2):
     plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
-    # is_singular(F_)
+    F_, mask = cv2.findFundamentalMat(pts1_, pts2_, cv.CV_FM_8POINT)
+    is_singular(F_)
 
     # denormalise
-    # F = T2.T * np.mat(F_) * T1
+    F = T2.T * np.mat(F_) * T1
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
@@ -217,6 +255,8 @@ def getEssentialMatrix(F, K1, K2):
     testEssentialReln(E, norm_pts1, norm_pts2)
 
     w, u, vt = cv2.SVDecomp(E)
+    print "u:\n", u
+    print "vt:\n", vt
     print "\n> Singular values:\n", w
     return E, w, u, vt
 
@@ -235,7 +275,7 @@ def getConstrainedEssentialMatrix(u, vt):
     return E_prime, w2, u2, vt2
 
 
-def getNormalisedPMatrices(E, u, vt):
+def getNormalisedPMatrices(u, vt):
     R1 = np.mat(u) * np.mat(W) * np.mat(vt)
     R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
     t1 = u[:, 2]
@@ -245,7 +285,7 @@ def getNormalisedPMatrices(E, u, vt):
 
     # NORMALISED CAMERA MATRICES P = [Rt]
     P1 = BoringCameraArray()  # I|0
-    P2 = CameraArray(R, t)    # Rt
+    P2 = CameraArray(R, t)    # R|t
 
     print "\n> P1:\n", P1
     print "\n> P2:\n", P2
@@ -401,14 +441,17 @@ def testRtCombo(R, t, pts1, pts2):
 
 
 # used for checking the triangulation - provide UNNORMALISED DATA
-def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
+def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
 
+    # Nx4 array for filling with homogeneous points
     new = np.zeros((len(points3d), 4))
+
     for i, point in enumerate(points3d):
         new[i][0] = point[0]
         new[i][1] = point[1]
         new[i][2] = point[2]
         new[i][3] = 1
+
     total = 0
 
     reprojected1 = []
