@@ -23,17 +23,17 @@ K2 = np.mat(struc.CalibArray(5, 5, 5))
 
 # simulated projection data with project.py
 
-# data_3d = [[0, 0, 0],
-#                [10, 10, 10],
-#                [20, 20, 20],
-#                [30, 30, 30],
-#                [40, 40, 40],
-#                [50, 50, 50],
-#                [60, 40, 40],
-#                [70, 30, 30],
-#                [80, 20, 20],
-#                [90, 10, 10],
-#                [100, 0, 0]]
+data_3d = [[0, 0, 0],
+           [10, 10, 10],
+           [20, 20, 20],
+           [30, 30, 30],
+           [40, 40, 40],
+           [50, 50, 50],
+           [60, 40, 40],
+           [70, 30, 30],
+           [80, 20, 20],
+           [90, 10, 10],
+           [100, 0, 0]]
 
 pts1_raw = [[5.0, 5.0],
             [6.25, 6.25],
@@ -75,6 +75,8 @@ W, W_inv = struc.initWarrays()  # HZ 9.13
 
 
 def run():
+    plot3D(data_3d)
+
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
 
@@ -112,12 +114,99 @@ def run():
 # get the Fundamental matrix by the normalised eight point algorithm
 def getFundamentalMatrix(pts1, pts2):
 
-    # raw 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    # 8point normalisation
+    pts1_, T1 = eightPointNormalisation(pts1)
+    pts2_, T2 = eightPointNormalisation(pts2)
 
+    # normalised 8-point algorithm
+    F_, mask = cv2.findFundamentalMat(pts1_, pts2_, cv.CV_FM_8POINT)
+    is_singular(F_)
+
+    # denormalise
+    F = T2.T * np.mat(F_) * T1
+
+    # test on original coordinates
     print "\n> Fundamental:\n", F
     testFundamentalReln(F, pts1, pts2)
     return F
+
+
+# translate and scale image points, return both points and the transformation T
+def eightPointNormalisation(pts):
+    print "> 8POINT NORMALISATION"
+
+    cx = 0
+    cy = 0
+    pts_ = []
+
+    for p in pts:
+        cx += p[0]
+        cy += p[1]
+
+    cx = cx / len(pts)
+    cy = cy / len(pts)
+
+    # translation to (cx,cy) = (0,0)
+    T = np.mat([[1, 0, -cx],
+                [0, 1, -cy],
+                [0, 0, 1]])
+
+    print "Translate by:", -cx, -cy
+
+    # now scale to rms_d = sqrt(2)
+    total_d = 0
+    for p in pts:
+        d = math.hypot(p[0] - cx, p[1] - cy)
+        total_d += (d * d)
+
+    # square root of the mean of the squares
+    rms_d = math.sqrt((total_d / len(pts)))
+
+    scale_factor = math.sqrt(2) / rms_d
+    print "Scale by:", scale_factor
+
+    T = scale_factor * T
+    T[2, 2] = 1
+    print "T:\n", T
+
+    # apply the transformation
+    hom = cv2.convertPointsToHomogeneous(pts)
+    for h in hom:
+        h_ = T * h.T
+        pts_.append(h_)
+
+    # print pts[0]
+    # print hom[0]
+    # print pts_[0]
+
+    # conversion will normalise against the third col, so set to 1 beforehand
+    # (it's just a convenient way of stripping the third column)
+    for p in pts_:
+        p[2] = 1
+
+    pts_ = cv2.convertPointsFromHomogeneous(np.array(pts_, dtype='float32'))
+    check8PointNormalisation(pts_)
+
+    return pts_, T
+
+
+def check8PointNormalisation(pts_):
+    # average distance from origin should be sqrt(2) and centroid = origin
+    d_tot = 0
+    cx = 0
+    cy = 0
+    for p in pts_:
+        cx += p[0][0]
+        cx += p[0][1]
+        d = math.hypot(p[0][0], p[0][1])
+        d_tot += d
+
+    avg = d_tot / len(pts_)
+    cx = cx / len(pts_)
+    cy = cy / len(pts_)
+
+    assert(avg - math.sqrt(2) < 0.01), "Scale factor is wrong"
+    assert(cx < 0.1 and cy < 0.1), "Centroid not at origin"
 
 
 def getEssentialMatrix(F, K1, K2):
@@ -294,6 +383,7 @@ def is_singular(a):
     det = np.linalg.det(a)
     s = not is_invertible(a)
     print "> Singular:", s
+    assert(s is True), "Singularity problems."
 
 
 def is_invertible(a):
@@ -457,5 +547,5 @@ def plot3D(objectPoints):
 
     plt.show()
 
-
+print "---------------------------------------------"
 run()
