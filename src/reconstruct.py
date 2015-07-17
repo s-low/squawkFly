@@ -181,8 +181,8 @@ def eightPointNormalisation(pts):
 
     # conversion will normalise against the third col, so set to 1 beforehand
     # (it's just a convenient way of stripping the third column)
-    for p in pts_:
-        p[2] = 1
+    # for p in pts_:
+    #     p[2] = 1
 
     pts_ = cv2.convertPointsFromHomogeneous(np.array(pts_, dtype='float32'))
     check8PointNormalisation(pts_)
