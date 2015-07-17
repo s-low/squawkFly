@@ -11,6 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import triangulation as tri
 import structureTools as struc
+import plotting as plot
 
 np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
@@ -23,17 +24,17 @@ K2 = np.mat(struc.CalibArray(5, 5, 5))
 
 # simulated projection data with project.py
 
-data_3d = [[0, 0, 0],
-           [10, 10, 10],
-           [20, 20, 20],
-           [30, 30, 30],
-           [40, 40, 40],
-           [50, 50, 50],
-           [60, 40, 40],
-           [70, 30, 30],
-           [80, 20, 20],
-           [90, 10, 10],
-           [100, 0, 0]]
+original_3Ddata = [[0, 0, 0],
+                   [10, 10, 10],
+                   [20, 20, 20],
+                   [30, 30, 30],
+                   [40, 40, 40],
+                   [50, 50, 50],
+                   [60, 40, 40],
+                   [70, 30, 30],
+                   [80, 20, 20],
+                   [90, 10, 10],
+                   [100, 0, 0]]
 
 pts1_raw = [[5.0, 5.0],
             [6.25, 6.25],
@@ -67,6 +68,7 @@ pts2 = np.array(pts2_raw, dtype='float32')
 norm_pts1 = struc.normalise_homogenise(pts1, K1)
 norm_pts2 = struc.normalise_homogenise(pts2, K2)
 
+# Inhomogenous but normalised K_inv(x, y) (for if you want to calc E directly)
 inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
 inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
 
@@ -75,7 +77,7 @@ W, W_inv = struc.initWarrays()  # HZ 9.13
 
 
 def run():
-    plot3D(data_3d)
+    plot.plot3D(original_3Ddata, 'Original 3D Data')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
@@ -107,7 +109,7 @@ def run():
     # points4d = triangulateCV(KP1, KP2, pts1, pts2)
 
     # PLOTTING
-    plot3D(points3d)
+    plot.plot3D(points3d, '3D Reconstruction (Scale ambiguity)')
     reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d)
 
 
@@ -118,12 +120,19 @@ def getFundamentalMatrix(pts1, pts2):
     pts1_, T1 = eightPointNormalisation(pts1)
     pts2_, T2 = eightPointNormalisation(pts2)
 
+    plot.plot2D(pts1, pts1_, '8pt Normalisation on Image 1')
+    plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
+
+    print "HERE"
+    print pts1
+    print pts1_
+
     # normalised 8-point algorithm
-    F_, mask = cv2.findFundamentalMat(pts1_, pts2_, cv.CV_FM_8POINT)
-    is_singular(F_)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    # is_singular(F_)
 
     # denormalise
-    F = T2.T * np.mat(F_) * T1
+    # F = T2.T * np.mat(F_) * T1
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
@@ -175,19 +184,16 @@ def eightPointNormalisation(pts):
         h_ = T * h.T
         pts_.append(h_)
 
-    # print pts[0]
-    # print hom[0]
-    # print pts_[0]
-
-    # conversion will normalise against the third col, so set to 1 beforehand
-    # (it's just a convenient way of stripping the third column)
-    # for p in pts_:
-    #     p[2] = 1
-
     pts_ = cv2.convertPointsFromHomogeneous(np.array(pts_, dtype='float32'))
     check8PointNormalisation(pts_)
 
-    return pts_, T
+    # make sure the normalised points are in the same format as original
+    pts_r = []
+    for p in pts_:
+        pts_r.append(p[0])
+    pts_r = np.array(pts_r, dtype='float32')
+
+    return pts_r, T
 
 
 def check8PointNormalisation(pts_):
@@ -343,40 +349,10 @@ def testFundamentalReln(F, pts1, pts2):
     lines2 = lines2.reshape(-1, 3)
 
     # overlay lines1 on pts2
-    fig = plt.figure('Epilines of set 1 on image 2')
-    for r in lines1:
-        a, b, c = r[0], r[1], r[2]
-        x = np.linspace(-100, 100, 5)
-        y = ((-c) - (a * x)) / b
-        plt.plot(x, y)
-
-    x = []
-    y = []
-    for p in pts2:
-        x.append(p[0])
-        y.append(p[1])
-
-    plt.plot(x, y, 'r.')
-
-    plt.show()
+    plot.plotEpilines(lines1, pts2, 2)
 
     # overlay lines2 on pts1
-    fig = plt.figure('Epilines of set 2 on image 1')
-    for r in lines2:
-        a, b, c = r[0], r[1], r[2]
-        x = np.linspace(-100, 100, 5)
-        y = ((-c) - (a * x)) / b
-        plt.plot(x, y)
-
-    x = []
-    y = []
-    for p in pts1:
-        x.append(p[0])
-        y.append(p[1])
-
-    plt.plot(x, y, 'r.')
-
-    plt.show()
+    plot.plotEpilines(lines2, pts1, 1)
 
 
 def is_singular(a):
@@ -467,32 +443,10 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts1, pts2, points3d):
 
     print "\n> avg reprojection error:", total / (2 * len(points3d))
 
-    plotReprojection(reprojected1, reprojected2, pts1, pts2)
-
-
-def plotReprojection(proj1, proj2, meas1, meas2):
-
-    proj1_x = [point[0] for point in proj1]
-    proj1_y = [point[1] for point in proj1]
-
-    meas1_x = [point[0] for point in meas1]
-    meas1_y = [point[1] for point in meas1]
-
-    fig = plt.figure('Reprojection of Reconstruction onto Image 1')
-    plt.scatter(proj1_x, proj1_y, color='r')
-    plt.scatter(meas1_x, meas1_y, color='b')
-    plt.show()
-
-    proj2_x = [point[0] for point in proj2]
-    proj2_y = [point[1] for point in proj2]
-
-    meas2_x = [point[0] for point in meas2]
-    meas2_y = [point[1] for point in meas2]
-
-    fig = plt.figure('Reprojection of Reconstruction onto Image 2')
-    plt.scatter(proj2_x, proj2_y, color='r')
-    plt.scatter(meas2_x, meas2_y, color='b')
-    plt.show()
+    plot.plot2D(reprojected1, pts1,
+                'Reprojection of Reconstruction onto Image 1')
+    plot.plot2D(reprojected2, pts2,
+                'Reprojection of Reconstruction onto Image 2')
 
 
 def BoringCameraArray():
@@ -523,29 +477,6 @@ def CameraArray(R, t):
     P[2][3] = t[2]
 
     return P
-
-
-def plot3D(objectPoints):
-
-    # Plotting of the system
-    # print "\n> Triangulated data:"
-    # for point in objectPoints:
-    #     print point[0], point[1], point[2]
-
-    all_x = [point[0] for point in objectPoints]
-    all_y = [point[1] for point in objectPoints]
-    all_z = [point[2] for point in objectPoints]
-
-    fig = plt.figure('3D Reconstruction (Scale ambiguity)')
-    ax = fig.add_subplot(111, projection='3d')
-
-    ax.scatter(all_x, all_y, all_z, zdir='z')
-
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-
-    plt.show()
 
 print "---------------------------------------------"
 run()

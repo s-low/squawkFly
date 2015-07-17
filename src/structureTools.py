@@ -4,6 +4,9 @@ import numpy as np
 import cv2
 
 
+# [f  0  cx]
+# [0  f  cy]
+# [0  0  1 ]
 def CalibArray(focalLength, cx, cy):
     calibArray = np.zeros((3, 3), dtype='float32')
     calibArray[0][0] = focalLength
@@ -35,6 +38,9 @@ def initWarrays():
     W = np.zeros((3, 3), dtype='float32')
     W_inv = np.zeros((3, 3), dtype='float32')
 
+    # [0 -1  0]
+    # [1  0  0]
+    # [0  0  1]
     W[0][0] = 0  # HZ 9.13
     W[0][1] = -1
     W[0][2] = 0
@@ -45,6 +51,9 @@ def initWarrays():
     W[2][1] = 0
     W[2][2] = 1
 
+    # [0  1  0]
+    # [-1 0  0]
+    # [0  0  1]
     W_inv[0][0] = 0  # HZ 9.13
     W_inv[0][1] = 1
     W_inv[0][2] = 0
