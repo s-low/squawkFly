@@ -123,10 +123,6 @@ def getFundamentalMatrix(pts1, pts2):
     plot.plot2D(pts1, pts1_, '8pt Normalisation on Image 1')
     plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
-    print "HERE"
-    print pts1
-    print pts1_
-
     # normalised 8-point algorithm
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
     # is_singular(F_)
@@ -288,39 +284,6 @@ def getValidRtCombo(R1, R2, t1, t2):
     return R, t
 
 
-def triangulateLS(P1, P2, pts1, pts2):
-    points3d = []
-
-    for i in range(0, len(pts1)):
-
-        x1 = pts1[i][0]
-        y1 = pts1[i][1]
-
-        x2 = pts2[i][0]
-        y2 = pts2[i][1]
-
-        p1 = Point(x1, y1)
-        p2 = Point(x2, y2)
-
-        X = tri.LinearTriangulation(P1, p1, P2, p2)
-
-        points3d.append(X[1])
-
-    return points3d
-
-
-# expects normalised points
-def triangulateCV(KP1, KP2, pts1, pts2):
-    points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
-    points4d = points4d.T
-    print "\n> cv2.triangulatePoints:\n"
-    for point in points4d:
-        k = 1 / point[3]
-        point = point * k
-
-    return points4d
-
-
 def testFundamentalReln(F, pts1, pts2):
     # check that xFx = 0 for homog coords x x'
     F = np.mat(F)
@@ -377,6 +340,40 @@ def testEssentialReln(E, nh_pts1, nh_pts2):
 
     err = err[0, 0] / len(nh_pts1)
     print "> avg error in x'Ex = 0:", err
+
+
+# linear least squares triangulation for one 3-space point X
+def triangulateLS(P1, P2, pts1, pts2):
+    points3d = []
+
+    for i in range(0, len(pts1)):
+
+        x1 = pts1[i][0]
+        y1 = pts1[i][1]
+
+        x2 = pts2[i][0]
+        y2 = pts2[i][1]
+
+        p1 = Point(x1, y1)
+        p2 = Point(x2, y2)
+
+        X = tri.LinearTriangulation(P1, p1, P2, p2)
+
+        points3d.append(X[1])
+
+    return points3d
+
+
+# expects normalised points
+def triangulateCV(KP1, KP2, pts1, pts2):
+    points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
+    points4d = points4d.T
+    print "\n> cv2.triangulatePoints:\n"
+    for point in points4d:
+        k = 1 / point[3]
+        point = point * k
+
+    return points4d
 
 
 def testRtCombo(R, t, pts1, pts2):
