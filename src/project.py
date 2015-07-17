@@ -13,16 +13,13 @@ plt.style.use('ggplot')
 
 def main():
     data_3d = [[0, 0, 0],
-               [10, 10, 10],
-               [20, 20, 20],
-               [30, 30, 30],
-               [40, 40, 40],
-               [50, 50, 50],
-               [60, 40, 40],
-               [70, 30, 30],
-               [80, 20, 20],
-               [90, 10, 10],
-               [100, 0, 0]]
+               [0, 30, 0],
+               [0, 0, 30],
+               [0, 30, 30],
+               [30, 0, 0],
+               [30, 30, 0],
+               [30, 0, 30],
+               [30, 30, 30]]
 
     data_3d = np.array(data_3d, dtype='float32')
 
@@ -45,8 +42,8 @@ def main():
     img_pts1, jacobian = cv2.projectPoints(
         data_3d, rvec, tvec, K, distCoeffs)
 
-    tvec = (50, 0, 60)
-    rvec = (0, 0, 0)
+    tvec = (-120, 0, 120)
+    rvec = -dst
     img_pts2, jacobian = cv2.projectPoints(
         data_3d, rvec, tvec, K, distCoeffs)
 
