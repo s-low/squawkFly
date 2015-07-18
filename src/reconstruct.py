@@ -124,7 +124,7 @@ def run():
     p3d_cv = triangulateCV(KP1, KP2, pts1, pts2)
 
     # PLOTTING
-    plot.plot3D(p3d_ls, '3D Reconstruction (Scale ambiguity)')
+    plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
     reprojectionError(K1, P1_mat, K2, P2_mat, p3d_ls)
 
 
@@ -233,7 +233,6 @@ def getEssentialMatrix(F, K1, K2):
     testEssentialReln(E, norm_pts1, norm_pts2)
 
     w, u, vt = cv2.SVDecomp(E)
-    print "> SVDecomp(E):"
     print "u:\n", u
     print "vt:\n", vt
     print "\n> Singular values:\n", w
@@ -441,9 +440,9 @@ def testRtCombo(R, t, pts1, pts2):
 
     for i in range(0, len(pts1)):
         x1 = pts1[i][0]
-        y1 = pts1[i][1]
+        y1 = pts1[i][0]
         x2 = pts2[i][0]
-        y2 = pts2[i][1]
+        y2 = pts2[i][0]
 
         u1 = Point(x1, y1)
         u2 = Point(x2, y2)
@@ -537,11 +536,10 @@ def distanceToEpiline(line, pt):
     # y1(x) and y2(x) should be the same
     y_inter1 = (m1 * x) + k1
     y_inter2 = (m2 * x) + k2
-
-    message = " " + \
+    message = "Intersection point is wrong " + \
         str(y_inter1) + ' ' + str(y_inter2)
 
-    assert(abs(y_inter1 - y_inter2) < 5), message
+    assert(abs(y_inter1 - y_inter2) < 4), message
 
     # distance between p(x, y) and intersect(x, y)
     d = math.hypot(x - x_inter, y - y_inter1)
