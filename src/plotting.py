@@ -59,3 +59,23 @@ def plotEpilines(lines, pts, index):
     plt.plot(x, y, 'r.')
 
     plt.show()
+
+
+# given a list of numbers, visualise them to spot outliers
+def plotOrderedBar(data, name='Indexed Bar', xlabel='X', ylabel='Y'):
+    x = []
+    y = []
+    mean = sum(data) / len(data)
+
+    for i, d in enumerate(data):
+        x.append(i)
+        y.append(d)
+
+    fig = plt.figure(name)
+    ax = plt.axes()
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+    ax.bar(x, y)
+    ax.axhline(mean)
+
+    plt.show()

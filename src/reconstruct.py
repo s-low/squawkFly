@@ -332,12 +332,29 @@ def testFundamentalReln(F, pts1, pts2):
     pts1_hom = cv2.convertPointsToHomogeneous(pts1)
     pts2_hom = cv2.convertPointsToHomogeneous(pts2)
 
-    err = 0
-    for i in range(0, len(pts1_hom)):
-        err += abs(np.mat(pts1_hom[i]) * F * np.mat(pts2_hom[i]).T)
+    errors = []
+    sum_err = 0
 
-    err = err[0, 0] / len(pts1_hom)
+    # forwards
+    for i in range(0, len(pts1_hom)):
+        this_err = abs(np.mat(pts1_hom[i]) * F * np.mat(pts2_hom[i]).T)
+        sum_err += this_err[0, 0]
+        errors.append(this_err[0, 0])
+
+    # backwards
+    for i in range(0, len(pts2_hom)):
+        this_err = abs(np.mat(pts2_hom[i]) * F * np.mat(pts1_hom[i]).T)
+        sum_err += this_err[0, 0]
+        errors.append(this_err[0, 0])
+
+    err = sum_err / (2 * len(pts1_hom))
     print "> avg error in x'Fx:", err
+
+    # inspec the error distribution
+    plot.plotOrderedBar(errors,
+                        name='x\'Fx = 0 Test Results ',
+                        ylabel='Deflection from zero',
+                        xlabel='Point Index')
 
     # test the epilines
     pts1_epi = pts1.reshape(-1, 1, 2)
