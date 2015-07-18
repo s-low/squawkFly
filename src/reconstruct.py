@@ -525,7 +525,10 @@ def distanceToEpiline(line, pt):
     # y1(x) and y2(x) should be the same
     y_inter1 = (m1 * x) + k1
     y_inter2 = (m2 * x) + k2
-    assert(abs(y_inter1 - y_inter2) < 0.1), "Intersection point is wrong"
+    message = "Intersection point is wrong " + \
+        str(y_inter1) + ' ' + str(y_inter2)
+
+    assert(abs(y_inter1 - y_inter2) < 4), message
 
     # distance between p(x, y) and intersect(x, y)
     d = math.hypot(x - x_inter, y - y_inter1)

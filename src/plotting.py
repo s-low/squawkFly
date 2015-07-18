@@ -35,9 +35,13 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
         onlyoneset = True
 
     fig = plt.figure(name)
-    plt.scatter(x1, y1, color='r')
+    ax = plt.axes()
+    ax.scatter(x1, y1, color='r')
     if not onlyoneset:
-        plt.scatter(x2, y2, color='b')
+        ax.scatter(x2, y2, color='b')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+
     plt.show()
 
 
