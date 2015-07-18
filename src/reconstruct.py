@@ -356,6 +356,11 @@ def testFundamentalReln(F, pts1, pts2):
     for l, p in zip(lines2, pts1):
         distances1.append(distanceToEpiline(l, p))
 
+    avg1 = sum(distances1) / len(distances1)
+    avg2 = sum(distances2) / len(distances2)
+
+    print "> Average distance to epiline in image 1 and 2 (px):", avg1, avg2
+
     plot.plotOrderedBar(distances1,
                         'Image 1: Point-Epiline Distances', 'Index', 'px')
 
