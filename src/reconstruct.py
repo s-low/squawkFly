@@ -22,6 +22,7 @@ Point = namedtuple("Point", "x y")
 K1 = np.mat(struc.CalibArray(5, 5, 5))
 K2 = np.mat(struc.CalibArray(5, 5, 5))
 
+
 # simulated projection data with project.py
 def getSimulationData(folder):
     path = 'simulation_data/' + str(folder) + '/'
@@ -69,7 +70,6 @@ except IndexError:
     sim = 1
 
 original_3Ddata, pts1_raw, pts2_raw = getSimulationData(sim)
-
 
 # pts1_raw = [[5.0, 5.0],
 #             [6.25, 6.25],
