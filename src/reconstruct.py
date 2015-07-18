@@ -144,7 +144,7 @@ def getFundamentalMatrix(pts1, pts2):
 
     # denormalise
     F = T2.T * np.mat(F_) * T1
-    F = 4 * F / F[2, 2]
+    F = F / F[2, 2]
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
@@ -228,7 +228,7 @@ def check8PointNormalisation(pts_):
 
 
 def getEssentialMatrix(F, K1, K2):
-    E = K2.T * np.mat(F) * K1
+    E = K1.T * np.mat(F) * K2
     print "\n> Essential:\n", E
     testEssentialReln(E, norm_pts1, norm_pts2)
 
@@ -324,6 +324,9 @@ def testFundamentalReln(F, pts1, pts2):
         this_err = abs(np.mat(pts2_hom[i]) * F * np.mat(pts1_hom[i]).T)
         sum_err += this_err[0, 0]
         errors.append(this_err[0, 0])
+    # NB: although defining eqn is K'.T * F * K, this just means
+    # row x grid x col or (3x1)(3x3)(1x3). here our points are already rows
+    # so we have to transpose the last to get our column
 
     err = sum_err / (2 * len(pts1_hom))
     print "> x'Fx = 0:", err

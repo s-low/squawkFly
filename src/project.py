@@ -77,6 +77,8 @@ def main():
                     [0, 0, 1]], dtype='float32')
 
     z90cc = np.mat([[0, -1, 0], [1, 0, 0], [0, 0, 1]], dtype='float32')
+    z90cw = np.mat([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], dtype='float32')
+
     x90cc = np.mat([[1, 0, 0], [0, 0, -1], [0, 1, 0]], dtype='float32')
     y90cc = np.mat([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], dtype='float32')
 
@@ -86,14 +88,22 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (120, 0, 120)
-    tvec2 = (0, 0, 50)
+    tvec1 = (20, 10, 10)
+    tvec2 = (30, 40, 10)
+    rvec1 = (0, 0, 0)
+    rvec2 = (0, 0, 0)
 
-    img_pts1 = project(data_3d, K, z90cc, tvec1)
-    img_pts2 = project(data_3d, K, x90cc, tvec2)
+    # img_pts1 = project(data_3d, K, z90cc, tvec1)
+    # img_pts2 = project(data_3d, K, z90cw, tvec2)
 
-    # img_pts1, jacobian = cv2.projectPoints(data_3d, z90cc_vec, tvec, K, dist)
-    # img_pts1 = np.reshape(img_pts1_, (len(img_pts1_), 2, 1))
+    img_pts1, jacobian = cv2.projectPoints(
+        data_3d, (0.1, 0, 0), tvec1, K, dist)
+
+    img_pts2, jacobian = cv2.projectPoints(
+        data_3d, (0.1, 0, 0.2), tvec2, K, dist)
+
+    img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
+    img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
 
     plotSimulation(data_3d)
     plotImagePoints(img_pts1)
@@ -109,6 +119,7 @@ def project(objectPoints, K, R, t):
     print "--------- MANUAL PROJECTION -----------"
     objectPoints = cv2.convertPointsToHomogeneous(objectPoints)
     objectPoints = fixExtraneousParentheses(objectPoints)
+    print objectPoints
 
     imagePoints = []
     print "K:\n", K
@@ -124,16 +135,16 @@ def project(objectPoints, K, R, t):
     P = K * Rt
     print "P = k(R|t):\n", P
 
-    for x in objectPoints:
-        x = np.mat(x).T
+    for X in objectPoints:
+        x = np.mat(X).T
         x_ = P * x
         imagePoints.append(x_)
 
+    # image points are homogeneous (xz, yz, z) -> (x, y, 1)
     normed = []
     for p in imagePoints:
         p = p / p[2]
         normed.append(p)
-
     normed = np.array(normed)
     normed = np.delete(normed, 2, 1)
     return normed
@@ -172,7 +183,8 @@ def plotSimulation(objectPoints):
 
 
 def plotImagePoints(imagePoints):
-
+    all_x = []
+    all_y = []
     all_x = [point[0] for point in imagePoints]
     all_y = [point[1] for point in imagePoints]
 
