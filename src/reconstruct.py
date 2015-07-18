@@ -121,10 +121,7 @@ def run():
     p3d_ls = triangulateLS(KP1, KP2, pts1, pts2)
 
     # alternative triangulation
-    points3dcv = triangulateCV(KP1, KP2, pts1, pts2)
-    points3dcv = cv2.convertPointsFromHomogeneous(points3dcv)
-    p3d_cv = points3dcv.tolist()
-    p3d_cv = fixExtraneousParentheses(p3d_cv)
+    p3d_cv = triangulateCV(KP1, KP2, pts1, pts2)
 
     # PLOTTING
     plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
@@ -424,12 +421,12 @@ def triangulateLS(P1, P2, pts1, pts2):
 def triangulateCV(KP1, KP2, pts1, pts2):
     points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
     points4d = points4d.T
-    print "\n> cv2.triangulatePoints:\n"
-    for point in points4d:
-        k = 1 / point[3]
-        point = point * k
 
-    return points4d
+    points3d = cv2.convertPointsFromHomogeneous(points4d)
+    points3d = points3d.tolist()
+    points3d = fixExtraneousParentheses(points3d)
+
+    return points3d
 
 
 def testRtCombo(R, t, pts1, pts2):
