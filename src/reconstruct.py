@@ -118,12 +118,17 @@ def run():
     print "\n> KP2:\n", KP2
 
     # TRIANGULATION
-    points3d = triangulateLS(KP1, KP2, pts1, pts2)
-    # points4d = triangulateCV(KP1, KP2, pts1, pts2)
+    p3d_ls = triangulateLS(KP1, KP2, pts1, pts2)
+
+    # alternative triangulation
+    points3dcv = triangulateCV(KP1, KP2, pts1, pts2)
+    points3dcv = cv2.convertPointsFromHomogeneous(points3dcv)
+    p3d_cv = points3dcv.tolist()
+    p3d_cv = fixExtraneousParentheses(p3d_cv)
 
     # PLOTTING
-    plot.plot3D(points3d, '3D Reconstruction (Scale ambiguity)')
-    reprojectionError(K1, P1_mat, K2, P2_mat, points3d)
+    plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
+    reprojectionError(K1, P1_mat, K2, P2_mat, p3d_ls)
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
@@ -534,6 +539,16 @@ def distanceToEpiline(line, pt):
     d = math.hypot(x - x_inter, y - y_inter1)
 
     return d
+
+
+def fixExtraneousParentheses(points):
+    temp = []
+    for p in points:
+        p = p[0]
+        temp.append(p)
+
+    new = temp
+    return new
 
 
 def BoringCameraArray():
