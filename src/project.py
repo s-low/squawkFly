@@ -13,16 +13,55 @@ np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
 
 
+def getData(folder):
+    path = 'simulation_data/' + str(folder) + '/'
+    pts1 = []
+    pts2 = []
+    original_3Ddata = []
+
+    with open(path + '3d.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
+
+    data = data.split('\n')
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        z = float(row.split()[1])
+        original_3Ddata.append([x, y, z])
+
+    return original_3Ddata
+
+
+def writeData(folder, pts1, pts2):
+    path = 'simulation_data/' + str(folder) + '/'
+
+    startoffile = True
+    outfile = open(path + 'pts1.txt', 'w')
+
+    for p in pts1:
+        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
+        if not startoffile:
+            outfile.write('\n')
+        outfile.write(dstring)
+        startoffile = False
+    outfile.close()
+
+    startoffile = True
+    outfile = open(path + 'pts2.txt', 'w')
+
+    for p in pts2:
+        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
+        if not startoffile:
+            outfile.write('\n')
+        outfile.write(dstring)
+        startoffile = False
+    outfile.close()
+
+
 def main():
-    # cube
-    data_3d = [[0, 0, 0],
-               [0, 30, 0],
-               [0, 0, 30],
-               [0, 30, 30],
-               [30, 0, 0],
-               [30, 30, 0],
-               [30, 0, 30],
-               [30, 30, 30]]
+    folder = sys.argv[1]
+    data_3d = getData(folder)
 
     data_3d = np.array(data_3d, dtype='float32')
 
@@ -47,19 +86,20 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec = (120, 0, 120)
+    tvec1 = (120, 0, 120)
+    tvec2 = (0, 0, 50)
 
-    img_pts1 = project(data_3d, K, z90cc, tvec)
+    img_pts1 = project(data_3d, K, z90cc, tvec1)
+    img_pts2 = project(data_3d, K, x90cc, tvec2)
 
-    img_pts1_, jacobian = cv2.projectPoints(data_3d, z90cc_vec, tvec, K, dist)
-    img_pts1_ = np.reshape(img_pts1_, (len(img_pts1_), 2, 1))
-
-    print "manual:\n", img_pts1
-    print "opencv:\n", img_pts1_
+    # img_pts1, jacobian = cv2.projectPoints(data_3d, z90cc_vec, tvec, K, dist)
+    # img_pts1 = np.reshape(img_pts1_, (len(img_pts1_), 2, 1))
 
     plotSimulation(data_3d)
     plotImagePoints(img_pts1)
-    plotImagePoints(img_pts1_)
+    plotImagePoints(img_pts2)
+
+    writeData(folder, img_pts1, img_pts2)
 
 
 # own implementation of cv2.projectPoints() - project 3d into 2d plane
