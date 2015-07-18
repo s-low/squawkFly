@@ -52,16 +52,14 @@ def main():
     img_pts1 = project(data_3d, K, z90cc, tvec)
 
     img_pts1_, jacobian = cv2.projectPoints(data_3d, z90cc_vec, tvec, K, dist)
-    # img_pts1_ = fixExtraneousParentheses(img_pts1)
-
-    plotSimulation(data_3d)
+    img_pts1_ = np.reshape(img_pts1_, (len(img_pts1_), 2, 1))
 
     print "manual:\n", img_pts1
     print "opencv:\n", img_pts1_
-    plotImagePoints(img_pts1)
 
-    # print img_pts2
-    # plotImagePoints(img_pts2)
+    plotSimulation(data_3d)
+    plotImagePoints(img_pts1)
+    plotImagePoints(img_pts1_)
 
 
 # own implementation of cv2.projectPoints() - project 3d into 2d plane
