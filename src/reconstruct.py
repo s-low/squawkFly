@@ -19,8 +19,8 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 # Calibration matrices:
-K1 = np.mat(struc.CalibArray(5, 5, 5))
-K2 = np.mat(struc.CalibArray(5, 5, 5))
+K1 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
+K2 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
 
 
 # simulated projection data with project.py
@@ -144,6 +144,7 @@ def getFundamentalMatrix(pts1, pts2):
 
     # denormalise
     F = T2.T * np.mat(F_) * T1
+    F = 4 * F / F[2, 2]
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
