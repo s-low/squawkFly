@@ -71,31 +71,6 @@ except IndexError:
 
 original_3Ddata, pts1_raw, pts2_raw = getSimulationData(sim)
 
-# pts1_raw = [[5.0, 5.0],
-#             [6.25, 6.25],
-#             [7.0, 7.0],
-#             [7.5, 7.5],
-#             [7.85, 7.85714293],
-#             [8.12, 8.125],
-#             [9.28, 7.85714293],
-#             [10.83, 7.5],
-#             [13.00, 7.0],
-#             [16.25, 6.25],
-# [21.66, 5.00]]
-
-# pts2_raw = [[5.0, 6.875],
-#             [6.23262691, 7.61429834],
-#             [7.11896372, 8.14590073],
-#             [7.78696489, 8.54655075],
-#             [8.30845928, 8.85933018],
-#             [8.72688103, 9.11028957],
-#             [9.9604845, 9.08724403],
-#             [11.71813202, 9.05440903],
-#             [14.42380333, 9.00386333],
-#             [19.12773895, 8.91598797],
-#             [29.33972359, 8.72521496]]
-
-
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
@@ -348,7 +323,7 @@ def testFundamentalReln(F, pts1, pts2):
         errors.append(this_err[0, 0])
 
     err = sum_err / (2 * len(pts1_hom))
-    print "> avg error in x'Fx:", err
+    print "> x'Fx = 0:", err
 
     # inspec the error distribution
     plot.plotOrderedBar(errors,
@@ -368,11 +343,25 @@ def testFundamentalReln(F, pts1, pts2):
     lines2 = cv2.computeCorrespondEpilines(pts2_epi, 2, F)
     lines2 = lines2.reshape(-1, 3)
 
-    # overlay lines1 on pts2
-    plot.plotEpilines(lines1, pts2, 2)
+    distances2 = []
+    for l, p in zip(lines1, pts2):
+        distances2.append(distanceToEpiline(l, p))
+
+    distances1 = []
+    for l, p in zip(lines2, pts1):
+        distances1.append(distanceToEpiline(l, p))
+
+    plot.plotOrderedBar(distances1,
+                        'Image 1: Point-Epiline Distances', 'Index', 'px')
+
+    plot.plotOrderedBar(distances2,
+                        'Image 2: Point-Epiline Distances', 'Index', 'px')
 
     # overlay lines2 on pts1
     plot.plotEpilines(lines2, pts1, 1)
+
+    # overlay lines1 on pts2
+    plot.plotEpilines(lines1, pts2, 2)
 
 
 def is_singular(a):
@@ -396,7 +385,7 @@ def testEssentialReln(E, nh_pts1, nh_pts2):
         err += abs(np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T)
 
     err = err[0, 0] / len(nh_pts1)
-    print "> avg error in x'Ex = 0:", err
+    print "> x'Ex = 0:", err
 
 
 # linear least squares triangulation for one 3-space point X
@@ -469,8 +458,8 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
         new[i][2] = point[2]
         new[i][3] = 1
 
-    total = 0
-
+    errors1 = []
+    errors2 = []
     reprojected1 = []
     reprojected2 = []
 
@@ -495,15 +484,53 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
         # difference between them is:
         dist1 = math.hypot(xp1[0] - x1[0], xp1[1] - x1[1])
         dist2 = math.hypot(xp2[0] - x2[0], xp2[1] - x2[1])
+        errors1.append(dist1)
+        errors2.append(dist2)
 
-        total += dist1 + dist2
+    avg1 = sum(errors1) / len(errors1)
+    avg2 = sum(errors2) / len(errors2)
+    print "\n> average reprojection error in image 1:", avg1
+    print "\n> average reprojection error in image 2:", avg2
 
-    print "\n> avg reprojection error:", total / (2 * len(points3d))
+    plot.plotOrderedBar(errors1, 'Reprojection Error Image 1', 'Index', 'px')
+    plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
     plot.plot2D(reprojected1, pts1,
                 'Reprojection of Reconstruction onto Image 1')
     plot.plot2D(reprojected2, pts2,
                 'Reprojection of Reconstruction onto Image 2')
+
+
+# find the distance between an epiline and image point pair
+def distanceToEpiline(line, pt):
+
+    # ax + by + c = 0
+    a, b, c = line[0], line[1], line[2]
+
+    # image point coords
+    x = pt[0]
+    y = pt[1]
+
+    # y = mx + k (epiline)
+    m1 = -a / b
+    k1 = -c / b
+
+    # y = -1/m x + k2 (perpedicular line through p)
+    m2 = -1 / m1
+    k2 = y - (m2 * x)
+
+    # x at point of intersection:
+    x_inter = (k2 - k1) / (m1 - m2)
+
+    # y1(x) and y2(x) should be the same
+    y_inter1 = (m1 * x) + k1
+    y_inter2 = (m2 * x) + k2
+    assert(abs(y_inter1 - y_inter2) < 0.1), "Intersection point is wrong"
+
+    # distance between p(x, y) and intersect(x, y)
+    d = math.hypot(x - x_inter, y - y_inter1)
+
+    return d
 
 
 def BoringCameraArray():
