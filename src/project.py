@@ -33,6 +33,11 @@ def main():
     z90cc = np.mat([[0, -1, 0], [1, 0, 0], [0, 0, 1]], dtype='float32')
     z90cw = np.mat([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], dtype='float32')
 
+    z180 = np.mat([[-1, 0, 0], [0, -1, 0], [0, 0, 1]], dtype='float32')
+    x180 = np.mat([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype='float32')
+    y180 = np.mat([[-1, 0, 0], [0, 1, 0], [0, 0, -1]], dtype='float32')
+
+    x90cw = np.mat([[1, 0, 0], [0, 0, 1], [0, -1, 0]], dtype='float32')
     x90cc = np.mat([[1, 0, 0], [0, 0, -1], [0, 1, 0]], dtype='float32')
     y90cc = np.mat([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], dtype='float32')
 
@@ -42,20 +47,20 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (20, 0, 0)
-    rvec1 = (0.2, 0.1, 0.3)
+    tvec1 = (0, 0, 120)
+    rvec1 = (0, 0, 0)
 
-    tvec2 = (100, 0, 0)
-    rvec2 = (0.2, 0.1, 0.3)
+    tvec2 = (120, 0, 120)
+    rvec2 = (0, 0, 0)
 
-    # img_pts1 = project(data_3d, K, z90cc, tvec1)
-    # img_pts2 = project(data_3d, K, z90cw, tvec2)
+    img_pts1 = project(data_3d, K, x90cc, tvec1)
+    img_pts2 = project(data_3d, K, x90cc, tvec2)
 
-    img_pts1, jacobian = cv2.projectPoints(
-        data_3d, rvec1, tvec1, K, dist)
+    # img_pts1, jacobian = cv2.projectPoints(
+    #     data_3d, rvec1, tvec1, K, dist)
 
-    img_pts2, jacobian = cv2.projectPoints(
-        data_3d, rvec2, tvec2, K, dist)
+    # img_pts2, jacobian = cv2.projectPoints(
+    #     data_3d, rvec2, tvec2, K, dist)
 
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
@@ -103,7 +108,6 @@ def project(objectPoints, K, R, t):
     normed = np.array(normed)
     normed = np.delete(normed, 2, 1)
     return normed
-
 
 
 def getData(folder):

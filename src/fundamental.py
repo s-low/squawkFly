@@ -50,7 +50,8 @@ def testFundamentalReln(F, pts1, pts2):
     lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
     lines1 = lines1.reshape(-1, 3)
 
-    # lines computed frmo pts2
+    # lines computed from pts2
+    # (NB: index == 2 results in a transpose of F) in the calculation
     lines2 = cv2.computeCorrespondEpilines(pts2_epi, 2, F)
     lines2 = lines2.reshape(-1, 3)
 
