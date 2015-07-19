@@ -13,52 +13,6 @@ np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
 
 
-def getData(folder):
-    path = 'simulation_data/' + str(folder) + '/'
-    pts1 = []
-    pts2 = []
-    original_3Ddata = []
-
-    with open(path + '3d.txt') as datafile:
-        data = datafile.read()
-        datafile.close()
-
-    data = data.split('\n')
-    for row in data:
-        x = float(row.split()[0])
-        y = float(row.split()[1])
-        z = float(row.split()[2])
-        original_3Ddata.append([x, y, z])
-
-    return original_3Ddata
-
-
-def writeData(folder, pts1, pts2):
-    path = 'simulation_data/' + str(folder) + '/'
-
-    startoffile = True
-    outfile = open(path + 'pts1.txt', 'w')
-
-    for p in pts1:
-        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
-        if not startoffile:
-            outfile.write('\n')
-        outfile.write(dstring)
-        startoffile = False
-    outfile.close()
-
-    startoffile = True
-    outfile = open(path + 'pts2.txt', 'w')
-
-    for p in pts2:
-        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
-        if not startoffile:
-            outfile.write('\n')
-        outfile.write(dstring)
-        startoffile = False
-    outfile.close()
-
-
 def main():
     folder = sys.argv[1]
     data_3d = getData(folder)
@@ -149,6 +103,53 @@ def project(objectPoints, K, R, t):
     normed = np.array(normed)
     normed = np.delete(normed, 2, 1)
     return normed
+
+
+
+def getData(folder):
+    path = 'simulation_data/' + str(folder) + '/'
+    pts1 = []
+    pts2 = []
+    original_3Ddata = []
+
+    with open(path + '3d.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
+
+    data = data.split('\n')
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        z = float(row.split()[2])
+        original_3Ddata.append([x, y, z])
+
+    return original_3Ddata
+
+
+def writeData(folder, pts1, pts2):
+    path = 'simulation_data/' + str(folder) + '/'
+
+    startoffile = True
+    outfile = open(path + 'pts1.txt', 'w')
+
+    for p in pts1:
+        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
+        if not startoffile:
+            outfile.write('\n')
+        outfile.write(dstring)
+        startoffile = False
+    outfile.close()
+
+    startoffile = True
+    outfile = open(path + 'pts2.txt', 'w')
+
+    for p in pts2:
+        dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
+        if not startoffile:
+            outfile.write('\n')
+        outfile.write(dstring)
+        startoffile = False
+    outfile.close()
 
 
 def fixExtraneousParentheses(points):

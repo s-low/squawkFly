@@ -96,13 +96,17 @@ def run():
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
 
+    # print pts1, pts1.shape
+    # new = pts1.reshape((1, -1))
+    # print new
+
+    # sys.exit()
+    # newPoints1, newPoints2 = cv2.correctMatches(F, pts1, pts2)
+
     # ESSENTIAL MATRIX (HZ 9.12)
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
 
-    # CONSTRAINED ESSENTIAL MATRIX
-    E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt)
-
-    # PROJECTION/CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
+    # PROJECTION/CAMERA MATRICES from E (HZ 9.6.2)
     P1, P2 = getNormalisedPMatrices(u, vt)
     P1_mat = np.mat(P1)
     P2_mat = np.mat(P2)
@@ -121,8 +125,8 @@ def run():
     p3d_cv = triangulateCV(KP1, KP2, pts1, pts2)
 
     # PLOTTING
-    plot.plot3D(p3d_ls, '3D Reconstruction (Scale ambiguity)')
-    reprojectionError(K1, P1_mat, K2, P2_mat, p3d_ls)
+    plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
+    reprojectionError(K1, P1_mat, K2, P2_mat, p3d_cv)
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
