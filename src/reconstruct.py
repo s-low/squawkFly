@@ -9,9 +9,11 @@ import matplotlib.pyplot as plt
 from collections import namedtuple
 from mpl_toolkits.mplot3d import Axes3D
 
+import fundamental as fund
 import triangulation as tri
-import structureTools as struc
+import structureTools as tools
 import plotting as plot
+
 
 np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
@@ -59,7 +61,6 @@ def getSimulationData(folder):
 
     return original_3Ddata, pts1, pts2
 
-
 try:
     sim = sys.argv[1]
 except IndexError:
@@ -72,19 +73,19 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 # Calibration matrices:
-K1 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
-K2 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
+K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
-norm_pts1 = struc.normalise_homogenise(pts1, K1)
-norm_pts2 = struc.normalise_homogenise(pts2, K2)
+norm_pts1 = tools.normalise_homogenise(pts1, K1)
+norm_pts2 = tools.normalise_homogenise(pts2, K2)
 
 # Inhomogenous but normalised K_inv(x, y) (for if you want to calc E directly)
 inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
 inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
 
 # Arrays FOR Rt computation
-W, W_inv = struc.initWarrays()  # HZ 9.13
+W, W_inv = tools.initWarrays()  # HZ 9.13
 
 
 def run():
@@ -100,10 +101,6 @@ def run():
 
     # CONSTRAINED ESSENTIAL MATRIX
     E_prime, w2, u2, vt2 = getConstrainedEssentialMatrix(u, vt)
-
-    # scale = E[0, 0] / E_prime[0, 0]
-    # E_prime = E_prime * scale
-    # print "\n> scaled:\n", E_prime
 
     # PROJECTION/CAMERA MATRICES from E (or E_prime?) (HZ 9.6.2)
     P1, P2 = getNormalisedPMatrices(u, vt)
@@ -132,112 +129,39 @@ def run():
 def getFundamentalMatrix(pts1, pts2):
 
     # 8point normalisation
-    pts1_, T1 = eightPointNormalisation(pts1)
-    pts2_, T2 = eightPointNormalisation(pts2)
+    # pts1_, T1 = eightPointNormalisation(pts1)
+    # pts2_, T2 = eightPointNormalisation(pts2)
 
-    plot.plot2D(pts1, pts1_, '8pt Normalisation on Image 1')
-    plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
+    # plot.plot2D(pts1, pts1_, '8pt Normalisation on Image 1')
+    # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F_, mask = cv2.findFundamentalMat(pts1_, pts2_, cv.CV_FM_8POINT)
-    is_singular(F_)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    tools.is_singular(F)
 
     # denormalise
-    F = T1.T * np.mat(F_) * T2
-    F = F / F[2, 2]
+    # F = T2.T * np.mat(F_) * T1
+    # F = F / F[2, 2]
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
-    testFundamentalReln(F, pts1, pts2)
+    fund.testFundamentalReln(F, pts1, pts2)
     return F
 
 
 def getEssentialMatrix(F, K1, K2):
+
     E = K1.T * np.mat(F) * K2
     print "\n> Essential:\n", E
-    testEssentialReln(E, norm_pts1, norm_pts2)
 
+    fund.testEssentialReln(E, norm_pts1, norm_pts2)
     w, u, vt = cv2.SVDecomp(E)
+
     print "> SVDecomp(E):"
     print "u:\n", u
     print "vt:\n", vt
     print "\n> Singular values:\n", w
     return E, w, u, vt
-
-
-# translate and scale image points, return both points and the transformation T
-def eightPointNormalisation(pts):
-    print "> 8POINT NORMALISATION"
-
-    cx = 0
-    cy = 0
-    pts_ = []
-
-    for p in pts:
-        cx += p[0]
-        cy += p[1]
-
-    cx = cx / len(pts)
-    cy = cy / len(pts)
-
-    # translation to (cx,cy) = (0,0)
-    T = np.mat([[1, 0, -cx],
-                [0, 1, -cy],
-                [0, 0, 1]])
-
-    print "Translate by:", -cx, -cy
-
-    # now scale to rms_d = sqrt(2)
-    total_d = 0
-    for p in pts:
-        d = math.hypot(p[0] - cx, p[1] - cy)
-        total_d += (d * d)
-
-    # square root of the mean of the squares
-    rms_d = math.sqrt((total_d / len(pts)))
-
-    scale_factor = math.sqrt(2) / rms_d
-    print "Scale by:", scale_factor
-
-    T = scale_factor * T
-    T[2, 2] = 1
-    print "T:\n", T
-
-    # apply the transformation
-    hom = cv2.convertPointsToHomogeneous(pts)
-    for h in hom:
-        h_ = T * h.T
-        pts_.append(h_)
-
-    pts_ = cv2.convertPointsFromHomogeneous(np.array(pts_, dtype='float32'))
-    check8PointNormalisation(pts_)
-
-    # make sure the normalised points are in the same format as original
-    pts_r = []
-    for p in pts_:
-        pts_r.append(p[0])
-    pts_r = np.array(pts_r, dtype='float32')
-
-    return pts_r, T
-
-
-def check8PointNormalisation(pts_):
-    # average distance from origin should be sqrt(2) and centroid = origin
-    d_tot = 0
-    cx = 0
-    cy = 0
-    for p in pts_:
-        cx += p[0][0]
-        cx += p[0][1]
-        d = math.hypot(p[0][0], p[0][1])
-        d_tot += d
-
-    avg = d_tot / len(pts_)
-    cx = cx / len(pts_)
-    cy = cy / len(pts_)
-
-    assert(avg - math.sqrt(2) < 0.01), "Scale factor is wrong"
-    assert(cx < 0.1 and cy < 0.1), "Centroid not at origin"
 
 
 # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
@@ -246,7 +170,7 @@ def getConstrainedEssentialMatrix(u, vt):
 
     E_prime = np.mat(u) * diag * np.mat(vt)
     print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
-    testEssentialReln(E_prime, norm_pts1, norm_pts2)
+    fund.testEssentialReln(E_prime, norm_pts1, norm_pts2)
 
     w2, u2, vt2 = cv2.SVDecomp(E_prime)
     print "\n> Singular values:\n", w2
@@ -303,103 +227,6 @@ def getValidRtCombo(R1, R2, t1, t2):
     return R, t
 
 
-def testFundamentalReln(F, pts1, pts2):
-    # check that xFx = 0 for homog coords x x'
-    F = np.mat(F)
-    is_singular(F)
-
-    pts1_hom = cv2.convertPointsToHomogeneous(pts1)
-    pts2_hom = cv2.convertPointsToHomogeneous(pts2)
-
-    errors = []
-    sum_err = 0
-
-    # forwards
-    for i in range(0, len(pts1_hom)):
-        this_err = abs(np.mat(pts1_hom[i]) * F * np.mat(pts2_hom[i]).T)
-        sum_err += this_err[0, 0]
-        errors.append(this_err[0, 0])
-
-    # backwards
-    for i in range(0, len(pts2_hom)):
-        this_err = abs(np.mat(pts2_hom[i]) * F * np.mat(pts1_hom[i]).T)
-        sum_err += this_err[0, 0]
-        errors.append(this_err[0, 0])
-    # NB: although defining eqn is K'.T * F * K, this just means
-    # row x grid x col or (3x1)(3x3)(1x3). here our points are already rows
-    # so we have to transpose the last to get our column
-
-    err = sum_err / (2 * len(pts1_hom))
-    print "> x'Fx = 0:", err
-
-    # inspec the error distribution
-    plot.plotOrderedBar(errors,
-                        name='x\'Fx = 0 Test Results ',
-                        ylabel='Deflection from zero',
-                        xlabel='Point Index')
-
-    # test the epilines
-    pts1_epi = pts1.reshape((-1, 1, 2))
-    pts2_epi = pts2.reshape((-1, 1, 2))
-
-    # lines computed from pts1
-    lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
-    lines1 = lines1.reshape(-1, 3)
-
-    # lines computed frmo pts2
-    lines2 = cv2.computeCorrespondEpilines(pts2_epi, 2, F)
-    lines2 = lines2.reshape(-1, 3)
-
-    distances2 = []
-    for l, p in zip(lines1, pts2):
-        distances2.append(distanceToEpiline(l, p))
-
-    distances1 = []
-    for l, p in zip(lines2, pts1):
-        distances1.append(distanceToEpiline(l, p))
-
-    avg1 = sum(distances1) / len(distances1)
-    avg2 = sum(distances2) / len(distances2)
-
-    print "> Average distance to epiline in image 1 and 2 (px):", avg1, avg2
-
-    plot.plotOrderedBar(distances1,
-                        'Image 1: Point-Epiline Distances', 'Index', 'px')
-
-    plot.plotOrderedBar(distances2,
-                        'Image 2: Point-Epiline Distances', 'Index', 'px')
-
-    # overlay lines2 on pts1
-    plot.plotEpilines(lines2, pts1, 1)
-
-    # overlay lines1 on pts2
-    plot.plotEpilines(lines1, pts2, 2)
-
-
-def is_singular(a):
-    det = np.linalg.det(a)
-    s = not is_invertible(a)
-    print "> Singular:", s
-    assert(s is True), "Singularity problems."
-
-
-def is_invertible(a):
-    return a.shape[0] == a.shape[1] and np.linalg.matrix_rank(a) == a.shape[0]
-
-
-def testEssentialReln(E, nh_pts1, nh_pts2):
-    # check that x'Ex = 0 for normalised, homog coords x x'
-    E = np.mat(E)
-    is_singular(E)
-
-    err = 0
-    for i in range(0, len(nh_pts1)):
-        err += abs(np.mat(nh_pts1[i]) * E * np.mat(nh_pts2[i]).T)
-
-    err = err[0, 0] / len(nh_pts1)
-    print "> x'Ex = 0:", err
-
-
 # linear least squares triangulation for one 3-space point X
 def triangulateLS(P1, P2, pts1, pts2):
     points3d = []
@@ -429,7 +256,7 @@ def triangulateCV(KP1, KP2, pts1, pts2):
 
     points3d = cv2.convertPointsFromHomogeneous(points4d)
     points3d = points3d.tolist()
-    points3d = fixExtraneousParentheses(points3d)
+    points3d = tools.fixExtraneousParentheses(points3d)
 
     return points3d
 
@@ -512,52 +339,6 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
                 'Reprojection of Reconstruction onto Image 1')
     plot.plot2D(reprojected2, pts2,
                 'Reprojection of Reconstruction onto Image 2')
-
-
-# find the distance between an epiline and image point pair
-def distanceToEpiline(line, pt):
-
-    # ax + by + c = 0
-    a, b, c = line[0], line[1], line[2]
-
-    # image point coords
-    x = pt[0]
-    y = pt[1]
-
-    # y = mx + k (epiline)
-    m1 = -a / b
-    k1 = -c / b
-
-    # y = -1/m x + k2 (perpedicular line that runs through p(x,y))
-    m2 = -1 / m1
-    k2 = y - (m2 * x)
-
-    # x at point of intersection:
-    x_inter = (k2 - k1) / (m1 - m2)
-
-    # y1(x_intercept) and y2(x_intercept) should be the same
-    y_inter1 = (m1 * x_inter) + k1
-    y_inter2 = (m2 * x_inter) + k2
-
-    message = "Epiline and perp have different y at x_intercept:" + \
-        str(y_inter1) + ' ' + str(y_inter2)
-
-    assert(abs(y_inter1 - y_inter2) < 5), message
-
-    # distance between p(x, y) and intersect(x, y)
-    d = math.hypot(x - x_inter, y - y_inter1)
-
-    return d
-
-
-def fixExtraneousParentheses(points):
-    temp = []
-    for p in points:
-        p = p[0]
-        temp.append(p)
-
-    new = temp
-    return new
 
 
 def BoringCameraArray():

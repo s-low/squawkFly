@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import structureTools as struc
+import structureTools as tools
 
 np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
@@ -66,7 +66,7 @@ def main():
     data_3d = np.array(data_3d, dtype='float32')
 
     # artificial camera with f=5 units, cx = cy = 5 units
-    K = struc.CalibArray(5, 5, 5)
+    K = tools.CalibArray(5, 5, 5)
     dist = (0, 0, 0, 0)
 
     rt2 = math.sqrt(2)
@@ -88,19 +88,20 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (20, 10, 10)
-    tvec2 = (30, 40, 10)
-    rvec1 = (0, 0, 0)
-    rvec2 = (0, 0, 0)
+    tvec1 = (20, 0, 0)
+    rvec1 = (0.2, 0.1, 0.3)
+
+    tvec2 = (100, 0, 0)
+    rvec2 = (0.2, 0.1, 0.3)
 
     # img_pts1 = project(data_3d, K, z90cc, tvec1)
     # img_pts2 = project(data_3d, K, z90cw, tvec2)
 
     img_pts1, jacobian = cv2.projectPoints(
-        data_3d, (0.1, 0, 0), tvec1, K, dist)
+        data_3d, rvec1, tvec1, K, dist)
 
     img_pts2, jacobian = cv2.projectPoints(
-        data_3d, (0.1, 0, 0.2), tvec2, K, dist)
+        data_3d, rvec2, tvec2, K, dist)
 
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))

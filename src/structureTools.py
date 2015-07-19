@@ -34,6 +34,16 @@ def normalise_homogenise(pts, K):
     return n_pts
 
 
+def fixExtraneousParentheses(points):
+    temp = []
+    for p in points:
+        p = p[0]
+        temp.append(p)
+
+    new = temp
+    return new
+
+
 def initWarrays():
     W = np.zeros((3, 3), dtype='float32')
     W_inv = np.zeros((3, 3), dtype='float32')
@@ -64,3 +74,14 @@ def initWarrays():
     W_inv[2][1] = 0
     W_inv[2][2] = 1
     return W, W_inv
+
+
+def is_singular(a):
+    det = np.linalg.det(a)
+    s = not is_invertible(a)
+    print "> Singular:", s
+    assert(s is True), "Singularity problems."
+
+
+def is_invertible(a):
+    return a.shape[0] == a.shape[1] and np.linalg.matrix_rank(a) == a.shape[0]
