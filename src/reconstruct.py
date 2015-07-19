@@ -58,7 +58,7 @@ def getSimulationData(folder):
     for row in data:
         x = float(row.split()[0])
         y = float(row.split()[1])
-        z = float(row.split()[1])
+        z = float(row.split()[2])
         original_3Ddata.append([x, y, z])
 
     return original_3Ddata, pts1, pts2
@@ -143,7 +143,7 @@ def getFundamentalMatrix(pts1, pts2):
     is_singular(F_)
 
     # denormalise
-    F = T2.T * np.mat(F_) * T1
+    F = T1.T * np.mat(F_) * T2
     F = F / F[2, 2]
 
     # test on original coordinates
@@ -339,8 +339,8 @@ def testFundamentalReln(F, pts1, pts2):
                         xlabel='Point Index')
 
     # test the epilines
-    pts1_epi = pts1.reshape(-1, 1, 2)
-    pts2_epi = pts2.reshape(-1, 1, 2)
+    pts1_epi = pts1.reshape((-1, 1, 2))
+    pts2_epi = pts2.reshape((-1, 1, 2))
 
     # lines computed from pts1
     lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
@@ -434,16 +434,16 @@ def triangulateCV(KP1, KP2, pts1, pts2):
     return points3d
 
 
-def testRtCombo(R, t, pts1, pts2):
+def testRtCombo(R, t, norm_pts1, norm_pts2):
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
     points3d = []
 
-    for i in range(0, len(pts1)):
-        x1 = pts1[i][0]
-        y1 = pts1[i][1]
-        x2 = pts2[i][0]
-        y2 = pts2[i][1]
+    for i in range(0, len(norm_pts1)):
+        x1 = norm_pts1[i][0]
+        y1 = norm_pts1[i][1]
+        x2 = norm_pts2[i][0]
+        y2 = norm_pts2[i][1]
 
         u1 = Point(x1, y1)
         u2 = Point(x2, y2)
@@ -501,6 +501,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
 
     avg1 = sum(errors1) / len(errors1)
     avg2 = sum(errors2) / len(errors2)
+
     print "\n> average reprojection error in image 1:", avg1
     print "\n> average reprojection error in image 2:", avg2
 
@@ -527,17 +528,18 @@ def distanceToEpiline(line, pt):
     m1 = -a / b
     k1 = -c / b
 
-    # y = -1/m x + k2 (perpedicular line through p)
+    # y = -1/m x + k2 (perpedicular line that runs through p(x,y))
     m2 = -1 / m1
     k2 = y - (m2 * x)
 
     # x at point of intersection:
     x_inter = (k2 - k1) / (m1 - m2)
 
-    # y1(x) and y2(x) should be the same
-    y_inter1 = (m1 * x) + k1
-    y_inter2 = (m2 * x) + k2
-    message = "Intersection point is wrong " + \
+    # y1(x_intercept) and y2(x_intercept) should be the same
+    y_inter1 = (m1 * x_inter) + k1
+    y_inter2 = (m2 * x_inter) + k2
+
+    message = "Epiline and perp have different y at x_intercept:" + \
         str(y_inter1) + ' ' + str(y_inter2)
 
     assert(abs(y_inter1 - y_inter2) < 5), message
