@@ -18,10 +18,6 @@ plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
 
-# Calibration matrices:
-K1 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
-K2 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
-
 
 # simulated projection data with project.py
 def getSimulationData(folder):
@@ -74,6 +70,10 @@ original_3Ddata, pts1_raw, pts2_raw = getSimulationData(sim)
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
+
+# Calibration matrices:
+K1 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
+K2 = np.mat(struc.CalibArray(5, 5, 5), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = struc.normalise_homogenise(pts1, K1)
