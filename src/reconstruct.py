@@ -152,6 +152,19 @@ def getFundamentalMatrix(pts1, pts2):
     return F
 
 
+def getEssentialMatrix(F, K1, K2):
+    E = K1.T * np.mat(F) * K2
+    print "\n> Essential:\n", E
+    testEssentialReln(E, norm_pts1, norm_pts2)
+
+    w, u, vt = cv2.SVDecomp(E)
+    print "> SVDecomp(E):"
+    print "u:\n", u
+    print "vt:\n", vt
+    print "\n> Singular values:\n", w
+    return E, w, u, vt
+
+
 # translate and scale image points, return both points and the transformation T
 def eightPointNormalisation(pts):
     print "> 8POINT NORMALISATION"
@@ -225,19 +238,6 @@ def check8PointNormalisation(pts_):
 
     assert(avg - math.sqrt(2) < 0.01), "Scale factor is wrong"
     assert(cx < 0.1 and cy < 0.1), "Centroid not at origin"
-
-
-def getEssentialMatrix(F, K1, K2):
-    E = K1.T * np.mat(F) * K2
-    print "\n> Essential:\n", E
-    testEssentialReln(E, norm_pts1, norm_pts2)
-
-    w, u, vt = cv2.SVDecomp(E)
-    print "> SVDecomp(E):"
-    print "u:\n", u
-    print "vt:\n", vt
-    print "\n> Singular values:\n", w
-    return E, w, u, vt
 
 
 # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
