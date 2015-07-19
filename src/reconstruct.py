@@ -85,7 +85,7 @@ inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
 inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
 
 # Arrays FOR Rt computation
-W, W_inv = tools.initWarrays()  # HZ 9.13
+W, W_inv, Z = tools.initWZarrays()  # HZ 9.13
 
 
 def run():
@@ -159,13 +159,13 @@ def getEssentialMatrix(F, K1, K2):
     print "\n> Essential:\n", E
 
     fund.testEssentialReln(E, norm_pts1, norm_pts2)
-    w, u, vt = cv2.SVDecomp(E)
+    s, u, vt = cv2.SVDecomp(E)
 
     print "> SVDecomp(E):"
     print "u:\n", u
     print "vt:\n", vt
-    print "\n> Singular values:\n", w
-    return E, w, u, vt
+    print "\n> Singular values:\n", s
+    return E, s, u, vt
 
 
 # https://en.wikipedia.org/wiki/Eight-point_algorithm#Step_3:_Enforcing_the_internal_constraint
@@ -176,15 +176,23 @@ def getConstrainedEssentialMatrix(u, vt):
     print "\n> Constrained Essential = u * diag(1,1,0) * vt:\n", E_prime
     fund.testEssentialReln(E_prime, norm_pts1, norm_pts2)
 
-    w2, u2, vt2 = cv2.SVDecomp(E_prime)
-    print "\n> Singular values:\n", w2
+    s2, u2, vt2 = cv2.SVDecomp(E_prime)
+    print "\n> Singular values:\n", s2
 
-    return E_prime, w2, u2, vt2
+    return E_prime, s2, u2, vt2
 
 
 def getNormalisedPMatrices(u, vt):
     R1 = np.mat(u) * np.mat(W) * np.mat(vt)
     R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
+
+    # negate R if det(R) negative
+    if np.linalg.det(R1) < 0:
+        R1 = -1 * R1
+
+    if np.linalg.det(R2) < 0:
+        R2 = -1 * R2
+
     t1 = u[:, 2]
     t2 = -1 * u[:, 2]
 
@@ -203,22 +211,22 @@ def getNormalisedPMatrices(u, vt):
 def getValidRtCombo(R1, R2, t1, t2):
     # enforce positive depth combination of Rt using normalised coords
     if testRtCombo(R1, t1, norm_pts1, norm_pts2):
-        print "\n> RT: R1 t1"
+        print "\n> R|t: R1 t1"
         R = R1
         t = t1
 
     elif testRtCombo(R1, t2, norm_pts1, norm_pts2):
-        print "\n> RT: R1 t2"
+        print "\n> R|t: R1 t2"
         R = R1
         t = t2
 
     elif testRtCombo(R2, t1, norm_pts1, norm_pts2):
-        print "\n> RT: R2 t1"
+        print "\n> R|t: R2 t1"
         R = R2
         t = t1
 
     elif testRtCombo(R2, t2, norm_pts1, norm_pts2):
-        print "\n> RT: R2 t2"
+        print "\n> R|t: R2 t2"
         R = R2
         t = t2
 
@@ -229,6 +237,34 @@ def getValidRtCombo(R1, R2, t1, t2):
     print "R:\n", R
     print "t:\n", t
     return R, t
+
+
+# which combination of R|t gives us a P pair that works geometrically
+# ie: gives us a positive depth measure in both
+def testRtCombo(R, t, norm_pts1, norm_pts2):
+    P1 = BoringCameraArray()
+    P2 = CameraArray(R, t)
+    points3d = []
+
+    for i in range(0, len(norm_pts1)):
+        x1 = norm_pts1[i][0]
+        y1 = norm_pts1[i][1]
+        
+        x2 = norm_pts2[i][0]
+        y2 = norm_pts2[i][1]
+
+        u1 = Point(x1, y1)
+        u2 = Point(x2, y2)
+
+        X = tri.LinearTriangulation(P1, u1, P2, u2)
+        points3d.append(X[1])
+
+    # check if any z coord is negative
+    for point in points3d:
+        if point[2] < 0:
+            return False
+
+    return True
 
 
 # linear least squares triangulation for one 3-space point X
@@ -263,30 +299,6 @@ def triangulateCV(KP1, KP2, pts1, pts2):
     points3d = tools.fixExtraneousParentheses(points3d)
 
     return points3d
-
-
-def testRtCombo(R, t, norm_pts1, norm_pts2):
-    P1 = BoringCameraArray()
-    P2 = CameraArray(R, t)
-    points3d = []
-
-    for i in range(0, len(norm_pts1)):
-        x1 = norm_pts1[i][0]
-        y1 = norm_pts1[i][1]
-        x2 = norm_pts2[i][0]
-        y2 = norm_pts2[i][1]
-
-        u1 = Point(x1, y1)
-        u2 = Point(x2, y2)
-
-        X = tri.LinearTriangulation(P1, u1, P2, u2)
-        points3d.append(X[1])
-
-    for point in points3d:
-        if point[2] < 0:
-            return False
-
-    return True
 
 
 # used for checking the triangulation - provide UNNORMALISED DATA

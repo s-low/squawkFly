@@ -44,9 +44,10 @@ def fixExtraneousParentheses(points):
     return new
 
 
-def initWarrays():
+def initWZarrays():
     W = np.zeros((3, 3), dtype='float32')
     W_inv = np.zeros((3, 3), dtype='float32')
+    Z = np.zeros((3, 3), dtype='float32')
 
     # [0 -1  0]
     # [1  0  0]
@@ -73,7 +74,21 @@ def initWarrays():
     W_inv[2][0] = 0
     W_inv[2][1] = 0
     W_inv[2][2] = 1
-    return W, W_inv
+
+    # [0   1  0]
+    # [-1  0  0]
+    # [0   0  0]
+    Z[0][0] = 0  # HZ 9.13
+    Z[0][1] = 1
+    Z[0][2] = 0
+    Z[1][0] = -1
+    Z[1][1] = 0
+    Z[1][2] = 0
+    Z[2][0] = 0
+    Z[2][1] = 0
+    Z[2][2] = 0
+
+    return W, W_inv, Z
 
 
 def is_singular(a):
