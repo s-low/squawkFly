@@ -27,7 +27,7 @@ def getData(folder):
     for row in data:
         x = float(row.split()[0])
         y = float(row.split()[1])
-        z = float(row.split()[1])
+        z = float(row.split()[2])
         original_3Ddata.append([x, y, z])
 
     return original_3Ddata
