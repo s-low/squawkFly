@@ -48,16 +48,19 @@ def getSimulationData(folder):
         y = float(row.split()[1])
         pts2.append([x, y])
 
-    with open(path + '3d.txt') as datafile:
-        data = datafile.read()
-        datafile.close()
+    try:
+        with open(path + '3d.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
 
-    data = data.split('\n')
-    for row in data:
-        x = float(row.split()[0])
-        y = float(row.split()[1])
-        z = float(row.split()[2])
-        original_3Ddata.append([x, y, z])
+        data = data.split('\n')
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            z = float(row.split()[2])
+            original_3Ddata.append([x, y, z])
+    except Exception:
+        print "> No 3D reference data provided. Not a simulation."
 
     return original_3Ddata, pts1, pts2
 
@@ -249,7 +252,7 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
     for i in range(0, len(norm_pts1)):
         x1 = norm_pts1[i][0]
         y1 = norm_pts1[i][1]
-        
+
         x2 = norm_pts2[i][0]
         y2 = norm_pts2[i][1]
 
