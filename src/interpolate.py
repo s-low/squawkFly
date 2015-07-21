@@ -12,6 +12,7 @@ except IndexError:
     print "Usage: ./interpolate <file> <framerate>"
     sys.exit()
 
+outfilename = "interp_" + "filename"
 frame_length_ms = int(1000 / frame_rate)
 
 
@@ -63,7 +64,7 @@ for i in range(0, len(points) - 1):
         interpolated_points.append(new_point)
         print new_point
 
-    outfile = open('data_out.txt', 'w')
+    outfile = open(outfilename, 'w')
     startOfFile = True
 
     for p in interpolated_points:
