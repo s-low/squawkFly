@@ -76,8 +76,8 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
-K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+K1 = np.mat(tools.CalibArray(1005.099, 642, 363), dtype='float32')
+K2 = np.mat(tools.CalibArray(1091, 643, 360), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)

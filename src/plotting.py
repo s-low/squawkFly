@@ -50,7 +50,7 @@ def plotEpilines(lines, pts, index):
     fig = plt.figure(name)
     for r in lines:
         a, b, c = r[0], r[1], r[2]
-        x = np.linspace(-100, 100, 5)
+        x = np.linspace(0, 1280, 5)
         y = ((-c) - (a * x)) / b
         plt.plot(x, y)
 
