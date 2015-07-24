@@ -21,7 +21,8 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 
-# simulated projection data with project.py
+# Get point correspondeces (1+2) from subdir
+# Optionally: original 3d set, correspondences to be reconstructed (3+4)
 def getData(folder):
     path = 'simulation_data/' + str(folder) + '/'
     pts1 = []
@@ -57,12 +58,12 @@ def getData(folder):
 
         data = data.split('\n')
         for row in data:
-            print row
             x = float(row.split()[0])
             y = float(row.split()[1])
             z = float(row.split()[2])
             original_3Ddata.append([x, y, z])
-    except Exception:
+
+    except IOError:
         print "> No 3D reference data provided. Not a simulation."
 
     try:
@@ -107,8 +108,8 @@ pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(1005.099, 642, 363), dtype='float32')
-K2 = np.mat(tools.CalibArray(1091, 643, 360), dtype='float32')
+K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
