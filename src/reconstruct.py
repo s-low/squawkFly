@@ -22,10 +22,12 @@ Point = namedtuple("Point", "x y")
 
 
 # simulated projection data with project.py
-def getSimulationData(folder):
+def getData(folder):
     path = 'simulation_data/' + str(folder) + '/'
     pts1 = []
     pts2 = []
+    pts3 = []
+    pts4 = []
     original_3Ddata = []
 
     with open(path + 'pts1.txt') as datafile:
@@ -55,6 +57,7 @@ def getSimulationData(folder):
 
         data = data.split('\n')
         for row in data:
+            print row
             x = float(row.split()[0])
             y = float(row.split()[1])
             z = float(row.split()[2])
@@ -62,18 +65,46 @@ def getSimulationData(folder):
     except Exception:
         print "> No 3D reference data provided. Not a simulation."
 
-    return original_3Ddata, pts1, pts2
+    try:
+        with open(path + 'pts3.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
+
+        data = data.split('\n')
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            pts3.append([x, y])
+
+        with open(path + 'pts4.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
+
+        data = data.split('\n')
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            pts4.append([x, y])
+
+    except IOError:
+        print "> No reconstruction points provided. Using full point set."
+        pts3 = pts1
+        pts4 = pts2
+
+    return original_3Ddata, pts1, pts2, pts3, pts4
 
 try:
     sim = sys.argv[1]
 except IndexError:
     sim = 1
 
-original_3Ddata, pts1_raw, pts2_raw = getSimulationData(sim)
+original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw = getData(sim)
 
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
+pts3 = np.array(pts3_raw, dtype='float32')
+pts4 = np.array(pts4_raw, dtype='float32')
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005.099, 642, 363), dtype='float32')
@@ -122,10 +153,10 @@ def run():
     print "\n> KP2:\n", KP2
 
     # TRIANGULATION
-    p3d_ls = triangulateLS(KP1, KP2, pts1, pts2)
+    p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
 
     # alternative triangulation
-    p3d_cv = triangulateCV(KP1, KP2, pts1, pts2)
+    p3d_cv = triangulateCV(KP1, KP2, pts3, pts4)
 
     # PLOTTING
     plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
@@ -293,8 +324,9 @@ def triangulateLS(P1, P2, pts1, pts2):
 
 
 # expects normalised points
-def triangulateCV(KP1, KP2, pts1, pts2):
-    points4d = cv2.triangulatePoints(KP1, KP2, pts1.T, pts2.T)
+def triangulateCV(KP1, KP2, pts_a, pts_b):
+    print "TRIANGULATING", len(pts_a)
+    points4d = cv2.triangulatePoints(KP1, KP2, pts_a.T, pts_b.T)
     points4d = points4d.T
 
     points3d = cv2.convertPointsFromHomogeneous(points4d)
@@ -336,8 +368,8 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
         reprojected2.append(xp2)
 
         # and get the orginally measured points
-        x1 = pts1[i]
-        x2 = pts2[i]
+        x1 = pts3[i]
+        x2 = pts4[i]
 
         # difference between them is:
         dist1 = math.hypot(xp1[0] - x1[0], xp1[1] - x1[1])
@@ -354,9 +386,9 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
     plot.plotOrderedBar(errors1, 'Reprojection Error Image 1', 'Index', 'px')
     plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
-    plot.plot2D(reprojected1, pts1,
+    plot.plot2D(reprojected1, pts3,
                 'Reprojection of Reconstruction onto Image 1')
-    plot.plot2D(reprojected2, pts2,
+    plot.plot2D(reprojected2, pts4,
                 'Reprojection of Reconstruction onto Image 2')
 
 
