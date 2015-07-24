@@ -8,17 +8,30 @@ import math
 import matplotlib.pyplot as plt
 from collections import namedtuple
 from mpl_toolkits.mplot3d import Axes3D
+import random
 
 import fundamental as fund
 import triangulation as tri
 import structureTools as tools
 import plotting as plot
 
-
+random.seed()
 np.set_printoptions(suppress=True)
 plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
+
+
+# add some random noise to n image point set
+def addNoise(a, b, points):
+    new = []
+    for p in points:
+        n0 = p[0] + random.uniform(a, b)
+        n1 = p[1] + random.uniform(a, b)
+        n = [n0, n1]
+        new.append(n)
+
+    return np.array(new, dtype='float32')
 
 
 # Get point correspondeces (1+2) from subdir
@@ -106,6 +119,11 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
+
+print pts1[0]
+# pts1 = addNoise(0, 0.5, pts1)
+# pts2 = addNoise(0, 0.5, pts2)
+print pts1[0]
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
@@ -326,7 +344,6 @@ def triangulateLS(P1, P2, pts1, pts2):
 
 # expects normalised points
 def triangulateCV(KP1, KP2, pts_a, pts_b):
-    print "TRIANGULATING", len(pts_a)
     points4d = cv2.triangulatePoints(KP1, KP2, pts_a.T, pts_b.T)
     points4d = points4d.T
 
