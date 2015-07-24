@@ -14,7 +14,7 @@ except IndexError:
     print "Usage: ./interpolate <file> <framerate>"
     sys.exit()
 
-outfilename = "interpolation/data_out.txt"
+outfilename = "data/interpolation_out.txt"
 frame_length_ms = int(1000 / frame_rate)
 
 
