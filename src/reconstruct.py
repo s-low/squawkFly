@@ -107,6 +107,8 @@ def getData(folder):
 
     return original_3Ddata, pts1, pts2, pts3, pts4
 
+
+# INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
     sim = sys.argv[1]
 except IndexError:
@@ -120,11 +122,6 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-print pts1[0]
-# pts1 = addNoise(0, 0.5, pts1)
-# pts2 = addNoise(0, 0.5, pts2)
-print pts1[0]
-
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
@@ -133,7 +130,8 @@ K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
 norm_pts2 = tools.normalise_homogenise(pts2, K2)
 
-# Inhomogenous but normalised K_inv(x, y) (for if you want to calc E directly)
+# Inhomogenous but normalised K_inv(x, y) (for if you want to calc E
+# directly)
 inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
 inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
 
