@@ -5,6 +5,8 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 import matplotlib.pyplot as plt
+import os.path
+
 plt.style.use('ggplot')
 
 try:
@@ -14,9 +16,10 @@ except IndexError:
     print "Usage: ./interpolate <file> <framerate>"
     sys.exit()
 
-outfilename = "data/interpolation_out.txt"
-frame_length_ms = int(1000 / frame_rate)
+name, ext = os.path.splitext(filename)
 
+outfilename = name + "_interpolated.txt"
+frame_length_ms = int(1000 / frame_rate)
 
 # data in format: x / y / frame / pid
 with open(filename) as datafile:
