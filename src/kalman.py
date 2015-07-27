@@ -20,8 +20,8 @@ import numpy as np
 from kfilter import KFilter
 
 # Kalman Parameters
-init_dist = 60
-verify_distance = 30
+init_dist = 70
+verify_distance = 50
 
 # Program markers
 max_frame = 0
@@ -37,16 +37,28 @@ def verified(corrected_point, next_frame_index):
     except IndexError:
         return False
 
+    # init current verifying sep to an arbitrarily high value
+    min_sep = verify_distance
+    vpoint = None
+
+    # for each point in the next frame, check the distance between the pair
     for point_index, point in enumerate(next_frame["x"]):
         cx = float(next_frame["x"][point_index])
         cy = float(next_frame["y"][point_index])
         c_pid = int(next_frame["pid"][point_index])
         c = (cx, cy, c_pid)
 
-        if point_is_near_point(corrected_point, c, verify_distance):
-            return c
+        vflag, sep = point_is_near_point(corrected_point, c, verify_distance)
 
-    return False
+        # a point may be verified by several points. we want the best one.
+        if vflag is True and sep < min_sep:
+            min_sep = sep
+            vpoint = c
+
+    if vpoint is not None:
+        return vpoint
+    else:
+        return False
 
 
 def point_is_near_point(point1, point2, dist):
@@ -59,9 +71,9 @@ def point_is_near_point(point1, point2, dist):
     ydiff = float(y1) - float(y2)
     sep = ((xdiff ** 2) + (ydiff ** 2)) ** 0.5
     if sep < dist:
-        return True
+        return True, sep
     else:
-        return False
+        return False, sep
 
 
 # given a valid pair of nearby points, try to build the next step in trajectory
@@ -222,8 +234,11 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 4
+min_length = 2
 ti = 0
+
+# write tid / x / y / pid
+# but needs to be tid / x / y / pid / FRAME
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
