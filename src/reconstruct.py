@@ -100,21 +100,30 @@ def getData(folder):
             y = float(row.split()[1])
             pts4.append([x, y])
 
+        rec_data = True
+        print "> Designated reconstruction correspondences provided."
+
     except IOError:
         print "> No reconstruction points provided. Using full point set."
         pts3 = pts1
         pts4 = pts2
+        rec_data = False
 
-    return original_3Ddata, pts1, pts2, pts3, pts4
+    return original_3Ddata, pts1, pts2, pts3, pts4, rec_data
 
 
 # INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
-    sim = sys.argv[1]
+    d = sys.argv[1]
 except IndexError:
-    sim = 1
+    d = 1
 
-original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw = getData(sim)
+original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw, rec_data = getData(d)
+
+pts1 = []
+pts2 = []
+pts3 = []
+pts4 = []
 
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
@@ -123,8 +132,8 @@ pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
-K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+K1 = np.mat(tools.CalibArray(1091, 640, 360), dtype='float32')
+K2 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -169,6 +178,10 @@ def run():
     print "\n> KP1:\n", KP1
     print "\n> KP2:\n", KP2
 
+    # SYNCHRONISATION
+    if rec_data:
+        ret1, ret2 = synchronise(pts3, pts4, F)
+
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
 
@@ -181,7 +194,7 @@ def run():
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
-def getFundamentalMatrix(pts1, pts2):
+def getFundamentalMatrix(pts_1, pts_2):
 
     # 8point normalisation
     # pts1_, T1 = eightPointNormalisation(pts1)
@@ -191,7 +204,7 @@ def getFundamentalMatrix(pts1, pts2):
     # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts1, pts2, cv.CV_FM_8POINT)
+    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_8POINT)
     tools.is_singular(F)
 
     # denormalise
@@ -319,16 +332,16 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
 
 
 # linear least squares triangulation for one 3-space point X
-def triangulateLS(P1, P2, pts1, pts2):
+def triangulateLS(P1, P2, pts_1, pts_2):
     points3d = []
 
-    for i in range(0, len(pts1)):
+    for i in range(0, len(pts_1)):
 
-        x1 = pts1[i][0]
-        y1 = pts1[i][1]
+        x1 = pts_1[i][0]
+        y1 = pts_1[i][1]
 
-        x2 = pts2[i][0]
-        y2 = pts2[i][1]
+        x2 = pts_2[i][0]
+        y2 = pts_2[i][1]
 
         p1 = Point(x1, y1)
         p2 = Point(x2, y2)
@@ -341,8 +354,8 @@ def triangulateLS(P1, P2, pts1, pts2):
 
 
 # expects normalised points
-def triangulateCV(KP1, KP2, pts_a, pts_b):
-    points4d = cv2.triangulatePoints(KP1, KP2, pts_a.T, pts_b.T)
+def triangulateCV(KP1, KP2, pts_1, pts_2):
+    points4d = cv2.triangulatePoints(KP1, KP2, pts_1.T, pts_2.T)
     points4d = points4d.T
 
     points3d = cv2.convertPointsFromHomogeneous(points4d)
@@ -436,6 +449,24 @@ def CameraArray(R, t):
     P[2][3] = t[2]
 
     return P
+
+
+# given a set of point correspondences x x', adjust the correspondence such
+# that x'Fx = 0 is small
+def synchronise(pts_1, pts_2, F):
+
+    syncd1 = []
+    syncd2 = []
+
+    hom1 = cv2.convertPointsToHomogeneous(pts_1)
+    hom2 = cv2.convertPointsToHomogeneous(pts_2)
+
+    for p, p_ in zip(hom1, hom2):
+        err = np.mat(p) * F * np.mat(p_).T
+        print err
+
+    return syncd1, syncd2
+
 
 print "---------------------------------------------"
 run()
