@@ -7,13 +7,13 @@ import plotting as plot
 import structureTools as tools
 
 
-def testFundamentalReln(F, pts1, pts2):
+def testFundamentalReln(F, pts_1, pts_2):
     # check that xFx = 0 for homog coords x x'
     F = np.mat(F)
     tools.is_singular(F)
 
-    pts1_hom = cv2.convertPointsToHomogeneous(pts1)
-    pts2_hom = cv2.convertPointsToHomogeneous(pts2)
+    pts1_hom = cv2.convertPointsToHomogeneous(pts_1)
+    pts2_hom = cv2.convertPointsToHomogeneous(pts_2)
 
     errors = []
     sum_err = 0
@@ -43,8 +43,8 @@ def testFundamentalReln(F, pts1, pts2):
                         xlabel='Point Index')
 
     # test the epilines
-    pts1_epi = pts1.reshape((-1, 1, 2))
-    pts2_epi = pts2.reshape((-1, 1, 2))
+    pts1_epi = pts_1.reshape((-1, 1, 2))
+    pts2_epi = pts_2.reshape((-1, 1, 2))
 
     # lines computed from pts1
     lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
@@ -56,11 +56,11 @@ def testFundamentalReln(F, pts1, pts2):
     lines2 = lines2.reshape(-1, 3)
 
     distances2 = []
-    for l, p in zip(lines1, pts2):
+    for l, p in zip(lines1, pts_2):
         distances2.append(distanceToEpiline(l, p))
 
     distances1 = []
-    for l, p in zip(lines2, pts1):
+    for l, p in zip(lines2, pts_1):
         distances1.append(distanceToEpiline(l, p))
 
     avg1 = sum(distances1) / len(distances1)
@@ -75,10 +75,10 @@ def testFundamentalReln(F, pts1, pts2):
                         'Image 2: Point-Epiline Distances', 'Index', 'px')
 
     # overlay lines2 on pts1
-    plot.plotEpilines(lines2, pts1, 1)
+    plot.plotEpilines(lines2, pts_1, 1)
 
     # overlay lines1 on pts2
-    plot.plotEpilines(lines1, pts2, 2)
+    plot.plotEpilines(lines1, pts_2, 2)
 
 
 # find the distance between an epiline and image point pair
