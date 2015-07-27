@@ -2,6 +2,7 @@
 
 import sys
 import numpy as np
+import math
 
 with open("data/data_trajectories.txt") as datafile:
     data = datafile.read()
@@ -14,6 +15,8 @@ data.pop(-1)
 # each point will be (tid,pid)
 tid_pid = []
 TID = 0
+XC = 1
+YC = 2
 PID = 3
 
 for row in data:
@@ -73,11 +76,66 @@ def stitch(tid_list, tid_pid):
                                         not in B_points:
                                     point[0] = 1000
 
+                    # OR if the last point is the first point only
+                    elif A_points[-1] == B_points[0]:
+                        # compare the angle between end of A and start of B
+                        theta1 = getAngle(A_points[-2], A_points[-1])
+                        theta2 = getAngle(B_points[0], B_points[1])
+
+                        # if the angles are within k degrees
+                        if abs(theta1 - theta2) < 5:
+                            changed = True
+                            print "\n PARTIAL MATCH between TIDS:", A, B
+                            print ">", A_points[-1], B_points[0]
+
+                            # change tid of B to match A and and remove dupes
+                            print "> deleting point", B_points[0:1], "from", B
+                            del B_points[0:1]
+
+                            # do this to original data
+                            print "> updating data with stitch"
+                            for point in tid_pid:
+                                if point[TID] == B and point[PID] in B_points:
+                                    point[TID] = A
+                                elif point[TID] == B and point[PID] \
+                                        not in B_points:
+                                    point[0] = 1000
+
     # HAVE THEIR BEEN ANY CHANGES TO THE DATA SET AT ALL?
     print "\n> dataset changed:", changed
     if changed:
         print "> Re-running..."
         stitch(tid_list, tid_pid)
+
+
+# given a pair of PIDs, work out the angle they make with the vertical
+def getAngle(pid1, pid2):
+
+    p1 = None
+    p2 = None
+
+    for row in tid_pid:
+        if row[PID] == pid1:
+            p1 = row
+            break
+
+    for row in tid_pid:
+        if row[PID] == pid2:
+            p2 = row
+            break
+
+    dx = float(p2[XC]) - float(p1[XC])
+    dy = float(p2[YC]) - float(p1[YC])
+
+    try:
+        opp_adj = float(dy / dx)
+        theta = math.atan(opp_adj)
+        theta = math.degrees(theta)
+
+    except ZeroDivisionError:
+        theta = 90.0
+
+    return theta
 
 stitch(tid_list, tid_pid)
 
