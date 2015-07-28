@@ -38,6 +38,7 @@ def stitch(tid_list, tid_pid):
 
     # for each trajectory
     for A in tid_list:
+
         # collect the points into a list
         A_points = []
         for point in tid_pid:
@@ -46,8 +47,9 @@ def stitch(tid_list, tid_pid):
 
         # for each other trajectory
         for B in tid_list:
-            # collect the trajectory into a list
             if A != B:
+
+                # compile another list of points
                 B_points = []
                 for point in tid_pid:
                     if point[TID] == B:
@@ -55,51 +57,105 @@ def stitch(tid_list, tid_pid):
 
                 if len(B_points) > 1 and len(A_points) > 1:
 
-                    # if the last two points of A are the first two points of B
-                    if A_points[-1] == B_points[1]:
-                        if A_points[-2] == B_points[0]:
-                            changed = True
-                            print "\n> MATCH between TIDS:", A, B
-                            print ">", A_points[-2], B_points[0]
-                            print ">", A_points[-1], B_points[1]
+                    # if A ends somewhere in B
+                    if A_points[-1] in B_points:
 
-                            # change tid of B to match A and and remove dupes
-                            print "> deleting points", B_points[0:2], "from", B
-                            del B_points[0:2]
+                        # assume they match to begin
+                        match = True
 
-                            # do this to original data
-                            print "> updating data with stitch"
-                            for point in tid_pid:
-                                if point[TID] == B and point[PID] in B_points:
-                                    point[TID] = A
-                                elif point[TID] == B and point[PID] \
-                                        not in B_points:
-                                    point[0] = 1000
+                        # how many places into B does the end of A sit
+                        offset = B_points.index(A_points[-1])
 
-                    # OR if the last point is the first point only
-                    elif A_points[-1] == B_points[0]:
-                        # compare the angle between end of A and start of B
-                        theta1 = getAngle(A_points[-2], A_points[-1])
-                        theta2 = getAngle(B_points[0], B_points[1])
+                        if offset == 0:
+                            # compare the angle between end of A and start of B
+                            theta1 = getAngle(A_points[-2], A_points[-1])
+                            theta2 = getAngle(B_points[0], B_points[1])
 
-                        # if the angles are within k degrees
-                        if abs(theta1 - theta2) < 5:
-                            changed = True
-                            print "\n PARTIAL MATCH between TIDS:", A, B
-                            print ">", A_points[-1], B_points[0]
+                            # if the angles are within k degrees
+                            # if abs(theta1 - theta2) < 10:
+                            #     changed = True
+                            #     print "\n PARTIAL MATCH between TIDS:", A, B
+                            #     print "PID:", A_points[-1]
+                            #     del B_points[0:1]
 
-                            # change tid of B to match A and and remove dupes
-                            print "> deleting point", B_points[0:1], "from", B
-                            del B_points[0:1]
+                            #     # do this to original data
+                            #     # print "> updating data with stitch"
+                            #     for point in tid_pid:
+                            #         if point[TID] == B and point[PID] in B_points:
+                            #             point[TID] = A
+                            #         elif point[TID] == B and point[PID] \
+                            #                 not in B_points:
+                            #             point[0] = 1000
 
-                            # do this to original data
-                            print "> updating data with stitch"
-                            for point in tid_pid:
-                                if point[TID] == B and point[PID] in B_points:
-                                    point[TID] = A
-                                elif point[TID] == B and point[PID] \
-                                        not in B_points:
-                                    point[0] = 1000
+                        elif offset > 0 and offset < len(A_points):
+                            # check every element of B from B[0] to B[offset]
+                            for i in xrange(0, offset + 1):
+                                a_index = -(1 + offset) + i
+
+                                # if one element doesn't match then bail
+                                if B_points[i] != A_points[a_index]:
+                                    match = False
+                                    break
+
+                            if match:
+                                changed = True
+                                # change tid of B to match A and remove dupes
+                                print "\n> MATCH between TIDS:", A, B
+                                print "\n> Points in match:", offset + 1
+                                del B_points[0:offset + 1]
+
+                                for point in tid_pid:
+                                    if point[TID] == B and point[PID] in B_points:
+                                        point[TID] = A
+                                    elif point[TID] == B and point[PID] not in B_points:
+                                        point[TID] = 1000
+
+
+                    # # if the last two points of A are the first two points of B
+                    # if A_points[-1] == B_points[1]:
+                    #     if A_points[-2] == B_points[0]:
+                    #         changed = True
+                    #         print "\n> MATCH between TIDS:", A, B
+                    #         print ">", A_points[-2], B_points[0]
+                    #         print ">", A_points[-1], B_points[1]
+
+                    #         # change tid of B to match A and and remove dupes
+                    #         print "> deleting points", B_points[0:2], "from", B
+                    #         del B_points[0:2]
+
+                    #         # do this to original data
+                    #         print "> updating data with stitch"
+                    #         for point in tid_pid:
+                    #             if point[TID] == B and point[PID] in B_points:
+                    #                 point[TID] = A
+                    #             elif point[TID] == B and point[PID] \
+                    #                     not in B_points:
+                    #                 point[0] = 1000
+
+                    # # OR if the last point is the first point only
+                    # elif A_points[-1] == B_points[0]:
+                    #     # compare the angle between end of A and start of B
+                    #     theta1 = getAngle(A_points[-2], A_points[-1])
+                    #     theta2 = getAngle(B_points[0], B_points[1])
+
+                    #     # if the angles are within k degrees
+                    #     if abs(theta1 - theta2) < 15:
+                    #         changed = True
+                    #         print "\n PARTIAL MATCH between TIDS:", A, B
+                    #         print ">", A_points[-1], B_points[0]
+
+                    #         # change tid of B to match A and and remove dupes
+                    #         print "> deleting point", B_points[0:1], "from", B
+                    #         del B_points[0:1]
+
+                    #         # do this to original data
+                    #         print "> updating data with stitch"
+                    #         for point in tid_pid:
+                    #             if point[TID] == B and point[PID] in B_points:
+                    #                 point[TID] = A
+                    #             elif point[TID] == B and point[PID] \
+                    #                     not in B_points:
+                    #                 point[0] = 1000
 
     # HAVE THEIR BEEN ANY CHANGES TO THE DATA SET AT ALL?
     print "\n> dataset changed:", changed
