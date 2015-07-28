@@ -22,15 +22,18 @@ from kfilter import KFilter
 
 # Kalman Parameters
 init_dist = 100
-verify_distance = 25
+verify_distance = 15
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 0
+max_misses = 3
 min_length = 2
+
+# debug mode
+d = False
 
 print "----------KALMAN.PY------------"
 
@@ -86,30 +89,48 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
     global new_trajectory
     global n_miss
 
-    if new_trajectory:
+    if d and new_trajectory:
         print "\nNEW"
-    print "\ntrajectory:\n", this_trajectory
 
-    print "Head:", p0
-    print "Arm:", p1
+    if d:
+        print "\ntrajectory:\n", this_trajectory
+        print "Head:", p0
+        print "Arm:", p1
 
     # PREDICT location of branch
     kf.predict()
     predicted = kf.getPredicted()
-    print "Predicted:", predicted
+    if d: print "Predicted:", predicted
 
     # MEASURE location of verifying point
     p_verification = verified(predicted, frame_index + 1)
-    print "Verified by:", p_verification
+    if d: print "Verified by:", p_verification
 
-    if p_verification is not False:
+    if p_verification is False:
+        n_miss += 1
 
+        if n_miss >= max_misses:
+            if d: print "Bridge too far. End trajectory at last verified point."
+            n_miss = 0
+            new_trajectory = True
+            bridge = []
+
+        elif n_miss < max_misses:
+            # keep predicting from the unverified corrected point
+            unverified = (predicted[0], predicted[1], frame_index + 1)
+            if d: print "Append predicted point to bridge:", unverified
+            bridge.append(unverified)
+
+            this_trajectory = build_trajectory(
+                this_trajectory, bridge, kf, frame_index + 1, p1, unverified)
+
+    else:
         # CORRECT against the verifying measurement
         x = p_verification[0]
         y = p_verification[1]
         kf.correct(x, y)
         corrected = kf.getCorrected()
-        print "Corrected against P_ver:", corrected
+        if d: print "Corrected against P_ver:", corrected
 
         # if a brand new trajectory, add the initialising points too
         if new_trajectory:
@@ -120,34 +141,16 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 
         # if a bridge of unverifieds was needed, add it
         if len(bridge) != 0:
-            print "Appending bridge"
+            if d: print "Appending bridge of length:", len(bridge)
             this_trajectory = this_trajectory + bridge
             bridge = []
+            n_miss = 0
 
         # add verified point to trajectory + continue
         this_trajectory.append(p_verification)
 
-        "Appending verification point:", p_verification
-        # plot.plot2D(this_trajectory, 'Trajectory')
-
-        build_trajectory(
+        this_trajectory = build_trajectory(
             this_trajectory, bridge, kf, frame_index + 1, p1, p_verification)
-
-    elif p_verification is False:
-        n_miss += 1
-
-        if n_miss >= max_misses:
-            # print "--------------END-----------------"
-            n_miss = 0
-            new_trajectory = True
-            bridge = []
-
-        elif n_miss < max_misses:
-            # keep predicting from the unverified corrected point
-            bridge.append(p1)
-            unverified = (corrected[0], corrected[1])
-            build_trajectory(
-                this_trajectory, bridge, kf, frame_index + 1, p1, unverified)
 
     return this_trajectory
 
@@ -235,8 +238,8 @@ for frame_index, f0 in enumerate(frame_array):
                 vx = xdiff
                 vy = ydiff
 
-                print "\n-------- INIT Filter --------"
-                print "calculated speeds:", vx, vy
+                # print "\n-------- INIT Filter --------"
+                # print "calculated speeds:", vx, vy
 
                 kf.setPostState(b1[0], b1[1], vx, vy)
 
@@ -256,6 +259,7 @@ ti = 0
 
 # write tid / x / y / pid
 # but needs to be tid / x / y / pid / FRAME
+
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
