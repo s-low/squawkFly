@@ -132,8 +132,8 @@ pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(1091, 640, 360), dtype='float32')
-K2 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')
+K1 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')  # d5000
+K2 = np.mat(tools.CalibArray(602, 640, 360), dtype='float32')  # gopro
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -213,7 +213,7 @@ def getFundamentalMatrix(pts_1, pts_2):
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
-    fund.testFundamentalReln(F, pts1, pts2)
+    fund.testFundamentalReln(F, pts_1, pts_2)
     return F
 
 
@@ -466,6 +466,52 @@ def synchronise(pts_1, pts_2, F):
         print err
 
     return syncd1, syncd2
+
+
+# Copyright 2013, Alexander Mordvintsev & Abid K
+def autoGetCorrespondences(img1, img2):
+    sift = cv2.SIFT()
+
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
+
+    # FLANN parameters
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+    search_params = dict(checks=50)
+
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+    matches = flann.knnMatch(des1, des2, k=2)
+
+    good = []
+    auto_pts1 = []
+    auto_pts2 = []
+
+    # ratio test as per Lowe's paper
+    for i, (m, n) in enumerate(matches):
+        if m.distance < 0.8 * n.distance:
+            good.append(m)
+            auto_pts2.append(kp2[m.trainIdx].pt)
+            auto_pts1.append(kp1[m.queryIdx].pt)
+
+    return np.float32(auto_pts1), np.float32(auto_pts2)
+
+
+def autoGetF():
+    img1 = cv2.imread('../res/downs_test1/d5000.png', 0)
+    img2 = cv2.imread('../res/downs_test1/gopro.png', 0)
+
+    auto_pts1, auto_pts2 = autoGetCorrespondences(img1, img2)
+
+    F, mask = cv2.findFundamentalMat(auto_pts1, auto_pts2, cv2.FM_LMEDS)
+
+    # We select only inlier points
+    auto_pts1 = auto_pts1[mask.ravel() == 1]
+    auto_pts2 = auto_pts2[mask.ravel() == 1]
+
+    return F, auto_pts1, auto_pts2
+
 
 
 print "---------------------------------------------"
