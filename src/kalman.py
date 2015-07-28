@@ -22,14 +22,14 @@ from kfilter import KFilter
 
 # Kalman Parameters
 init_dist = 100
-verify_distance = 15
+verify_distance = 20
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 3
+max_misses = 4
 min_length = 2
 
 # debug mode

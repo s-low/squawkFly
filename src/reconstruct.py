@@ -207,6 +207,8 @@ def getFundamentalMatrix(pts_1, pts_2):
     F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_8POINT)
     tools.is_singular(F)
 
+    # F, pts_1, pts_2 = autoGetF()
+
     # denormalise
     # F = T2.T * np.mat(F_) * T1
     # F = F / F[2, 2]

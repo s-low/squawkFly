@@ -36,6 +36,7 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
 
     fig = plt.figure(name)
     ax = plt.axes()
+    # ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
     ax.scatter(x1, y1, color='r')
     if not onlyoneset:
         ax.scatter(x2, y2, color='b')
