@@ -18,6 +18,8 @@ with open("data/data_detections.txt") as datafile:
     raw = datafile.read()
     datafile.close()
 
+outfile = open('data_trajectories_subset.txt', 'w')
+
 trajectories = trajectories.split('\n')
 raw = raw.split('\n')
 
@@ -42,6 +44,7 @@ ax.plot(raw_x, raw_y, 'k.')
 last_t = int(0)
 set_x = []
 set_y = []
+displayed_t = []
 
 for row in trajectories:
     t = int(row.split(' ')[0])
@@ -54,7 +57,11 @@ for row in trajectories:
 
     else:
         if len(set_x) > min_length:
+            displayed_t.append(last_t)
             ax.plot(set_x, set_y, linewidth=2)
+            for a, b in zip(set_x, set_y):
+                outfile.write(a + ' ' + b + '\n')
+
         set_x = []
         set_y = []
         last_t = t
@@ -64,4 +71,7 @@ for row in trajectories:
 if len(set_x) > min_length:
     ax.plot(set_x, set_y, linewidth=2)
 
+print "Showing trajectories:", displayed_t
+
+outfile.close()
 plt.show()
