@@ -61,6 +61,8 @@ for A in tid_list:
 
             if set(B_points).issubset(A_points):
                 count += 1
+                sys.stdout.write("\r" + str(count))
+                sys.stdout.flush()
                 trivial_tids.append(B)
 
 
