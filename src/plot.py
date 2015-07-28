@@ -17,7 +17,7 @@ if len(sys.argv) > 1:
         save = True
     if sys.argv[1] == 's':
         stack = True
-
+ 
 
 # DATA
 filename = "data/data_detections.txt"
@@ -69,7 +69,7 @@ ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
 if animate_on:
     counter = ax.text(710, -40, 'Frame:', fontsize=15)
-scat, = ax.plot([], [], 'ro')
+scat, = ax.plot([], [], 'k.')
 
 
 x_set = []
