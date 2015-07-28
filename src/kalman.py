@@ -16,19 +16,23 @@ import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
+import plotting as plot
 
 from kfilter import KFilter
 
 # Kalman Parameters
-init_dist = 70
-verify_distance = 50
+init_dist = 100
+verify_distance = 25
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 5
+max_misses = 0
+min_length = 2
+
+print "----------KALMAN.PY------------"
 
 
 def verified(corrected_point, next_frame_index):
@@ -82,37 +86,49 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
     global new_trajectory
     global n_miss
 
-    x = p1[0]
-    y = p1[1]
+    if new_trajectory:
+        print "\nNEW"
+    print "\ntrajectory:\n", this_trajectory
 
-    # predict and correct
-    kf.update(x, y)
-    corrected = kf.getCorrected()
+    print "Head:", p0
+    print "Arm:", p1
+
+    # PREDICT location of branch
+    kf.predict()
     predicted = kf.getPredicted()
+    print "Predicted:", predicted
 
-    # verify
-    p_verification = verified(corrected, frame_index + 1)
+    # MEASURE location of verifying point
+    p_verification = verified(predicted, frame_index + 1)
+    print "Verified by:", p_verification
 
     if p_verification is not False:
-        # print ""
-        # print "f:"+`frame_index-1`, p0
-        # print "f:"+`frame_index`, p1
-        # print "Predicted:",predicted
-        # print "Corrected:",corrected
-        # print "VERIFIED by f:"+`frame_index+1`,p_verification
 
-        # if brand new, add the very first point too
+        # CORRECT against the verifying measurement
+        x = p_verification[0]
+        y = p_verification[1]
+        kf.correct(x, y)
+        corrected = kf.getCorrected()
+        print "Corrected against P_ver:", corrected
+
+        # if a brand new trajectory, add the initialising points too
         if new_trajectory:
             this_trajectory.append(p0)
+            this_trajectory.append(p1)
             new_trajectory = False
+            # plot.plot2D(this_trajectory, 'Trajectory')
 
         # if a bridge of unverifieds was needed, add it
         if len(bridge) != 0:
+            print "Appending bridge"
             this_trajectory = this_trajectory + bridge
             bridge = []
 
         # add verified point to trajectory + continue
-        this_trajectory.append(p1)
+        this_trajectory.append(p_verification)
+
+        "Appending verification point:", p_verification
+        # plot.plot2D(this_trajectory, 'Trajectory')
 
         build_trajectory(
             this_trajectory, bridge, kf, frame_index + 1, p1, p_verification)
@@ -135,9 +151,8 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
 
     return this_trajectory
 
+
 # retrieve output of detection system and parse
-
-
 def get_data(filename):
     global max_frame
 
@@ -209,8 +224,8 @@ for frame_index, f0 in enumerate(frame_array):
             b1 = (b1_x, b1_y, b1_pid)
 
             # IF separation between b and b+ is small
-            xdiff = abs(b0_x - b1_x)
-            ydiff = abs(b0_y - b1_y)
+            xdiff = b1_x - b0_x
+            ydiff = b1_y - b0_y
             sep = ((ydiff ** 2) + (xdiff ** 2)) ** 0.5
 
             if sep < init_dist:
@@ -219,6 +234,9 @@ for frame_index, f0 in enumerate(frame_array):
                 kf = KFilter()
                 vx = xdiff
                 vy = ydiff
+
+                print "\n-------- INIT Filter --------"
+                print "calculated speeds:", vx, vy
 
                 kf.setPostState(b1[0], b1[1], vx, vy)
 
@@ -234,7 +252,6 @@ for frame_index, f0 in enumerate(frame_array):
 
 print ""
 count = 0
-min_length = 2
 ti = 0
 
 # write tid / x / y / pid

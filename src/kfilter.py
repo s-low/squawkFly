@@ -61,11 +61,21 @@ class KFilter(object):
         self.kf.state_post[2, 0] = vx
         self.kf.state_post[3, 0] = vy
 
+    def predict(self):
+        self.predicted = cv.KalmanPredict(self.kf)
+
+    def correct(self, x, y):
+        self.measurement[0, 0] = x
+        self.measurement[1, 0] = y
+        print "correcting against", x, y
+        self.corrected = cv.KalmanCorrect(self.kf, self.measurement)
+
     def update(self, x, y):
         self.measurement[0, 0] = x
         self.measurement[1, 0] = y
 
         self.predicted = cv.KalmanPredict(self.kf)
+        print "correcting against", x, y
         self.corrected = cv.KalmanCorrect(self.kf, self.measurement)
 
     def getCorrected(self):
