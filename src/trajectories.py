@@ -44,7 +44,11 @@ ax.plot(raw_x, raw_y, 'k.')
 last_t = int(0)
 set_x = []
 set_y = []
+current_longest_x = []
+current_longest_y = []
+current_longest_t = 0
 displayed_t = []
+
 
 for row in trajectories:
     t = int(row.split(' ')[0])
@@ -56,8 +60,13 @@ for row in trajectories:
         set_y.append(y)
 
     else:
-        if len(set_x) > min_length:
-            displayed_t.append(last_t)
+        if min_length == -1:
+            if len(set_x) > len(current_longest_x):
+                current_longest_x = set_x
+                current_longest_y = set_y
+                current_longest_t = t
+        elif len(set_x) > min_length:
+            displayed_t.append(t)
             ax.plot(set_x, set_y, linewidth=2)
             for a, b in zip(set_x, set_y):
                 outfile.write(a + ' ' + b + '\n')
@@ -68,10 +77,19 @@ for row in trajectories:
         set_x.append(x)
         set_y.append(y)
 
-if len(set_x) > min_length:
+if min_length == -1:
+    if len(set_x) > len(current_longest_x):
+        current_longest_x = set_x
+        current_longest_y = set_y
+elif len(set_x) > min_length:
     ax.plot(set_x, set_y, linewidth=2)
+    print "Showing trajectories:", displayed_t
 
-print "Showing trajectories:", displayed_t
+if min_length == -1:
+    ax.plot(current_longest_x, current_longest_y, linewidth=2)
+    print "Longest trajectory TID:", current_longest_t
+    print "Length:", len(current_longest_x)
+
 
 outfile.close()
 plt.show()
