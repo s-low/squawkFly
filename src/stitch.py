@@ -14,10 +14,15 @@ data.pop(-1)
 # for each pair of trajectories A and B in data
 # each point will be (tid,pid)
 tid_pid = []
+
+# index markers
 TID = 0
 XC = 1
 YC = 2
 PID = 3
+
+# debug mode
+d = True
 
 for row in data:
     tid_pid.append(list((row.split(' ')[0], row.split(' ')[1],
@@ -33,27 +38,32 @@ int_list = map(int, tid_list)
 max_tid = max(int_list)
 
 
-def stitch(tid_list, tid_pid):
+def stitch():
+    # modify scope
+    global tid_list
+    global tid_pid
+
     changed = False
     matches = 0
     # for each trajectory
     for A in tid_list:
 
-        # collect the points into a list
-        A_points = []
-        for point in tid_pid:
-            if point[TID] == A:
-                A_points.append(point[PID])
-
         # for each other trajectory
         for B in tid_list:
             if A != B:
 
+                # compile and RECOMPILE the A points into a list
+                A_points = []
+                for point in tid_pid:
+                    if point[TID] == A:
+                        A_points.append(point[PID])
+                        
                 # compile another list of points
                 B_points = []
                 for point in tid_pid:
                     if point[TID] == B:
                         B_points.append(point[PID])
+
 
                 if len(B_points) > 1 and len(A_points) > 1:
 
@@ -74,12 +84,15 @@ def stitch(tid_list, tid_pid):
                             # if the angles are within k degrees
                             if abs(theta1 - theta2) < 10:
                                 changed = True
-                                print "\n PARTIAL MATCH between TIDS:", A, B
-                                print "PID:", A_points[-1]
+                                if d: print "\n PARTIAL MATCH between TIDS:", A, B
+                                if d: print "PID:", A_points[-1]
+                                print A, B
+                                print A_points
+                                print B_points
+                                if d: raw_input()
                                 del B_points[0:1]
 
                                 # do this to original data
-                                print "> updating data with stitch"
                                 for point in tid_pid:
                                     if point[TID] == B and point[PID] in B_points:
                                         point[TID] = A
@@ -101,10 +114,15 @@ def stitch(tid_list, tid_pid):
                                 matches += 1
                                 changed = True
                                 # change tid of B to match A and remove dupes
-                                # print "\n> MATCH between TIDS:", A, B
-                                # print "\n> Points in match:", offset + 1
-                                sys.stdout.write("\r" + str(matches))
-                                sys.stdout.flush()
+                                if d: print "\n> MATCH between TIDS:", A, B
+                                if d: print "First PID:", A_points[-1]
+                                if d: print "\n> Points in match:", offset + 1
+                                print A, B
+                                print A_points
+                                print B_points
+                                if d: raw_input()
+                                if not d: sys.stdout.write("\r" + str(matches))
+                                if not d: sys.stdout.flush()
 
                                 del B_points[0:offset + 1]
 
@@ -164,7 +182,7 @@ def stitch(tid_list, tid_pid):
     print "\n> dataset changed:", changed
     if changed:
         print "> Re-running..."
-        stitch(tid_list, tid_pid)
+        stitch()
 
 
 # given a pair of PIDs, work out the angle they make with the vertical
@@ -196,7 +214,7 @@ def getAngle(pid1, pid2):
 
     return theta
 
-stitch(tid_list, tid_pid)
+stitch()
 
 # write the new data back to file
 outfile = open('data/data_trajectories.txt', 'w')
