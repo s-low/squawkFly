@@ -44,52 +44,69 @@ ax.plot(raw_x, raw_y, 'k.')
 last_t = int(0)
 set_x = []
 set_y = []
+set_f = []
 current_longest_x = []
 current_longest_y = []
 current_longest_t = 0
 displayed_t = []
 
-
+# Rows are: TID, X, Y, FRAME, PID
 for row in trajectories:
     t = int(row.split(' ')[0])
     x = row.split(' ')[1]
     y = row.split(' ')[2]
+    f = row.split(' ')[3]
 
+    # buld the trajectory
     if t == last_t:
         set_x.append(x)
         set_y.append(y)
+        set_f.append(f)
 
+    # work out what to do with it
     else:
-        if min_length == -1:
-            if len(set_x) > len(current_longest_x):
-                current_longest_x = set_x
-                current_longest_y = set_y
-                current_longest_t = t
-        elif len(set_x) > min_length:
+
+        # log the longest T
+        if len(set_x) > len(current_longest_x):
+            current_longest_x = set_x
+            current_longest_y = set_y
+            current_longest_f = set_f
+            current_longest_t = t
+
+        # accepting anything over a certain length
+        if len(set_x) >= min_length and min_length != -1:
             displayed_t.append(t)
             ax.plot(set_x, set_y, linewidth=2)
-            for a, b in zip(set_x, set_y):
-                outfile.write(a + ' ' + b + '\n')
 
+            # write (x, y, frame) to subset file
+            for a, b, c in zip(set_x, set_y, set_f):
+                outfile.write(a + ' ' + b + ' ' + c + '\n')
+
+        # reset and start the new T
         set_x = []
         set_y = []
         last_t = t
         set_x.append(x)
         set_y.append(y)
 
-if min_length == -1:
-    if len(set_x) > len(current_longest_x):
-        current_longest_x = set_x
-        current_longest_y = set_y
-elif len(set_x) > min_length:
+# file over - handle the remainder T
+if len(set_x) > len(current_longest_x):
+    current_longest_x = set_x
+    current_longest_y = set_y
+    current_longest_f = set_f
+    current_longest_t = t
+
+if len(set_x) >= min_length and min_length != -1:
     ax.plot(set_x, set_y, linewidth=2)
-    print "Showing trajectories:", displayed_t
 
 if min_length == -1:
     ax.plot(current_longest_x, current_longest_y, linewidth=2)
     print "Longest trajectory TID:", current_longest_t
     print "Length:", len(current_longest_x)
+    print current_longest_x
 
+else:
+    print "Showing trajectories:", displayed_t
 
 outfile.close()
 plt.show()

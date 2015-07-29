@@ -167,7 +167,7 @@ def search(src, thresh):
 
 def square(h, w):
     squareness = abs((float(w) / float(h)) - 1)
-    if squareness < 0.3:
+    if squareness < 0.6:
         return True
     else:
         return False

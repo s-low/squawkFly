@@ -30,6 +30,7 @@ data = data.split('\n')
 points = []
 interpolated_points = []
 
+# rows are X, Y, FRAME
 for row in data:
     point = []
     point.append(float(row.split(' ')[0]))
@@ -98,6 +99,7 @@ for i in range(0, len(points) - 1):
         startOfFile = False
 
     outfile.close()
+    print "> Written to:", outfilename
 
 arr = np.array(interpolated_points)
 x = arr[:, 0]

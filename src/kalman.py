@@ -53,7 +53,10 @@ def verified(corrected_point, next_frame_index):
         cx = float(next_frame["x"][point_index])
         cy = float(next_frame["y"][point_index])
         c_pid = int(next_frame["pid"][point_index])
-        c = (cx, cy, c_pid)
+        c_frame = next_frame_index
+
+        # POINT: X / Y / FRAME / PID
+        c = (cx, cy, c_frame, c_pid)
 
         vflag, sep = point_is_near_point(corrected_point, c, verify_distance)
 
@@ -107,6 +110,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
     # MEASURE location of verifying point
     p_verification = verified(predicted, frame_index + 1)
+
     if d:
         print "Verified by:", p_verification
 
@@ -122,7 +126,8 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
         elif n_miss < max_misses:
             # keep predicting from the unverified corrected point
-            unverified = (predicted[0], predicted[1], frame_index + 1)
+            # POINT: X / Y / FRAME / PID
+            unverified = (predicted[0], predicted[1], frame_index + 1, 1000)
             if d:
                 print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
@@ -171,22 +176,23 @@ def get_data(filename):
 
     data = data.split('\n')
 
+    # data_detections in form: X / Y / FRAME / PID
     all_x = [row.split(' ')[0] for row in data]
     all_y = [row.split(' ')[1] for row in data]
     all_frames = [row.split(' ')[2] for row in data]
-    all_index = [row.split(' ')[3] for row in data]
+    all_pid = [row.split(' ')[3] for row in data]
 
-    # now translate into frame array
+    # now translate into 'frame array' (each element is a frame)
     max_frame = int(all_frames[-1])
     frame_array = [{} for x in xrange(max_frame + 1)]
 
-    # for each data point - dump it into the frame of dictionaries
+    # create an array of dictionaries, one element for each frame
     for i in range(0, max_frame + 1):
         frame_array[i]["x"] = []
         frame_array[i]["y"] = []
         frame_array[i]["pid"] = []
 
-    # for each recorded frame
+    # for each detection, get x/y/pid and dump it into the appropriate dict
     for row in data:
         x = row.split(' ')[0]
         y = row.split(' ')[1]
@@ -221,7 +227,10 @@ for frame_index, f0 in enumerate(frame_array):
         b0_x = float(f0["x"][b0_index])
         b0_y = float(f0["y"][b0_index])
         b0_pid = int(f0["pid"][b0_index])
-        b0 = (b0_x, b0_y, b0_pid)
+
+        # POINT: X / Y / FRAME / PID
+        b0 = (b0_x, b0_y, b0_frame, b0_pid)
+        print "b0:", b0
 
         # FOR each point pair of b and b1:
         for b1_index, b1 in enumerate(f1["x"]):
@@ -230,7 +239,10 @@ for frame_index, f0 in enumerate(frame_array):
             b1_x = float(f1["x"][b1_index])
             b1_y = float(f1["y"][b1_index])
             b1_pid = int(f1["pid"][b1_index])
-            b1 = (b1_x, b1_y, b1_pid)
+
+            # POINT: X / Y / FRAME / PID
+            b1 = (b1_x, b1_y, b1_frame, b1_pid)
+            print "b1:", b1
 
             # IF separation between b and b+ is small
             xdiff = b1_x - b0_x
@@ -263,15 +275,15 @@ print ""
 count = 0
 ti = 0
 
-# write tid / x / y / pid
-# but needs to be tid / x / y / pid / FRAME
+# write: TID / X / Y / FRAME / PID
 
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
-        for point in trajectory:
-            outfile.write(str(count) + " " + str(point[0]) + " " +
-                          str(point[1]) + " " + str(point[2]) + "\n")
+        for p in trajectory:
+            print p
+            outfile.write(str(count) + " " + str(p[0]) + " " +
+                          str(p[1]) + " " + str(p[2]) + " " + str(p[3]) + "\n")
 
 print "> Found", ti, "trajectories"
 print ">", count, "are longer than", min_length, "points"
