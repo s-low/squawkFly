@@ -22,7 +22,7 @@ from kfilter import KFilter
 
 # Kalman Parameters
 init_dist = 100
-verify_distance = 20
+verify_distance = 30
 
 # Program markers
 max_frame = 0
@@ -84,13 +84,15 @@ def point_is_near_point(point1, point2, dist):
 
 
 # given a valid pair of nearby points, try to build the next step in trajectory
-def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
+def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
+    global d
     global new_trajectory
     global n_miss
 
     if d and new_trajectory:
         print "\nNEW"
+        raw_input()
 
     if d:
         print "\ntrajectory:\n", this_trajectory
@@ -100,17 +102,20 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
     # PREDICT location of branch
     kf.predict()
     predicted = kf.getPredicted()
-    if d: print "Predicted:", predicted
+    if d:
+        print "Predicted:", predicted
 
     # MEASURE location of verifying point
     p_verification = verified(predicted, frame_index + 1)
-    if d: print "Verified by:", p_verification
+    if d:
+        print "Verified by:", p_verification
 
     if p_verification is False:
         n_miss += 1
 
         if n_miss >= max_misses:
-            if d: print "Bridge too far. End trajectory at last verified point."
+            if d:
+                print "Bridge too far. End at last verified point."
             n_miss = 0
             new_trajectory = True
             bridge = []
@@ -118,11 +123,12 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
         elif n_miss < max_misses:
             # keep predicting from the unverified corrected point
             unverified = (predicted[0], predicted[1], frame_index + 1)
-            if d: print "Append predicted point to bridge:", unverified
+            if d:
+                print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
 
             this_trajectory = build_trajectory(
-                this_trajectory, bridge, kf, frame_index + 1, p1, unverified)
+                this_trajectory, bridge, kf, frame_index + 1, p1, unverified, False)
 
     else:
         # CORRECT against the verifying measurement
@@ -130,19 +136,19 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
         y = p_verification[1]
         kf.correct(x, y)
         corrected = kf.getCorrected()
-        if d: print "Corrected against P_ver:", corrected
+        if d:
+            print "Corrected against P_ver:", corrected
 
         # if a brand new trajectory, add the initialising points too
         if new_trajectory:
             this_trajectory.append(p0)
-            this_trajectory.append(p1)
+            # only append p1 if it was a real point
+            if real:
+                this_trajectory.append(p1)
             new_trajectory = False
-            # plot.plot2D(this_trajectory, 'Trajectory')
 
-        # if a bridge of unverifieds was needed, add it
+        # if a bridge of unverifieds was needed reset it
         if len(bridge) != 0:
-            if d: print "Appending bridge of length:", len(bridge)
-            this_trajectory = this_trajectory + bridge
             bridge = []
             n_miss = 0
 
@@ -150,7 +156,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1):
         this_trajectory.append(p_verification)
 
         this_trajectory = build_trajectory(
-            this_trajectory, bridge, kf, frame_index + 1, p1, p_verification)
+            this_trajectory, bridge, kf, frame_index + 1, p1, p_verification, True)
 
     return this_trajectory
 
@@ -246,7 +252,7 @@ for frame_index, f0 in enumerate(frame_array):
                 this_t = []
                 bridge = []
                 trajectory = build_trajectory(
-                    this_t, bridge, kf, frame_index + 1, b0, b1)
+                    this_t, bridge, kf, frame_index + 1, b0, b1, True)
 
                 if len(trajectory) != 0:
                     trajectories.append(trajectory)
