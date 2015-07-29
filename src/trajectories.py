@@ -57,6 +57,8 @@ for row in trajectories:
     y = row.split(' ')[2]
     f = row.split(' ')[3]
 
+    print x, y, f
+
     # buld the trajectory
     if t == last_t:
         set_x.append(x)
@@ -88,6 +90,7 @@ for row in trajectories:
         last_t = t
         set_x.append(x)
         set_y.append(y)
+        set_f.append(f)
 
 # file over - handle the remainder T
 if len(set_x) > len(current_longest_x):
@@ -104,6 +107,11 @@ if min_length == -1:
     print "Longest trajectory TID:", current_longest_t
     print "Length:", len(current_longest_x)
     print current_longest_x
+    print len(current_longest_f), len(current_longest_x), len(current_longest_y)
+
+    # write (x, y, frame) to subset file
+    for a, b, c in zip(current_longest_x, current_longest_y, current_longest_f):
+        outfile.write(a + ' ' + b + ' ' + c + '\n')
 
 else:
     print "Showing trajectories:", displayed_t
