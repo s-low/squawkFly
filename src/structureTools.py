@@ -95,7 +95,7 @@ def is_singular(a):
     det = np.linalg.det(a)
     s = not is_invertible(a)
     print "> Singular:", s
-    assert(s is True), "Singularity problems."
+    # assert(s is True), "Singularity problems."
 
 
 def is_invertible(a):

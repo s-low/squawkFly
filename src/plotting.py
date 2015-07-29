@@ -36,7 +36,7 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
 
     fig = plt.figure(name)
     ax = plt.axes()
-    # ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
+    # ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
     ax.scatter(x1, y1, color='r')
     if not onlyoneset:
         ax.scatter(x2, y2, color='b')
@@ -49,11 +49,13 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
 def plotEpilines(lines, pts, index):
     name = 'Corresponding Epilines on Image ' + str(index)
     fig = plt.figure(name)
+    ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
+
     for r in lines:
         a, b, c = r[0], r[1], r[2]
         x = np.linspace(0, 1280, 5)
         y = ((-c) - (a * x)) / b
-        plt.plot(x, y)
+        ax.plot(x, y)
 
     x = []
     y = []
@@ -61,7 +63,7 @@ def plotEpilines(lines, pts, index):
         x.append(p[0])
         y.append(p[1])
 
-    plt.plot(x, y, 'r.')
+    ax.plot(x, y, 'r.')
 
     plt.show()
 

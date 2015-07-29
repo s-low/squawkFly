@@ -57,9 +57,7 @@ for row in trajectories:
     y = row.split(' ')[2]
     f = row.split(' ')[3]
 
-    print x, y, f
-
-    # buld the trajectory
+    # build the trajectory
     if t == last_t:
         set_x.append(x)
         set_y.append(y)
@@ -106,8 +104,6 @@ if min_length == -1:
     ax.plot(current_longest_x, current_longest_y, linewidth=2)
     print "Longest trajectory TID:", current_longest_t
     print "Length:", len(current_longest_x)
-    print current_longest_x
-    print len(current_longest_f), len(current_longest_x), len(current_longest_y)
 
     # write (x, y, frame) to subset file
     for a, b, c in zip(current_longest_x, current_longest_y, current_longest_f):

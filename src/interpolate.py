@@ -63,7 +63,7 @@ for i in range(0, len(points) - 1):
     x = p[0]
     y = p[1]
 
-    max_ms_diff = 20  # no two points should be further apart than this
+    max_ms_diff = 15  # no two points should be further apart than this
 
     frames_between = n[2] - p[2]
     ms_between = frames_between * frame_length_ms

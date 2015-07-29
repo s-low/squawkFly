@@ -133,7 +133,7 @@ pts4 = np.array(pts4_raw, dtype='float32')
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')  # d5000
-K2 = np.mat(tools.CalibArray(602, 640, 360), dtype='float32')  # gopro
+K2 = np.mat(tools.CalibArray(1091, 640, 360), dtype='float32')  # g3
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -149,6 +149,9 @@ W, W_inv, Z = tools.initWZarrays()  # HZ 9.13
 
 
 def run():
+    global pts3
+    global pts4
+
     plot.plot3D(original_3Ddata, 'Original 3D Data')
     plot.plot2D(pts1_raw, 'First image')
     plot.plot2D(pts2_raw, 'Second image')
@@ -180,7 +183,7 @@ def run():
 
     # SYNCHRONISATION
     if rec_data:
-        ret1, ret2 = synchronise(pts3, pts4, F)
+        pts3, pts4 = synchronise(pts3, pts4, F)
 
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
@@ -459,13 +462,63 @@ def synchronise(pts_1, pts_2, F):
 
     syncd1 = []
     syncd2 = []
+    shorter = []
+    longer = []
+    short_flag = 0
 
-    hom1 = cv2.convertPointsToHomogeneous(pts_1)
-    hom2 = cv2.convertPointsToHomogeneous(pts_2)
+    if len(pts_1) < len(pts_2):
+        shorter = pts_1
+        longer = pts_2
+        short_flag = 1
+    else:
+        shorter = pts_2
+        longer = pts_1
+        short_flag = 2
 
-    for p, p_ in zip(hom1, hom2):
-        err = np.mat(p) * F * np.mat(p_).T
-        print err
+    diff = len(longer) - len(shorter)
+
+    shorter_hom = cv2.convertPointsToHomogeneous(shorter)
+    longer_hom = cv2.convertPointsToHomogeneous(longer)
+
+    averages = []
+
+    for offset in xrange(0, diff + 1):
+        err = 0
+        avg = 0
+
+        for i in xrange(0, len(shorter_hom)):
+            a = shorter_hom[i]
+            b = longer_hom[i + offset]
+            err += np.mat(a) * F * np.mat(b).T
+
+        avg = err / len(shorter_hom)
+        avg_off = (avg, offset)
+        averages.append(avg_off)
+        print avg, offset
+
+    m = min(float(a[0]) for a in averages)
+
+    ret = [item for item in averages if item[0] == m]
+
+    print "Minimum:", m
+    print "Offset:", ret[0][1]
+
+    # trim the beginning of the longer list
+    offset = ret[0][1]
+    longer = longer[offset:]
+    print len(longer)
+
+    # trim its end
+    tail = len(longer) - len(shorter)
+    longer = longer[:-tail]
+    print len(longer)
+
+    if short_flag == 1:
+        syncd1 = shorter
+        syncd2 = longer
+    else:
+        syncd1 = longer
+        syncd2 = shorter
 
     return syncd1, syncd2
 
@@ -513,7 +566,6 @@ def autoGetF():
     auto_pts2 = auto_pts2[mask.ravel() == 1]
 
     return F, auto_pts1, auto_pts2
-
 
 
 print "---------------------------------------------"

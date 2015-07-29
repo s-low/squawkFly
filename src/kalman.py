@@ -230,7 +230,6 @@ for frame_index, f0 in enumerate(frame_array):
 
         # POINT: X / Y / FRAME / PID
         b0 = (b0_x, b0_y, b0_frame, b0_pid)
-        print "b0:", b0
 
         # FOR each point pair of b and b1:
         for b1_index, b1 in enumerate(f1["x"]):
@@ -242,7 +241,6 @@ for frame_index, f0 in enumerate(frame_array):
 
             # POINT: X / Y / FRAME / PID
             b1 = (b1_x, b1_y, b1_frame, b1_pid)
-            print "b1:", b1
 
             # IF separation between b and b+ is small
             xdiff = b1_x - b0_x
@@ -281,7 +279,6 @@ for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
         for p in trajectory:
-            print p
             outfile.write(str(count) + " " + str(p[0]) + " " +
                           str(p[1]) + " " + str(p[2]) + " " + str(p[3]) + "\n")
 
