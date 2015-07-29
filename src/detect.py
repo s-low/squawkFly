@@ -12,8 +12,8 @@ tracking = True
 paused = True
 point_index = 0
 
-max_area = 3000
-min_area = 100
+max_area = 4000
+min_area = 200
 
 outfile = None
 
@@ -109,7 +109,7 @@ def diff(f0, f1, f2):
 
 # returns a re-thresholded image after blur and open/close/erode/dilate
 def morph(image):
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((11, 11), np.uint8)
     image = cv2.dilate(image, kernel)
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     image = cv2.GaussianBlur(image, (11, 11), 0)
