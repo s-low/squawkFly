@@ -197,12 +197,12 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-pts1, pts2 = synchroniseAtApex(pts1, pts2)
-pts3, pts4 = synchroniseAtApex(pts3, pts4)
+# pts1, pts2 = synchroniseAtApex(pts1, pts2)
+# pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')  # d5000
-K2 = np.mat(tools.CalibArray(1091, 640, 360), dtype='float32')  # g3
+K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # d5000
+K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # g3
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
