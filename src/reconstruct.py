@@ -37,7 +37,7 @@ def addNoise(a, b, points):
 # Get point correspondeces (1+2) from subdir
 # Optionally: original 3d set, correspondences to be reconstructed (3+4)
 def getData(folder):
-    path = 'simulation_data/' + str(folder) + '/'
+    path = 'tests/' + str(folder) + '/'
     pts1 = []
     pts2 = []
     pts3 = []
@@ -454,6 +454,29 @@ def CameraArray(R, t):
     P[2][3] = t[2]
 
     return P
+
+
+def synchroniseAtApex(pts_1, pts_2):
+    syncd1 = []
+    syncd2 = []
+    shorter = []
+    longer = []
+    short_flag = 0
+
+    if len(pts_1) < len(pts_2):
+        shorter = pts_1
+        longer = pts_2
+        short_flag = 1
+    else:
+        shorter = pts_2
+        longer = pts_1
+        short_flag = 2
+
+    diff = len(longer) - len(shorter)
+
+    apex_y = max(float(p[1]) for p in shorter)
+
+    ret = [item for item in averages if item[0] == m]
 
 
 # given a set of point correspondences x x', adjust the correspondence such
