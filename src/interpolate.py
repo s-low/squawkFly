@@ -69,10 +69,13 @@ for i in range(0, len(points) - 1):
     ms_between = frames_between * frame_length_ms
     num_between = int(ms_between / max_ms_diff)
 
+    print "Frames between:", frames_between
+    print "Number of points to insert:", num_between
+
     diff_x = n[0] - p[0]
     # diff_y = n[1] - p[1]
 
-    dx = int(diff_x / (num_between + 1))
+    dx = float(diff_x / (num_between + 1))
     # dy = int(diff_y / (num_between + 1))
 
     interpolated_points.append(p)

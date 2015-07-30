@@ -75,7 +75,7 @@ for row in trajectories:
 
         # accepting anything over a certain length
         if len(set_x) >= min_length and min_length != -1:
-            displayed_t.append(t)
+            displayed_t.append(last_t)
             ax.plot(set_x, set_y, linewidth=2)
 
             # write (x, y, frame) to subset file
