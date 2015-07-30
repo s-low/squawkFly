@@ -21,19 +21,19 @@ import plotting as plot
 from kfilter import KFilter
 
 # Kalman Parameters
-init_dist = 100
-verify_distance = 30
+init_dist = 400
+verify_distance = 100
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 4
+max_misses = 6
 min_length = 2
 
 # debug mode
-d = False
+d = True
 
 print "----------KALMAN.PY------------"
 
@@ -254,10 +254,11 @@ for frame_index, f0 in enumerate(frame_array):
                 vx = xdiff
                 vy = ydiff
 
-                # print "\n-------- INIT Filter --------"
-                # print "calculated speeds:", vx, vy
+                print "\n-------- INIT Filter --------"
+                print "Points:", b0, b1
 
-                kf.setPostState(b1[0], b1[1], vx, vy)
+                kf.setPostState(b1[0], b1[1], vx, vy, 0, 0)
+                print "Post state set:", b1[0], b1[1], vx, vy, 0, 0
 
                 this_t = []
                 bridge = []
