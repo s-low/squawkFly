@@ -9,6 +9,8 @@ import os.path
 
 plt.style.use('ggplot')
 
+max_ms_diff = float(15)  # no two points should be further apart in time
+
 try:
     filename = sys.argv[1]
     frame_rate = int(sys.argv[2])
@@ -19,7 +21,10 @@ except IndexError:
 name, ext = os.path.splitext(filename)
 
 outfilename = name + "_interpolated.txt"
-frame_length_ms = int(1000 / frame_rate)
+frame_length_ms = float(1000) / float(frame_rate)
+
+print "Frame Rate:", frame_rate
+print "Length of each frame (ms):", frame_length_ms
 
 # data in format: x / y / frame / pid
 with open(filename) as datafile:
@@ -62,8 +67,6 @@ for i in range(0, len(points) - 1):
 
     x = p[0]
     y = p[1]
-
-    max_ms_diff = 15  # no two points should be further apart than this
 
     frames_between = n[2] - p[2]
     ms_between = frames_between * frame_length_ms
