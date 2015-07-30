@@ -49,7 +49,8 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
 def plotEpilines(lines, pts, index):
     name = 'Corresponding Epilines on Image ' + str(index)
     fig = plt.figure(name)
-    ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
+    # ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
+    ax = plt.axes(xlim=(0, 1280))
 
     for r in lines:
         a, b, c = r[0], r[1], r[2]

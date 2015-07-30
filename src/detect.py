@@ -13,7 +13,7 @@ paused = True
 point_index = 0
 
 max_area = 4000
-min_area = 200
+min_area = 300
 
 outfile = None
 
