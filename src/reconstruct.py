@@ -39,7 +39,7 @@ def synchroniseAtApex(pts_1, pts_2):
         short_flag = 2
 
     diff = len(longer) - len(shorter)
-
+    print "Difference in lengths:", diff
     # find the highest y value in each point set
     apex1 = max(float(p[1]) for p in shorter)
     apex2 = max(float(p[1]) for p in longer)
@@ -47,22 +47,26 @@ def synchroniseAtApex(pts_1, pts_2):
     apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
     apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
 
-    print apex1, apex1_i
-    print apex2, apex2_i
+    print "\nAPEXES"
+    print "Short:", apex1, apex1_i, "of", len(shorter)
+    print "Long:", apex2, apex2_i, "of", len(longer)
 
     shift = apex2_i[0] - apex1_i[0]
-    remainder = diff - shift
-
-    print "Short:", len(shorter)
-    print "Long:", len(longer)
 
     # remove the front end dangle
     print "\nShift by:", shift
-    longer = longer[shift:]
-    print "New length:", len(longer)
+
+    if shift > 0:
+        longer = longer[shift:]
+        print "Longer front trimmed, new length:", len(longer)
+    else:
+        shorter = shorter[abs(shift):]
+        print "Shorter front trimmed, new length:", len(shorter)
+
+    remainder = diff - shift
 
     # remove the rear end dangle
-    print "\nTrim by:", remainder
+    print "\nTrim longer by remainder:", remainder
     index = len(longer) - remainder
     longer = longer[:index]
     print "New length:", len(longer)
@@ -197,12 +201,12 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-# pts1, pts2 = synchroniseAtApex(pts1, pts2)
-# pts3, pts4 = synchroniseAtApex(pts3, pts4)
+pts1, pts2 = synchroniseAtApex(pts1, pts2)
+pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # d5000
-K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # g3
+K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
+K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
