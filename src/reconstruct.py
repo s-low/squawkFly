@@ -22,6 +22,72 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 
+def synchroniseAtApex(pts_1, pts_2):
+    syncd1 = []
+    syncd2 = []
+    shorter = []
+    longer = []
+    short_flag = 0
+
+    if len(pts_1) < len(pts_2):
+        shorter = pts_1
+        longer = pts_2
+        short_flag = 1
+    else:
+        shorter = pts_2
+        longer = pts_1
+        short_flag = 2
+
+    diff = len(longer) - len(shorter)
+
+    # find the highest y value in each point set
+    apex1 = max(float(p[1]) for p in shorter)
+    apex2 = max(float(p[1]) for p in longer)
+
+    apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
+    apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
+
+    print apex1, apex1_i
+    print apex2, apex2_i
+
+    shift = apex2_i[0] - apex1_i[0]
+    remainder = diff - shift
+
+    print "Short:", len(shorter)
+    print "Long:", len(longer)
+
+    # remove the front end dangle
+    print "\nShift by:", shift
+    longer = longer[shift:]
+    print "New length:", len(longer)
+
+    # remove the rear end dangle
+    print "\nTrim by:", remainder
+    index = len(longer) - remainder
+    longer = longer[:index]
+    print "New length:", len(longer)
+
+    # find the highest y value in each point set
+    apex1 = max(float(p[1]) for p in shorter)
+    apex2 = max(float(p[1]) for p in longer)
+
+    apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
+    apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
+
+    print "\nNew apex positions:"
+    print apex1, apex1_i
+    print apex2, apex2_i
+
+    if short_flag == 1:
+        syncd1 = shorter
+        syncd2 = longer
+    else:
+        syncd1 = longer
+        syncd2 = shorter
+
+    return syncd1, syncd2
+
+
 # add some random noise to n image point set
 def addNoise(a, b, points):
     new = []
@@ -130,6 +196,9 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
+
+pts1, pts2 = synchroniseAtApex(pts1, pts2)
+pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005, 640, 360), dtype='float32')  # d5000
@@ -454,29 +523,6 @@ def CameraArray(R, t):
     P[2][3] = t[2]
 
     return P
-
-
-def synchroniseAtApex(pts_1, pts_2):
-    syncd1 = []
-    syncd2 = []
-    shorter = []
-    longer = []
-    short_flag = 0
-
-    if len(pts_1) < len(pts_2):
-        shorter = pts_1
-        longer = pts_2
-        short_flag = 1
-    else:
-        shorter = pts_2
-        longer = pts_1
-        short_flag = 2
-
-    diff = len(longer) - len(shorter)
-
-    apex_y = max(float(p[1]) for p in shorter)
-
-    ret = [item for item in averages if item[0] == m]
 
 
 # given a set of point correspondences x x', adjust the correspondence such
