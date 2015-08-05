@@ -578,7 +578,7 @@ def synchroniseGeometric(pts_1, pts_2, F):
             a = shorter_hom[i]
             b = longer_hom[i + offset]
             err += abs(np.mat(a) * F * np.mat(b).T)
-            print err
+            # print err
 
         avg = err / len(shorter)
         print "Offset, Err:", offset, avg
@@ -600,7 +600,9 @@ def synchroniseGeometric(pts_1, pts_2, F):
 
     # trim its end
     tail = len(longer) - len(shorter)
-    longer = longer[:-tail]
+    print "Trim tail:", tail
+    if tail != 0:
+        longer = longer[:-tail]
     print len(longer)
 
     if short_flag == 1:
