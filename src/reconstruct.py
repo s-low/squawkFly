@@ -23,6 +23,7 @@ Point = namedtuple("Point", "x y")
 
 
 def synchroniseAtApex(pts_1, pts_2):
+    print "APEX SYNCHRONISATION"
     syncd1 = []
     syncd2 = []
     shorter = []
@@ -201,12 +202,18 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-pts1, pts2 = synchroniseAtApex(pts1, pts2)
-pts3, pts4 = synchroniseAtApex(pts3, pts4)
+# # Synchronise the trajectories at apex
+# if rec_data is False:
+#     pts1, pts2 = synchroniseAtApex(pts1, pts2)
+#     pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
 K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
+
+# K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # d5000
+# K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # g3
+
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -256,7 +263,8 @@ def run():
 
     # SYNCHRONISATION
     if rec_data:
-        pts3, pts4 = synchronise(pts3, pts4, F)
+        pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
+        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
@@ -529,9 +537,13 @@ def CameraArray(R, t):
     return P
 
 
-# given a set of point correspondences x x', adjust the correspondence such
-# that x'Fx = 0 is small
-def synchronise(pts_1, pts_2, F):
+# given a set of point correspondences x x', adjust the alignment such
+# that x'Fx = 0 is smallest. obeys the geometry most closely.
+def synchroniseGeometric(pts_1, pts_2, F):
+
+    print "> GEOMETRIC SYNCHRONISATION:"
+    plot.plot2D(pts_1, name='First Trajectory')
+    plot.plot2D(pts_2, name='Second Trajectory')
 
     syncd1 = []
     syncd2 = []
@@ -549,6 +561,9 @@ def synchronise(pts_1, pts_2, F):
         short_flag = 2
 
     diff = len(longer) - len(shorter)
+    print "Longer:", len(longer)
+    print "Shorter:", len(shorter)
+    print "Diff:", diff
 
     shorter_hom = cv2.convertPointsToHomogeneous(shorter)
     longer_hom = cv2.convertPointsToHomogeneous(longer)
@@ -559,15 +574,17 @@ def synchronise(pts_1, pts_2, F):
         err = 0
         avg = 0
 
-        for i in xrange(0, len(shorter_hom)):
+        for i in xrange(0, len(shorter)):
             a = shorter_hom[i]
             b = longer_hom[i + offset]
-            err += np.mat(a) * F * np.mat(b).T
+            err += abs(np.mat(a) * F * np.mat(b).T)
+            print err
 
-        avg = err / len(shorter_hom)
+        avg = err / len(shorter)
+        print "Offset, Err:", offset, avg
+        raw_input()
         avg_off = (avg, offset)
         averages.append(avg_off)
-        print avg, offset
 
     m = min(float(a[0]) for a in averages)
 
