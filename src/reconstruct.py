@@ -215,17 +215,17 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-# Synchronise the trajectories at apex
-if rec_data is False:
-    pts1, pts2 = synchroniseAtApex(pts1, pts2)
-    pts3, pts4 = synchroniseAtApex(pts3, pts4)
-
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
-K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
+K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
 
 # K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 # K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+
+# using the trajectories themselves to calculate geometry
+if rec_data is False:
+    pts1, pts2 = synchroniseAtApex(pts1, pts2)
+    pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -245,18 +245,11 @@ def run():
     global pts4
 
     plot.plot3D(original_3Ddata, 'Original 3D Data')
-    plot.plot2D(pts1_raw, name='First Raw Image')
-    plot.plot2D(pts2_raw, name='Second Raw Image')
+    plot.plot2D(pts1_raw, name='First Static Correspondences')
+    plot.plot2D(pts2_raw, name='Second Static Correspondences')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
-
-    # print pts1, pts1.shape
-    # new = pts1.reshape((1, -1))
-    # print new
-
-    # sys.exit()
-    # newPoints1, newPoints2 = cv2.correctMatches(F, pts1, pts2)
 
     # ESSENTIAL MATRIX (HZ 9.12)
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
@@ -273,10 +266,16 @@ def run():
     print "\n> KP1:\n", KP1
     print "\n> KP2:\n", KP2
 
-    # SYNCHRONISATION
-    # if rec_data:
-        # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
-        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
+    # SYNCHRONISATION + CORRECTION
+    if rec_data:
+        pts3, pts4 = synchroniseAtApex(pts3, pts4)
+
+        pts3 = pts3.reshape((1, -1, 2))
+        pts4 = pts4.reshape((1, -1, 2))
+        newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
+
+    pts3 = newPoints3.reshape((-1, 2))
+    pts4 = newPoints4.reshape((-1, 2))
 
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
@@ -300,7 +299,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_RANSAC, 15)
+    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_RANSAC, 4)
     tools.is_singular(F)
 
     # F, pts_1, pts_2 = autoGetF()
