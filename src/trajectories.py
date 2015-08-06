@@ -45,9 +45,9 @@ last_t = int(0)
 set_x = []
 set_y = []
 set_f = []
-current_longest_x = []
-current_longest_y = []
-current_longest_t = 0
+longest_x = []
+longest_y = []
+longest_t = 0
 displayed_t = []
 
 # Rows are: TID, X, Y, FRAME, PID
@@ -67,11 +67,11 @@ for row in trajectories:
     else:
 
         # log the longest T
-        if len(set_x) > len(current_longest_x):
-            current_longest_x = set_x
-            current_longest_y = set_y
-            current_longest_f = set_f
-            current_longest_t = t
+        if len(set_x) > len(longest_x):
+            longest_x = set_x
+            longest_y = set_y
+            longest_f = set_f
+            longest_t = t
 
         # accepting anything over a certain length
         if len(set_x) >= min_length and min_length != -1:
@@ -91,22 +91,22 @@ for row in trajectories:
         set_f.append(f)
 
 # file over - handle the remainder T
-if len(set_x) > len(current_longest_x):
-    current_longest_x = set_x
-    current_longest_y = set_y
-    current_longest_f = set_f
-    current_longest_t = t
+if len(set_x) > len(longest_x):
+    longest_x = set_x
+    longest_y = set_y
+    longest_f = set_f
+    longest_t = t
 
 if len(set_x) >= min_length and min_length != -1:
     ax.plot(set_x, set_y, linewidth=2)
 
 if min_length == -1:
-    ax.plot(current_longest_x, current_longest_y, linewidth=2)
-    print "Longest trajectory TID:", current_longest_t
-    print "Length:", len(current_longest_x)
+    ax.plot(longest_x, longest_y, linewidth=2)
+    print "Longest trajectory TID:", longest_t
+    print "Length:", len(longest_x)
 
-    # write (x, y, frame) to subset file
-    for a, b, c in zip(current_longest_x, current_longest_y, current_longest_f):
+    # write (x, y, f) to subset file
+    for a, b, c in zip(longest_x, longest_y, longest_f):
         outfile.write(a + ' ' + b + ' ' + c + '\n')
 
 else:
