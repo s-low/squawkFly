@@ -21,6 +21,8 @@ plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
 
+simulation = False
+
 
 def synchroniseAtApex(pts_1, pts_2):
     print "APEX SYNCHRONISATION"
@@ -160,6 +162,8 @@ def getData(folder):
             z = float(row.split()[2])
             original_3Ddata.append([x, y, z])
 
+        print "> 3D reference data provided. Simulation."
+
     except IOError:
         print "> No 3D reference data provided. Not a simulation."
 
@@ -202,6 +206,9 @@ try:
 except IndexError:
     d = 1
 
+if d.isdigit():
+    simulation = True
+
 original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw, rec_data = getData(d)
 
 pts1 = []
@@ -219,11 +226,13 @@ pts4 = np.array(pts4_raw, dtype='float32')
 K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
 K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
 
-# K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
-# K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+# If one of the simulation folders, set the calib matrices to sim values
+if simulation:
+    K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+    K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 
 # using the trajectories themselves to calculate geometry
-if rec_data is False:
+if rec_data is False and simulation is False:
     pts1, pts2 = synchroniseAtApex(pts1, pts2)
     pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
@@ -273,9 +282,12 @@ def run():
         pts3 = pts3.reshape((1, -1, 2))
         pts4 = pts4.reshape((1, -1, 2))
         newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
+        pts3 = newPoints3.reshape((-1, 2))
+        pts4 = newPoints4.reshape((-1, 2))
 
-    pts3 = newPoints3.reshape((-1, 2))
-    pts4 = newPoints4.reshape((-1, 2))
+    elif simulation:
+        pts3 = pts1
+        pts4 = pts2
 
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
@@ -299,7 +311,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_RANSAC, 4)
+    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_8POINT)
     tools.is_singular(F)
 
     # F, pts_1, pts_2 = autoGetF()
