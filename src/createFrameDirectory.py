@@ -26,11 +26,12 @@ while (cap.isOpened()):
 
     if ret is True:
         count += 1
-        cv2.imshow('Current frame', frame)
-
-        outfilename = outdir + '/' + str(count) + '.png'
+        fname = str(count)
+        fname = fname.zfill(5)
+        outfilename = outdir + '/' + fname + '.png'
         print "write:", outfilename
         cv2.imwrite(outfilename, frame)
+
     else:
         break
 
