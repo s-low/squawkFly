@@ -17,7 +17,6 @@ if len(sys.argv) > 1:
         save = True
     if sys.argv[1] == 's':
         stack = True
- 
 
 # DATA
 filename = "data/data_detections.txt"

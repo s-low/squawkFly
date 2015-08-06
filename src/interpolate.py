@@ -9,7 +9,7 @@ import os.path
 
 plt.style.use('ggplot')
 
-max_ms_diff = float(15)  # no two points should be further apart in time
+max_ms_diff = float(10)  # no two points should be further apart in time
 
 try:
     filename = sys.argv[1]
@@ -87,7 +87,8 @@ def interpolate(start, end, func):
 
         interpolated_points.append(p)
 
-        print "> adding points:"
+        if num_between != 0:
+            print "> adding points:"
         for j in range(0, num_between):
             new_point = [None] * 3
             new_point[0] = x + dx
