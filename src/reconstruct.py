@@ -24,6 +24,7 @@ Point = namedtuple("Point", "x y")
 
 def synchroniseAtApex(pts_1, pts_2):
     print "APEX SYNCHRONISATION"
+
     syncd1 = []
     syncd2 = []
     shorter = []
@@ -67,10 +68,19 @@ def synchroniseAtApex(pts_1, pts_2):
     remainder = diff - shift
 
     # remove the rear end dangle
-    print "\nTrim longer by remainder:", remainder
-    index = len(longer) - remainder
-    longer = longer[:index]
-    print "New length:", len(longer)
+    if remainder >= 0:
+        print "\nTrim longer by remainder:", remainder
+        index = len(longer) - remainder
+        print "Trim to index:", index
+        longer = longer[:index]
+
+    if remainder < 0:
+        index = len(shorter) - abs(remainder)
+        print "\nShift > diff in lengths, trim the shorter end to:", index
+        shorter = shorter[:index]
+
+    print "New length of shorter:", len(shorter)
+    print "New length of longer:", len(longer)
 
     # find the highest y value in each point set
     apex1 = max(float(p[1]) for p in shorter)
@@ -89,6 +99,9 @@ def synchroniseAtApex(pts_1, pts_2):
     else:
         syncd1 = longer
         syncd2 = shorter
+
+    plot.plot2D(syncd1, name='First Synced Trajectory')
+    plot.plot2D(syncd2, name='Second Synced Trajectory')
 
     return syncd1, syncd2
 
@@ -202,18 +215,17 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-# # Synchronise the trajectories at apex
-# if rec_data is False:
-#     pts1, pts2 = synchroniseAtApex(pts1, pts2)
-#     pts3, pts4 = synchroniseAtApex(pts3, pts4)
+# Synchronise the trajectories at apex
+if rec_data is False:
+    pts1, pts2 = synchroniseAtApex(pts1, pts2)
+    pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Calibration matrices:
 K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
 K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
 
-# K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # d5000
-# K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')  # g3
-
+# K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
+# K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -233,8 +245,8 @@ def run():
     global pts4
 
     plot.plot3D(original_3Ddata, 'Original 3D Data')
-    plot.plot2D(pts1_raw, 'First image')
-    plot.plot2D(pts2_raw, 'Second image')
+    plot.plot2D(pts1_raw, name='First Raw Image')
+    plot.plot2D(pts2_raw, name='Second Raw Image')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
@@ -262,8 +274,8 @@ def run():
     print "\n> KP2:\n", KP2
 
     # SYNCHRONISATION
-    if rec_data:
-        pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
+    # if rec_data:
+        # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
         # pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
     # TRIANGULATION
@@ -288,7 +300,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
 
     # normalised 8-point algorithm
-    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_8POINT)
+    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_RANSAC, 15)
     tools.is_singular(F)
 
     # F, pts_1, pts_2 = autoGetF()
@@ -542,8 +554,6 @@ def CameraArray(R, t):
 def synchroniseGeometric(pts_1, pts_2, F):
 
     print "> GEOMETRIC SYNCHRONISATION:"
-    plot.plot2D(pts_1, name='First Trajectory')
-    plot.plot2D(pts_2, name='Second Trajectory')
 
     syncd1 = []
     syncd2 = []
@@ -573,16 +583,16 @@ def synchroniseGeometric(pts_1, pts_2, F):
     for offset in xrange(0, diff + 1):
         err = 0
         avg = 0
-
+        print ""
         for i in xrange(0, len(shorter)):
             a = shorter_hom[i]
             b = longer_hom[i + offset]
-            err += abs(np.mat(a) * F * np.mat(b).T)
-            # print err
+            this_err = abs(np.mat(a) * F * np.mat(b).T)
+            err += this_err
+            print this_err
 
         avg = err / len(shorter)
-        print "Offset, Err:", offset, avg
-        raw_input()
+        # print "Offset, Err:", offset, avg
         avg_off = (avg, offset)
         averages.append(avg_off)
 
@@ -596,14 +606,11 @@ def synchroniseGeometric(pts_1, pts_2, F):
     # trim the beginning of the longer list
     offset = ret[0][1]
     longer = longer[offset:]
-    print len(longer)
 
     # trim its end
     tail = len(longer) - len(shorter)
-    print "Trim tail:", tail
     if tail != 0:
         longer = longer[:-tail]
-    print len(longer)
 
     if short_flag == 1:
         syncd1 = shorter
@@ -611,6 +618,11 @@ def synchroniseGeometric(pts_1, pts_2, F):
     else:
         syncd1 = longer
         syncd2 = shorter
+
+    print "Synched Trajectory Length:", len(longer), len(shorter)
+
+    plot.plot2D(syncd1, name='First Synced Trajectory')
+    plot.plot2D(syncd2, name='Second Synced Trajectory')
 
     return syncd1, syncd2
 
