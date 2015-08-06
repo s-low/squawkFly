@@ -20,7 +20,7 @@ def main():
     data_3d = np.array(data_3d, dtype='float32')
 
     # artificial camera with f=5 units, cx = cy = 5 units
-    K = tools.CalibArray(5, 5, 5)
+    K = tools.CalibArray(1000, 640, 360)
     dist = (0, 0, 0, 0)
 
     rt2 = math.sqrt(2)
@@ -47,13 +47,13 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (0, 0, 120)
+    tvec1 = (0, 0, 1000)
     rvec1 = (0, 0, 0)
 
-    tvec2 = (120, 0, 120)
+    tvec2 = (0, 500, 500)
     rvec2 = (0, 0, 0)
 
-    img_pts1 = project(data_3d, K, x90cc, tvec1)
+    img_pts1 = project(data_3d, K, y180, tvec1)
     img_pts2 = project(data_3d, K, x90cc, tvec2)
 
     # img_pts1, jacobian = cv2.projectPoints(
@@ -111,7 +111,7 @@ def project(objectPoints, K, R, t):
 
 
 def getData(folder):
-    path = 'simulation_data/' + str(folder) + '/'
+    path = 'tests/' + str(folder) + '/'
     pts1 = []
     pts2 = []
     original_3Ddata = []
@@ -131,7 +131,7 @@ def getData(folder):
 
 
 def writeData(folder, pts1, pts2):
-    path = 'simulation_data/' + str(folder) + '/'
+    path = 'tests/' + str(folder) + '/'
 
     startoffile = True
     outfile = open(path + 'pts1.txt', 'w')
