@@ -657,8 +657,8 @@ def autoGetCorrespondences(img1, img2):
 
 
 def autoGetF():
-    img1 = cv2.imread('../res/downs_test1/d5000.png', 0)
-    img2 = cv2.imread('../res/downs_test1/gopro.png', 0)
+    img1 = cv2.imread('../res/mvb/d5000.png', 0)
+    img2 = cv2.imread('../res/mvb/g3.png', 0)
 
     auto_pts1, auto_pts2 = autoGetCorrespondences(img1, img2)
 
