@@ -4,6 +4,7 @@
 import sys
 import cv2
 import numpy as np
+import os.path
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 
 cap = 0
@@ -27,11 +28,21 @@ def main():
     keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
 
     if len(sys.argv) != 2:
-        print "Usage : python detect.py <video_file>"
+        print "Usage : python detect.py <video_file> or <image_sequence>"
         sys.exit(0)
 
-    cap = cv2.VideoCapture(sys.argv[1])
-    print "Frame rate: " + repr(cap.get(5))
+    path = sys.argv[1]
+
+    # supplied path can be a directory containing an image sequence: 00001.png
+    if os.path.isdir(path):
+        print "> INPUT: Image Sequence"
+        path = path + '/frame_%05d.png'
+    else:
+        print "> INPUT: Video File"
+
+    # otherwise just go and get the video file
+    cap = cv2.VideoCapture(path)
+    # print "Frame rate: " + repr(cap.get(5))
 
     outfile = open('data/data_detections.txt', 'w')
 

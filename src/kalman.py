@@ -21,15 +21,15 @@ import plotting as plot
 from kfilter import KFilter
 
 # Kalman Parameters
-init_dist = 100
-verify_distance = 30
+init_dist = 400
+verify_distance = 50
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 4
+max_misses = 6
 min_length = 2
 
 # debug mode
@@ -44,7 +44,7 @@ def verified(corrected_point, next_frame_index):
     except IndexError:
         return False
 
-    # init current verifying sep to an arbitrarily high value
+    # init the measured sep to an arbitrarily high value
     min_sep = verify_distance
     vpoint = None
 
@@ -128,6 +128,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
             # keep predicting from the unverified corrected point
             # POINT: X / Y / FRAME / PID
             unverified = (predicted[0], predicted[1], frame_index + 1, 1000)
+            new_trajectory = False
             if d:
                 print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
@@ -136,7 +137,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
                 this_trajectory, bridge, kf, frame_index + 1, p1, unverified, False)
 
     else:
-        # CORRECT against the verifying measurement
+        # CORRECT filter against the verifying (but noisy) measurement
         x = p_verification[0]
         y = p_verification[1]
         kf.correct(x, y)
@@ -254,10 +255,11 @@ for frame_index, f0 in enumerate(frame_array):
                 vx = xdiff
                 vy = ydiff
 
-                # print "\n-------- INIT Filter --------"
-                # print "calculated speeds:", vx, vy
+                print "\n-------- INIT Filter --------"
+                print "Points:", b0, b1
 
-                kf.setPostState(b1[0], b1[1], vx, vy)
+                kf.setPostState(b1[0], b1[1], vx, vy, 0, 0)
+                print "Post state set:", b1[0], b1[1], vx, vy, 0, 0
 
                 this_t = []
                 bridge = []

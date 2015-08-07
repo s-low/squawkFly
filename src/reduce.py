@@ -75,8 +75,10 @@ print "> trivials:", trivial_tids
 for row in data:
     if row.split(' ')[0] not in trivial_tids:
         outfile.write(row.split(' ')[0] + " " +
-                      row.split(' ')[1] + " " + row.split(' ')[2] + " " +
-                      row.split(' ')[3] + "\n")
+                      row.split(' ')[1] + " " +
+                      row.split(' ')[2] + " " +
+                      row.split(' ')[3] + " " +
+                      row.split(' ')[4] + "\n")
 
 outfile.close()
 
