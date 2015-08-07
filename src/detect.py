@@ -36,7 +36,7 @@ def main():
     # supplied path can be a directory containing an image sequence: 00001.png
     if os.path.isdir(path):
         print "> INPUT: Image Sequence"
-        path = path + '/%05d.png'
+        path = path + '/frame_%05d.png'
     else:
         print "> INPUT: Video File"
 
