@@ -203,7 +203,8 @@ def getData(folder):
 def undistortData(points, K, d):
 
     points = np.array(points, dtype='float32').reshape((-1, 1, 2))
-    points = cv2.undistortPoints(points, K, d).tolist()
+    points = cv2.undistortPoints(
+        src=points, cameraMatrix=K, distCoeffs=d, P=K).tolist()
 
     points_ = []
     for p in points:
