@@ -200,6 +200,18 @@ def getData(folder):
     return original_3Ddata, pts1, pts2, pts3, pts4, rec_data
 
 
+def undistortData(points, K, d):
+
+    points = np.array(points, dtype='float32').reshape((-1, 1, 2))
+    points = cv2.undistortPoints(points, K, d).tolist()
+
+    points_ = []
+    for p in points:
+        points_.append(p[0])
+
+    return points_
+
+
 # INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
     d = sys.argv[1]
@@ -209,7 +221,26 @@ except IndexError:
 if d.isdigit():
     simulation = True
 
+# Calibration matrices:
+K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
+K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
+
+dist_coeffs1 = np.array([-0.101, 0.138, 0, 0, 0])
+dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
+
+# If one of the simulation folders, set the calib matrices to sim values
+if simulation:
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+
+# get the data from file
 original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw, rec_data = getData(d)
+
+# undistort it
+# pts1_raw = undistortData(pts1_raw, K1, dist_coeffs1)
+# pts2_raw = undistortData(pts2_raw, K2, dist_coeffs2)
+# pts3_raw = undistortData(pts3_raw, K1, dist_coeffs1)
+# pts4_raw = undistortData(pts4_raw, K2, dist_coeffs2)
 
 pts1 = []
 pts2 = []
@@ -222,14 +253,6 @@ pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
 
-# Calibration matrices:
-K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
-K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
-
-# If one of the simulation folders, set the calib matrices to sim values
-if simulation:
-    K1 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
-    K2 = np.mat(tools.CalibArray(5, 5, 5), dtype='float32')
 
 # using the trajectories themselves to calculate geometry
 if rec_data is False and simulation is False:
