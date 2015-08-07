@@ -223,10 +223,10 @@ if d.isdigit():
     simulation = True
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(1005, 640, -360), dtype='float32')  # d5000
+K1 = np.mat(tools.CalibArray(950, 640, -340), dtype='float32')  # lumix
 K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
 
-dist_coeffs1 = np.array([-0.101, 0.138, 0, 0, 0])
+dist_coeffs1 = np.array([-0.039, 0.18, 0, 0, 0])
 dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
 
 # If one of the simulation folders, set the calib matrices to sim values

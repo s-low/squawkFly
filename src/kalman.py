@@ -43,7 +43,7 @@ def verified(corrected_point, next_frame_index):
         next_frame = frame_array[next_frame_index]
     except IndexError:
         return False
-    
+
     # init the measured sep to an arbitrarily high value
     min_sep = verify_distance
     vpoint = None

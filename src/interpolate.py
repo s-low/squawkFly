@@ -9,7 +9,7 @@ import os.path
 
 plt.style.use('ggplot')
 
-max_ms_diff = float(10)  # no two points should be further apart in time
+max_ms_diff = float(20)  # no two points should be further apart in time
 
 try:
     filename = sys.argv[1]
