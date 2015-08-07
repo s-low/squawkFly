@@ -48,6 +48,23 @@ avg calculated projection error:  0.10057009029
 
 ---------------------------------------------------
 
+lumix 
+
+35/35 successful detections
+
+calibration matrix:
+[[ 950.21     0.     641.034]
+ [   0.     952.096  341.25 ]
+ [   0.       0.       1.   ]]
+
+distortion:
+[[-0.039  0.018 -0.005 -0.     0.006]]
+
+avg returned reprojection error: 0.681101578764
+avg calculated projection error:  0.0818439339992
+
+---------------------------------------------------
+
 gopro
 
 29.97fps
