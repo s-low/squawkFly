@@ -26,10 +26,11 @@ while (cap.isOpened()):
 
     if ret is True:
         count += 1
+        if count % 100 == 0:
+            print "write frame:", count
         fname = str(count)
         fname = fname.zfill(5)
         outfilename = outdir + '/' + fname + '.png'
-        print "write:", outfilename
         cv2.imwrite(outfilename, frame)
 
     else:
