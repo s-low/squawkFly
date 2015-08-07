@@ -18,7 +18,7 @@ def click(event, x, y, flags, param):
 
     if event == cv2.EVENT_LBUTTONDOWN:
         counter += 1
-        string = str(x) + ' ' + str(y)
+        string = str(x) + ' -' + str(y)
 
         cv2.circle(img, (x, y), 5, (255, 0, 0), -1)
         cv2.putText(img, str(counter), (x, y), font, 2, red)
