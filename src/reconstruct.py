@@ -223,8 +223,8 @@ if d.isdigit():
     simulation = True
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(950, 640, -340), dtype='float32')  # lumix
-K2 = np.mat(tools.CalibArray(1091, 640, -412), dtype='float32')  # g3
+K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
+K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
 
 dist_coeffs1 = np.array([-0.039, 0.18, 0, 0, 0])
 dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
@@ -439,6 +439,7 @@ def getValidRtCombo(R1, R2, t1, t2):
 # which combination of R|t gives us a P pair that works geometrically
 # ie: gives us a positive depth measure in both
 def testRtCombo(R, t, norm_pts1, norm_pts2):
+    print "> RT Test:"
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
     points3d = []
@@ -458,7 +459,8 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
 
     # check if any z coord is negative
     for point in points3d:
-        if point[2] < 0:
+        print point[2]
+        if point[2] < -0.1:
             return False
 
     return True
