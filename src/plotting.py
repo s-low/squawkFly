@@ -23,7 +23,7 @@ def plot3D(data_3d, name='3D Plot'):
 
 
 # can provide an optional second set of data
-def plot2D(pts1, pts2=[], name='2D Plot'):
+def plot2D(pts1, pts2=[], name='2D Plot', lims=(0, 0)):
     onlyoneset = False
     x1 = [p[0] for p in pts1]
     y1 = [p[1] for p in pts1]
@@ -36,7 +36,11 @@ def plot2D(pts1, pts2=[], name='2D Plot'):
 
     fig = plt.figure(name)
     ax = plt.axes()
-    # ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
+
+    if lims[0] != 0:
+        ax.set_xlim(0, lims[0])
+        ax.set_ylim(lims[1], 0)
+
     ax.scatter(x1, y1, color='r')
     if not onlyoneset:
         ax.scatter(x2, y2, color='b')

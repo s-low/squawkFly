@@ -353,7 +353,7 @@ def run():
     p3d_cv = triangulateCV(KP1, KP2, pts3, pts4)
 
     # PLOTTING
-    plot.plot3D(p3d_cv, '3D Reconstruction (Scale ambiguity)')
+    plot.plot3D(p3d_cv, '3D Reconstruction')
     reprojectionError(K1, P1_mat, K2, P2_mat, p3d_cv)
 
 
@@ -584,9 +584,11 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
     plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
     plot.plot2D(reprojected1, pts3,
-                'Reprojection of Reconstruction onto Image 1')
+                'Reprojection of Reconstruction onto Image 1',
+                lims=(1280, -720))
     plot.plot2D(reprojected2, pts4,
-                'Reprojection of Reconstruction onto Image 2')
+                'Reprojection of Reconstruction onto Image 2',
+                lims=(1280, -720))
 
 
 def BoringCameraArray():
