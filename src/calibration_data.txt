@@ -82,3 +82,19 @@ distortion:
 
 avg returned reprojection error: 0.491073459484
 avg calculated projection error:  0.0555853398398
+
+
+-------------------------------------------------
+canon
+
+35 / 36 successful detections
+
+calibration matrix:
+[[ 658.597    0.     318.955]
+ [   0.     659.108  255.283]
+ [   0.       0.       1.   ]]
+
+distortion:
+[[-0.18   0.161 -0.001 -0.001 -0.085]]
+avg returned reprojection error: 0.232998195712
+avg calculated projection error:  0.0310387074079
