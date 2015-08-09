@@ -128,7 +128,9 @@ def getData(folder):
     pts2 = []
     pts3 = []
     pts4 = []
-    original_3Ddata = []
+    postPts1 = []
+    postPts2 = []
+    data3D = []
 
     with open(path + 'pts1.txt') as datafile:
         data = datafile.read()
@@ -160,7 +162,7 @@ def getData(folder):
             x = float(row.split()[0])
             y = float(row.split()[1])
             z = float(row.split()[2])
-            original_3Ddata.append([x, y, z])
+            data3D.append([x, y, z])
 
         print "> 3D reference data provided. Simulation."
 
@@ -197,7 +199,31 @@ def getData(folder):
         pts4 = pts2
         rec_data = False
 
-    return original_3Ddata, pts1, pts2, pts3, pts4, rec_data
+    try:
+        with open(path + 'postPts1.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
+        data = data.split('\n')
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            postPts1.append([x, y])
+    except IOError:
+        pass
+
+    try:
+        with open(path + 'postPts2.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
+        data = data.split('\n')
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            postPts2.append([x, y])
+    except IOError:
+        pass
+
+    return data3D, pts1, pts2, pts3, pts4, postPts1, postPts2, rec_data
 
 
 def undistortData(points, K, d):
@@ -235,7 +261,7 @@ if simulation:
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
 # get the data from file
-original_3Ddata, pts1_raw, pts2_raw, pts3_raw, pts4_raw, rec_data = getData(d)
+data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(d)
 
 # undistort it
 # pts1_raw = undistortData(pts1_raw, K1, dist_coeffs1)
@@ -253,6 +279,8 @@ pts1 = np.array(pts1_raw, dtype='float32')
 pts2 = np.array(pts2_raw, dtype='float32')
 pts3 = np.array(pts3_raw, dtype='float32')
 pts4 = np.array(pts4_raw, dtype='float32')
+postPts1 = np.array(postPts1, dtype='float32')
+postPts2 = np.array(postPts2, dtype='float32')
 
 
 # using the trajectories themselves to calculate geometry
@@ -277,7 +305,7 @@ def run():
     global pts3
     global pts4
 
-    plot.plot3D(original_3Ddata, 'Original 3D Data')
+    plot.plot3D(data3D, 'Original 3D Data')
     plot.plot2D(pts1_raw, name='First Static Correspondences')
     plot.plot2D(pts2_raw, name='Second Static Correspondences')
 
@@ -312,6 +340,11 @@ def run():
     elif simulation:
         pts3 = pts1
         pts4 = pts2
+
+    # add the post point data into the reconstruction for context
+    if len(postPts1) == 4:
+        pts3 = np.concatenate((pts3, postPts1), axis=0)
+        pts4 = np.concatenate((pts4, postPts2), axis=0)
 
     # TRIANGULATION
     p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
