@@ -28,6 +28,8 @@ data_detections.txt
 
 *.mp4
 
+*.mkv
+
 *.mov
 
 *.jpg
