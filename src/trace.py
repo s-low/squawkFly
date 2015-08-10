@@ -2,6 +2,7 @@
 
 import sys
 import cv2
+import cv2.cv as cv
 import numpy as np
 import os.path
 
@@ -54,7 +55,10 @@ while (1):
 
             # connect the dots
             if prev is not None:
-                cv2.line(frame, prev, dot, color=(0, 0, 255), thickness=3)
+                cv2.line(frame, prev, dot,
+                         lineType=cv.CV_AA,
+                         color=(0, 0, 255),
+                         thickness=3)
 
             prev = dot
 
