@@ -330,6 +330,7 @@ def run():
     # SYNCHRONISATION + CORRECTION
     if rec_data:
         pts3, pts4 = synchroniseAtApex(pts3, pts4)
+        # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
 
         pts3 = pts3.reshape((1, -1, 2))
         pts4 = pts4.reshape((1, -1, 2))

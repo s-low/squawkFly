@@ -58,7 +58,7 @@ while (1):
                 cv2.line(frame, prev, dot,
                          lineType=cv.CV_AA,
                          color=(0, 0, 255),
-                         thickness=3)
+                         thickness=2)
 
             prev = dot
 
