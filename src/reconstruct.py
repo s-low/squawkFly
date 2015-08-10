@@ -306,8 +306,8 @@ def run():
     global pts3
     global pts4
 
-    # if simulation:
-    plot.plot3D(data3D, 'Original 3D Data')
+    if simulation:
+        plot.plot3D(data3D, 'Original 3D Data')
 
     plot.plot2D(pts1_raw, name='First Static Correspondences')
     plot.plot2D(pts2_raw, name='Second Static Correspondences')
@@ -383,10 +383,10 @@ def getSpeed(worldPoints):
     speeds = []
     for p in worldPoints:
         dist = sep3D(p, prev)
-        # dist is m travelled in 10ms -> 100*dist = m/s
-        speed = 50 * dist
+        # dist is m travelled in 15ms
+        speed = 60 * dist
         mph = 2.23693629 * speed
-        outfile.write(str(mph) + '\n')
+        outfile.write(str(speed) + ' ' + str(mph) + '\n')
 
         speeds.append(mph)
 
@@ -394,6 +394,7 @@ def getSpeed(worldPoints):
 
     outfile.close()
     avg = int(sum(speeds) / len(speeds))
+    print "> Average speed: ", str(avg) + 'mph'
     outfile = open('tests/' + d + '/avg_speed.txt', 'w')
     outfile.write(str(avg))
     outfile.close()
@@ -586,10 +587,14 @@ def getScale(goalPosts):
     distances = []
 
     leftBar = sep3D(p1, p2)
-    rightBar = sep3D(p3, p4)
-
-    baseline = sep3D(p1, p4)
     crossbar = sep3D(p2, p3)
+    rightBar = sep3D(p3, p4)
+    baseline = sep3D(p1, p4)
+
+    print "left upright:", leftBar
+    print "right upright:", rightBar
+    print "crossbar:", crossbar
+    print "baseline:", baseline
 
     distances = [leftBar, rightBar, baseline, crossbar]
 
@@ -601,8 +606,8 @@ def getScale(goalPosts):
     a = (largest + second_largest) / 2
     b = (smallest + second_smallest) / 2
 
-    print "crossbar:", a
-    print "bars:", b
+    # print "crossbar:", a
+    # print "bars:", b
 
     scale_a = 7.32 / a
     scale_b = 2.44 / b

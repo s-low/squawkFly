@@ -13,14 +13,14 @@ def show(image):
         if cv2.waitKey(20) & 0xFF == 113:
             break
 
-filename = "../res/goalposts_red.png"
+filename = sys.argv[1]
 
 image = cv2.imread(filename)
 
 show(image)
 
-lower = [0, 0, 200]
-upper = [50, 50, 255]
+lower = [0, 0, 90]
+upper = [40, 40, 255]
 
 lower = np.array(lower, dtype="uint8")
 upper = np.array(upper, dtype="uint8")
@@ -60,6 +60,7 @@ for contour in contours:
 
     if area < max_area and area > min_area:
         x, y, w, h = cv2.boundingRect(contour)
+        print x, y
         cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
         cx = x + float(w) / 2.0
