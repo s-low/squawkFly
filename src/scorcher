@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./trace.py ../res/coombe/clips/scorcher/g3 tests/coombe_scorcher/g3_trajectory.txt
+

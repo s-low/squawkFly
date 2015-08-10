@@ -35,7 +35,7 @@ with open(speed) as datafile:
     avg_speed = datafile.read()
     datafile.close()
 
-avg_speed = str(avg_speed) + 'mph'
+avg_speed = 'AVG: ' + str(avg_speed) + 'mph'
 
 all_x = []
 all_y = []
