@@ -17,6 +17,9 @@ if len(sys.argv) != 3:
 clip = sys.argv[1]
 trajectory = sys.argv[2]
 
+t_dir = os.path.dirname(trajectory)
+speed = t_dir + '/avg_speed.txt'
+
 if os.path.isdir(clip):
     print "> Input Type: Image Sequence"
     clip = clip + '/frame_%05d.png'
@@ -28,6 +31,12 @@ with open(trajectory) as datafile:
     data = datafile.read()
     datafile.close()
 
+with open(speed) as datafile:
+    avg_speed = datafile.read()
+    datafile.close()
+
+avg_speed = str(avg_speed) + 'mph'
+
 all_x = []
 all_y = []
 all_f = []
@@ -38,8 +47,6 @@ for row in data:
     all_y.append(row.split()[1])
     all_f.append(int(row.split()[2]))
 
-print all_f
-
 cap = cv2.VideoCapture(clip)
 count = 0
 dots = []
@@ -49,6 +56,13 @@ while (1):
 
     if ret:
         prev = None
+
+        cv2.putText(frame, avg_speed, (800, 700),
+                    fontFace=cv2.FONT_HERSHEY_PLAIN,
+                    fontScale=1.8,
+                    thickness=2,
+                    color=(255, 255, 255))
+
         for dot in dots:
             # draw the dot
             cv2.circle(frame, dot, 2, (0, 0, 255), thickness=-1)

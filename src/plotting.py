@@ -19,6 +19,8 @@ def plot3D(data_3d, name='3D Plot'):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
+    # ax.auto_scale_xyz([-2, 2], [-2, 2], [-2, 2])
+
     plt.show()
 
 

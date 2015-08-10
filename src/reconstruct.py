@@ -261,7 +261,8 @@ if simulation:
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
 # get the data from file
-data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(d)
+data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
+    d)
 
 # undistort it
 # pts1_raw = undistortData(pts1_raw, K1, dist_coeffs1)
@@ -305,7 +306,9 @@ def run():
     global pts3
     global pts4
 
+    # if simulation:
     plot.plot3D(data3D, 'Original 3D Data')
+
     plot.plot2D(pts1_raw, name='First Static Correspondences')
     plot.plot2D(pts2_raw, name='Second Static Correspondences')
 
@@ -344,18 +347,56 @@ def run():
 
     # add the post point data into the reconstruction for context
     if len(postPts1) == 4:
-        pts3 = np.concatenate((pts3, postPts1), axis=0)
-        pts4 = np.concatenate((pts4, postPts2), axis=0)
+        pts3_gp = np.concatenate((pts3, postPts1), axis=0)
+        pts4_gp = np.concatenate((pts4, postPts2), axis=0)
 
     # TRIANGULATION
-    p3d_ls = triangulateLS(KP1, KP2, pts3, pts4)
+    p3d_ls = triangulateLS(KP1, KP2, pts3_gp, pts4_gp)
 
     # alternative triangulation
+    goal_posts = triangulateCV(KP1, KP2, postPts1, postPts2)
+
+    # with goal posts included
+    p3d_cv_gp = triangulateCV(KP1, KP2, pts3_gp, pts4_gp)
+
+    # just the trajectory
     p3d_cv = triangulateCV(KP1, KP2, pts3, pts4)
 
-    # PLOTTING
-    plot.plot3D(p3d_cv, '3D Reconstruction')
-    reprojectionError(K1, P1_mat, K2, P2_mat, p3d_cv)
+    # SCALING AND PLOTTING
+    scale = getScale(goal_posts)
+    scaled_gp_only = [[a * scale for a in inner] for inner in goal_posts]
+    scaled_gp = [[a * scale for a in inner] for inner in p3d_cv_gp]
+    scaled = [[a * scale for a in inner] for inner in p3d_cv]
+
+    plot.plot3D(scaled_gp_only, 'Goal Posts')
+    plot.plot3D(scaled_gp, '3D Reconstruction')
+    reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
+
+    getSpeed(scaled)
+
+
+# give the scaled up set of trajectory points, work out the point to point
+# speed and write it to a file
+def getSpeed(worldPoints):
+    outfile = open('tests/' + d + '/speed.txt', 'w')
+    prev = worldPoints.pop(0)
+    speeds = []
+    for p in worldPoints:
+        dist = sep3D(p, prev)
+        # dist is m travelled in 10ms -> 100*dist = m/s
+        speed = 50 * dist
+        mph = 2.23693629 * speed
+        outfile.write(str(mph) + '\n')
+
+        speeds.append(mph)
+
+        prev = p
+
+    outfile.close()
+    avg = int(sum(speeds) / len(speeds))
+    outfile = open('tests/' + d + '/avg_speed.txt', 'w')
+    outfile.write(str(avg))
+    outfile.close()
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
@@ -534,8 +575,66 @@ def triangulateCV(KP1, KP2, pts_1, pts_2):
     return points3d
 
 
+# given corners 1, 2, 3, 4, work out the 3d scale factor.
+def getScale(goalPosts):
+
+    p1 = goalPosts[0]  # bottom left
+    p2 = goalPosts[1]  # top left
+    p3 = goalPosts[2]  # top right
+    p4 = goalPosts[3]  # bottom right
+
+    distances = []
+
+    leftBar = sep3D(p1, p2)
+    rightBar = sep3D(p3, p4)
+
+    baseline = sep3D(p1, p4)
+    crossbar = sep3D(p2, p3)
+
+    distances = [leftBar, rightBar, baseline, crossbar]
+
+    largest = distances.pop(distances.index(max(distances)))
+    second_largest = distances.pop(distances.index(max(distances)))
+    smallest = distances.pop(distances.index(min(distances)))
+    second_smallest = distances.pop(distances.index(min(distances)))
+
+    a = (largest + second_largest) / 2
+    b = (smallest + second_smallest) / 2
+
+    print "crossbar:", a
+    print "bars:", b
+
+    scale_a = 7.32 / a
+    scale_b = 2.44 / b
+
+    print "derived scales:", scale_a, scale_b
+
+    # scale = (scale_a + scale_b) / 2
+    scale = max(scale_a, scale_b)
+
+    print "scale:", scale
+
+    return scale
+
+
+# distance between two 3d coordinates
+def sep3D(a, b):
+    xa = a[0]
+    ya = a[2]
+    za = a[2]
+
+    xb = b[0]
+    yb = b[2]
+    zb = b[2]
+
+    # dist = math.sqrt(((xa - xb) ** 2) + ((ya - yb) ** 2))
+    dist = math.sqrt(((xa - xb) ** 2) + ((ya - yb) ** 2) + ((za - zb) ** 2))
+
+    return dist
+
+
 # used for checking the triangulation - provide UNNORMALISED DATA
-def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
+def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
 
     # Nx4 array for filling with homogeneous points
     new = np.zeros((len(points3d), 4))
@@ -566,8 +665,8 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
         reprojected2.append(xp2)
 
         # and get the orginally measured points
-        x1 = pts3[i]
-        x2 = pts4[i]
+        x1 = pts_3[i]
+        x2 = pts_4[i]
 
         # difference between them is:
         dist1 = math.hypot(xp1[0] - x1[0], xp1[1] - x1[1])
@@ -584,10 +683,10 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, points3d):
     plot.plotOrderedBar(errors1, 'Reprojection Error Image 1', 'Index', 'px')
     plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
-    plot.plot2D(reprojected1, pts3,
+    plot.plot2D(reprojected1, pts_3,
                 'Reprojection of Reconstruction onto Image 1',
                 lims=(1280, -720))
-    plot.plot2D(reprojected2, pts4,
+    plot.plot2D(reprojected2, pts_4,
                 'Reprojection of Reconstruction onto Image 2',
                 lims=(1280, -720))
 
