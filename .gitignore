@@ -39,3 +39,5 @@ data_detections.txt
 *.avi
 
 src/data_trajectories_subset.txt
+
+res
