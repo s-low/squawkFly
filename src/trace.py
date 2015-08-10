@@ -50,7 +50,6 @@ while (1):
         for dot in dots:
             cv2.circle(frame, dot, 2, (0, 0, 255), thickness=-1)
 
-        count += 1
         try:
             i = all_f.index(count)
             x = float(all_x[i])
@@ -59,7 +58,8 @@ while (1):
 
         except ValueError, e:
             pass
-
+            
+        count += 1
         cv2.imshow('Stream', frame)
         cv2.waitKey()
     else:
