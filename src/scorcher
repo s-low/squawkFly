@@ -2,3 +2,4 @@
 
 ./trace.py ../res/coombe/clips/scorcher/g3 tests/coombe_scorcher/g3_trajectory.txt
 
+./trace.py ../res/coombe/clips/scorcher/lumix tests/coombe_scorcher/lumix_trajectory.txt
