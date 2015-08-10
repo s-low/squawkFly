@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os.path
 
-# two command line arguments:
+# two arguments:
 # 1. A video clip or image sequence
 # 2. The the 2D trajectory corresponding to that clip
 
@@ -47,8 +47,16 @@ while (1):
     ret, frame = cap.read()
 
     if ret:
+        prev = None
         for dot in dots:
+            # draw the dot
             cv2.circle(frame, dot, 2, (0, 0, 255), thickness=-1)
+
+            # connect the dots
+            if prev is not None:
+                cv2.line(frame, prev, dot, color=(0, 0, 255), thickness=3)
+
+            prev = dot
 
         try:
             i = all_f.index(count)
@@ -58,7 +66,7 @@ while (1):
 
         except ValueError, e:
             pass
-            
+
         count += 1
         cv2.imshow('Stream', frame)
         cv2.waitKey()
