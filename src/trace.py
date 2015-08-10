@@ -18,7 +18,7 @@ clip = sys.argv[1]
 trajectory = sys.argv[2]
 
 t_dir = os.path.dirname(trajectory)
-speed = t_dir + '/avg_speed.txt'
+tracer_stats = t_dir + '/tracer_stats.txt'
 
 if os.path.isdir(clip):
     print "> Input Type: Image Sequence"
@@ -31,11 +31,16 @@ with open(trajectory) as datafile:
     data = datafile.read()
     datafile.close()
 
-with open(speed) as datafile:
-    avg_speed = datafile.read()
+with open(tracer_stats) as datafile:
+    stats = datafile.read()
     datafile.close()
 
+stats = stats.split('\n')
+avg_speed = stats[0]
+distance = stats[1]
+
 avg_speed = 'AVG: ' + str(avg_speed) + 'mph'
+distance = 'Range: ' + str(distance) + 'm'
 
 all_x = []
 all_y = []
@@ -57,7 +62,12 @@ while (1):
     if ret:
         prev = None
 
-        cv2.putText(frame, avg_speed, (800, 700),
+        cv2.putText(frame, avg_speed, (800, 675),
+                    fontFace=cv2.FONT_HERSHEY_PLAIN,
+                    fontScale=1.8,
+                    thickness=2,
+                    color=(255, 255, 255))
+        cv2.putText(frame, distance, (800, 700),
                     fontFace=cv2.FONT_HERSHEY_PLAIN,
                     fontScale=1.8,
                     thickness=2,
@@ -87,7 +97,7 @@ while (1):
 
         count += 1
         cv2.imshow('Stream', frame)
-        cv2.waitKey()
+        cv2.waitKey(1)
     else:
         break
 

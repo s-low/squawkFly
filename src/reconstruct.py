@@ -379,12 +379,14 @@ def run():
 # speed and write it to a file
 def getSpeed(worldPoints):
     outfile = open('tests/' + d + '/speed.txt', 'w')
-    prev = worldPoints.pop(0)
+    first = worldPoints.pop(0)
+    prev = first
     speeds = []
     for p in worldPoints:
         dist = sep3D(p, prev)
-        # dist is m travelled in 15ms
-        speed = 60 * dist
+
+        # dist is m travelled in ~15ms
+        speed = 66 * dist
         mph = 2.23693629 * speed
         outfile.write(str(speed) + ' ' + str(mph) + '\n')
 
@@ -393,10 +395,20 @@ def getSpeed(worldPoints):
         prev = p
 
     outfile.close()
+
+    # calculate range
+    last = prev
+    print first
+    print last
+    shotRange = int(sep3D(first, last))
+
     avg = int(sum(speeds) / len(speeds))
+    print "> Range:", str(shotRange) + 'm'
     print "> Average speed: ", str(avg) + 'mph'
-    outfile = open('tests/' + d + '/avg_speed.txt', 'w')
-    outfile.write(str(avg))
+
+    outfile = open('tests/' + d + '/tracer_stats.txt', 'w')
+    outfile.write(str(avg) + '\n')
+    outfile.write(str(shotRange))
     outfile.close()
 
 
@@ -603,11 +615,8 @@ def getScale(goalPosts):
     smallest = distances.pop(distances.index(min(distances)))
     second_smallest = distances.pop(distances.index(min(distances)))
 
-    a = (largest + second_largest) / 2
-    b = (smallest + second_smallest) / 2
-
-    # print "crossbar:", a
-    # print "bars:", b
+    a = (crossbar + baseline) / 2
+    b = (leftBar + rightBar) / 2
 
     scale_a = 7.32 / a
     scale_b = 2.44 / b
@@ -625,14 +634,13 @@ def getScale(goalPosts):
 # distance between two 3d coordinates
 def sep3D(a, b):
     xa = a[0]
-    ya = a[2]
+    ya = a[1]
     za = a[2]
 
     xb = b[0]
-    yb = b[2]
+    yb = b[1]
     zb = b[2]
 
-    # dist = math.sqrt(((xa - xb) ** 2) + ((ya - yb) ** 2))
     dist = math.sqrt(((xa - xb) ** 2) + ((ya - yb) ** 2) + ((za - zb) ** 2))
 
     return dist
