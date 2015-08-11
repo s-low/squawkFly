@@ -6,20 +6,33 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def plot3D(data_3d, name='3D Plot'):
 
-    all_x = [point[0] for point in data_3d]
-    all_y = [point[1] for point in data_3d]
-    all_z = [point[2] for point in data_3d]
+    X = [point[0] for point in data_3d]
+    Y = [point[1] for point in data_3d]
+    Z = [point[2] for point in data_3d]
 
     fig = plt.figure(name)
-    ax = fig.add_subplot(111, projection='3d')
+    ax = Axes3D(fig)
+    # ax = fig.add_subplot(111, projection='3d')
+    ax.set_aspect('equal')
+    ax.scatter(X, Y, Z, zdir='z')
 
-    ax.scatter(all_x, all_y, all_z, zdir='z')
+    # Create cubic bounding box to simulate equal aspect ratio
+    max_range = np.array(
+        [max(X) - min(X), max(Y) - min(Y), max(Z) - min(Z)]).max()
+    Xb = 0.5 * max_range * \
+        np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (max(X) + min(X))
+    Yb = 0.5 * max_range * \
+        np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (max(Y) + min(Y))
+    Zb = 0.5 * max_range * \
+        np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (max(Z) + min(Z))
 
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    # Comment or uncomment following both lines to test the fake bounding box:
+    for xb, yb, zb in zip(Xb, Yb, Zb):
+        ax.plot([xb], [yb], [zb], 'w')
 
-    # ax.auto_scale_xyz([-2, 2], [-2, 2], [-2, 2])
+    ax.set_xlabel('X (m)')
+    ax.set_ylabel('Y (m)')
+    ax.set_zlabel('Z (m)')
 
     plt.show()
 

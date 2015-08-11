@@ -438,7 +438,7 @@ def getFundamentalMatrix(pts_1, pts_2):
 
 def getEssentialMatrix(F, K1, K2):
 
-    E = K2.T * np.mat(F) * K1
+    E = K1.T * np.mat(F) * K2
     print "\n> Essential:\n", E
 
     fund.testEssentialReln(E, norm_pts1, norm_pts2)
