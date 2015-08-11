@@ -335,11 +335,11 @@ def run():
         pts3, pts4 = synchroniseAtApex(pts3, pts4)
         # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
 
-        pts3 = pts3.reshape((1, -1, 2))
-        pts4 = pts4.reshape((1, -1, 2))
-        newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
-        pts3 = newPoints3.reshape((-1, 2))
-        pts4 = newPoints4.reshape((-1, 2))
+        # pts3 = pts3.reshape((1, -1, 2))
+        # pts4 = pts4.reshape((1, -1, 2))
+        # newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
+        # pts3 = newPoints3.reshape((-1, 2))
+        # pts4 = newPoints4.reshape((-1, 2))
 
     elif simulation:
         pts3 = pts1
@@ -438,7 +438,7 @@ def getFundamentalMatrix(pts_1, pts_2):
 
 def getEssentialMatrix(F, K1, K2):
 
-    E = K1.T * np.mat(F) * K2
+    E = K2.T * np.mat(F) * K1
     print "\n> Essential:\n", E
 
     fund.testEssentialReln(E, norm_pts1, norm_pts2)
@@ -546,9 +546,9 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
     # check if any z coord is negative
     for point in points3d:
         print point[2]
-        if point[2] < -0.1:
+        if point[2] < -0.05:
             return False
-
+    print ""
     return True
 
 

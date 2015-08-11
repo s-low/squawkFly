@@ -34,8 +34,8 @@ def LinearTriangulation(P1, p1, P2, p2):
 
     # AX = B
     B[0][0] = -(p1.x * P1[2, 3] - P1[0, 3])
-    B[0][0] = -(p1.y * P1[2, 3] - P1[1, 3])
-    B[0][0] = -(p2.x * P2[2, 3] - P2[0, 3])
+    B[1][0] = -(p1.y * P1[2, 3] - P1[1, 3])
+    B[2][0] = -(p2.x * P2[2, 3] - P2[0, 3])
     B[3][0] = -(p2.y * P2[2, 3] - P2[1, 3])
 
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
