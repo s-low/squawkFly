@@ -33,7 +33,7 @@ max_misses = 6
 min_length = 2
 
 # debug mode
-d = True
+d = False
 
 print "----------KALMAN.PY------------"
 

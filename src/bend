@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./trace.py ../res/coombe/clips/bendIt/g3 tests/coombe_bend/g3_trajectory.txt
+
+./trace.py ../res/coombe/clips/bendIt/lumix tests/coombe_bend/lumix_trajectory.txt

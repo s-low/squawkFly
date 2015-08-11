@@ -48,7 +48,7 @@ ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Trajectory from Kalman Filter", y=1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
-# ax.plot(raw_x, raw_y, 'k.')
+ax.plot(raw_x, raw_y, 'k.')
 
 # TRAJECTORIES
 last_tid = int(0)

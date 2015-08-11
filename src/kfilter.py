@@ -47,9 +47,6 @@ class KFilter(object):
         cv.SetIdentity(
             self.kf.error_cov_post, cv.RealScalar(errorCovariancePost))
 
-        # predict location in f2 from state f1
-        control_mat = cv.CreateMat(2, 1, cv.CV_32FC1)
-
         self.predicted = None
         self.corrected = None
 

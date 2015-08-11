@@ -5,6 +5,9 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 import os.path
+from time import sleep
+import plotting as plot
+
 
 # two arguments:
 # 1. A video clip or image sequence
@@ -40,7 +43,7 @@ avg_speed = stats[0]
 distance = stats[1]
 
 avg_speed = 'Average Speed: ' + str(avg_speed) + 'mph'
-distance = 'Distance covered: ' + str(distance) + 'm'
+distance = 'Distance covered*: ' + str(distance) + 'm'
 
 all_x = []
 all_y = []
@@ -62,14 +65,14 @@ while (1):
     if ret:
         prev = None
 
-        cv2.putText(frame, avg_speed, (800, 475),
-                    fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=1.8,
+        cv2.putText(frame, avg_speed, (800, 585),
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                    fontScale=1.0,
                     thickness=2,
                     color=(255, 255, 255))
-        cv2.putText(frame, distance, (800, 500),
-                    fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=1.8,
+        cv2.putText(frame, distance, (800, 620),
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                    fontScale=1.0,
                     thickness=2,
                     color=(255, 255, 255))
 
@@ -98,7 +101,7 @@ while (1):
 
         count += 1
         cv2.imshow('Stream', frame)
-        cv2.waitKey()
+        cv2.waitKey(1)
     else:
         break
 
