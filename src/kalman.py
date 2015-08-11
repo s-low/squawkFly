@@ -33,7 +33,7 @@ max_misses = 6
 min_length = 2
 
 # debug mode
-d = False
+d = True
 
 print "----------KALMAN.PY------------"
 
@@ -101,6 +101,8 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "\ntrajectory:\n", this_trajectory
         print "Head:", p0
         print "Arm:", p1
+        postState = kf.getPostState()
+        print "Post state:\n", np.asarray(postState[:,:])
 
     # PREDICT location of branch
     kf.predict()
