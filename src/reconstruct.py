@@ -350,29 +350,39 @@ def run():
         pts3_gp = np.concatenate((pts3, postPts1), axis=0)
         pts4_gp = np.concatenate((pts4, postPts2), axis=0)
 
-    # TRIANGULATION
-    p3d_ls = triangulateLS(KP1, KP2, pts3_gp, pts4_gp)
-
     # alternative triangulation
-    goal_posts = triangulateCV(KP1, KP2, postPts1, postPts2)
+    if simulation is False:
+        goal_posts = triangulateCV(KP1, KP2, postPts1, postPts2)
 
-    # with goal posts included
-    p3d_cv_gp = triangulateCV(KP1, KP2, pts3_gp, pts4_gp)
+        # with goal posts included
+        p3d_cv_gp = triangulateCV(KP1, KP2, pts3_gp, pts4_gp)
 
     # just the trajectory
     p3d_cv = triangulateCV(KP1, KP2, pts3, pts4)
 
     # SCALING AND PLOTTING
-    scale = getScale(goal_posts)
-    scaled_gp_only = [[a * scale for a in inner] for inner in goal_posts]
-    scaled_gp = [[a * scale for a in inner] for inner in p3d_cv_gp]
-    scaled = [[a * scale for a in inner] for inner in p3d_cv]
+    if simulation:
+        plot.plot3D(p3d_cv, 'Simulation Reconstruction')
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d_cv)
 
-    plot.plot3D(scaled_gp_only, 'Goal Posts')
-    plot.plot3D(scaled_gp, '3D Reconstruction')
-    reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
+    else:
+        scale = getScale(goal_posts)
+        scaled_gp_only = [[a * scale for a in inner] for inner in goal_posts]
+        scaled_gp = [[a * scale for a in inner] for inner in p3d_cv_gp]
+        scaled = [[a * scale for a in inner] for inner in p3d_cv]
 
-    getSpeed(scaled)
+        plot.plot3D(scaled_gp_only, 'Goal Posts')
+        plot.plot3D(scaled_gp, '3D Reconstruction')
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
+
+        getSpeed(scaled)
+
+        # write X Y Z to file
+        outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
+        for p in scaled_gp:
+            string = str(p[0]) + ' ' + str(p[1]) + ' ' + str(p[2])
+            outfile.write(string + '\n')
+        outfile.close()
 
 
 # give the scaled up set of trajectory points, work out the point to point
@@ -399,10 +409,13 @@ def getSpeed(worldPoints):
     # calculate range
     last = prev
     shotRange = int(sep3D(first, last))
-
     avg = int(sum(speeds) / len(speeds))
+    avgms = avg / 2.237
+    time = float(shotRange) / float(avgms)
+
     print "> Distance Covered:", str(shotRange) + 'm'
     print "> Average speed: ", str(avg) + 'mph'
+    print "> Distance covered in:", str(time) + 's'
 
     outfile = open('tests/' + d + '/tracer_stats.txt', 'w')
     outfile.write(str(avg) + '\n')
@@ -696,11 +709,9 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
     plot.plot2D(reprojected1, pts_3,
-                'Reprojection of Reconstruction onto Image 1',
-                lims=(1280, -720))
+                'Reprojection of Reconstruction onto Image 1')
     plot.plot2D(reprojected2, pts_4,
-                'Reprojection of Reconstruction onto Image 2',
-                lims=(1280, -720))
+                'Reprojection of Reconstruction onto Image 2')
 
 
 def BoringCameraArray():
