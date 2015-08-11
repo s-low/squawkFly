@@ -62,27 +62,28 @@ while (1):
     if ret:
         prev = None
 
-        cv2.putText(frame, avg_speed, (800, 675),
-                    fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=1.8,
-                    thickness=2,
-                    color=(255, 255, 255))
-        cv2.putText(frame, distance, (800, 700),
-                    fontFace=cv2.FONT_HERSHEY_PLAIN,
-                    fontScale=1.8,
-                    thickness=2,
-                    color=(255, 255, 255))
+        # cv2.putText(frame, avg_speed, (800, 475),
+        #             fontFace=cv2.FONT_HERSHEY_PLAIN,
+        #             fontScale=1.8,
+        #             thickness=2,
+        #             color=(255, 255, 255))
+        # cv2.putText(frame, distance, (800, 500),
+        #             fontFace=cv2.FONT_HERSHEY_PLAIN,
+        #             fontScale=1.8,
+        #             thickness=2,
+        #             color=(255, 255, 255))
 
         for dot in dots:
             # draw the dot
-            cv2.circle(frame, dot, 2, (0, 0, 255), thickness=-1)
+            cv2.circle(frame, dot, 4, (0, 0, 255), thickness=-1)
 
             # connect the dots
-            if prev is not None:
-                cv2.line(frame, prev, dot,
-                         lineType=cv.CV_AA,
-                         color=(0, 0, 255),
-                         thickness=2)
+            # if prev is not None:
+
+            #     cv2.line(frame, prev, dot,
+            #              lineType=cv.CV_AA,
+            #              color=(0, 0, 255),
+            #              thickness=2)
 
             prev = dot
 
@@ -97,7 +98,7 @@ while (1):
 
         count += 1
         cv2.imshow('Stream', frame)
-        cv2.waitKey(1)
+        cv2.waitKey()
     else:
         break
 

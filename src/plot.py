@@ -7,6 +7,13 @@ import matplotlib.animation as animation
 
 plt.style.use('ggplot')
 
+
+font = {'family': 'normal',
+        'weight': 'bold',
+        'size': 18}
+
+plt.rc('font', **font)
+
 # FLAGS
 save = False
 animate_on = False

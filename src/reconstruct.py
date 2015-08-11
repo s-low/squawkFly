@@ -370,6 +370,7 @@ def run():
 
     plot.plot3D(scaled_gp_only, 'Goal Posts')
     plot.plot3D(scaled_gp, '3D Reconstruction')
+    plot.plot3D(scaled, 'Trajectory Only')
     reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
 
     getSpeed(scaled)
@@ -386,7 +387,7 @@ def getSpeed(worldPoints):
         dist = sep3D(p, prev)
 
         # dist is m travelled in ~15ms
-        speed = 66 * dist
+        speed = 58 * dist
         mph = 2.23693629 * speed
         outfile.write(str(speed) + ' ' + str(mph) + '\n')
 
@@ -578,19 +579,30 @@ def triangulateLS(P1, P2, pts_1, pts_2):
 
 # expects normalised points
 def triangulateCV(KP1, KP2, pts_1, pts_2):
+
     points4d = cv2.triangulatePoints(KP1, KP2, pts_1.T, pts_2.T)
     points4d = points4d.T
-
-    points3d = cv2.convertPointsFromHomogeneous(points4d)
+    points3d = convertFromHomogeneous(points4d)
     points3d = points3d.tolist()
-    points3d = tools.fixExtraneousParentheses(points3d)
 
     return points3d
 
 
+# because openCV is stupid
+def convertFromHomogeneous(points):
+    new = []
+    for p in points:
+        s = 1 / p[3]
+        n = (s * p[0], s * p[1], s * p[2])
+        new.append(n)
+
+    new = np.array(new, dtype='float32')
+    return new
+
+
 # given corners 1, 2, 3, 4, work out the 3d scale factor.
 def getScale(goalPosts):
-
+    print goalPosts
     p1 = goalPosts[0]  # bottom left
     p2 = goalPosts[1]  # top left
     p3 = goalPosts[2]  # top right
@@ -610,23 +622,16 @@ def getScale(goalPosts):
 
     distances = [leftBar, rightBar, baseline, crossbar]
 
-    largest = distances.pop(distances.index(max(distances)))
-    second_largest = distances.pop(distances.index(max(distances)))
-    smallest = distances.pop(distances.index(min(distances)))
-    second_smallest = distances.pop(distances.index(min(distances)))
-
     a = (crossbar + baseline) / 2
     b = (leftBar + rightBar) / 2
 
     scale_a = 7.32 / a
     scale_b = 2.44 / b
 
-    print "derived scales:", scale_a, scale_b
+    print "crossbar and bar scales:", scale_a, scale_b
+    scale = (scale_a + scale_b) / 2
 
-    # scale = (scale_a + scale_b) / 2
-    scale = max(scale_a, scale_b)
-
-    print "scale:", scale
+    print "avg scale:", scale
 
     return scale
 

@@ -5,6 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
+
+font = {'family': 'normal',
+        'weight': 'bold',
+        'size': 18}
+
+plt.rc('font', **font)
+
 min_length = 0
 if len(sys.argv) > 1:
     min_length = int(sys.argv[1])
@@ -38,10 +45,10 @@ fig = plt.figure(figsize=(w, h))
 
 # xlim=(400, 800), ylim=(-720,0)
 ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
-ax.set_title("Points from trajectories Filter", y=1.03)
+ax.set_title("Ball Trajectory from Kalman Filter", y=1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
-ax.plot(raw_x, raw_y, 'k.')
+# ax.plot(raw_x, raw_y, 'k.')
 
 # TRAJECTORIES
 last_tid = int(0)
@@ -84,7 +91,7 @@ for row in trajectories:
         # check to see if the last T is above the min selection length
         if len(set_x) >= min_length and min_length != -1:
             displayed_tids.append(last_tid)
-            ax.plot(set_x, set_y, linewidth=2)
+            ax.plot(set_x, set_y, linewidth=4)
 
             # write (x, y, frame) to subset file
             for a, b, c in zip(set_x, set_y, set_f):
@@ -119,7 +126,7 @@ if len(set_x) >= min_length and min_length != -1:
 
 # plot the longest T found if option selected
 if min_length == -1:
-    ax.plot(longest_x, longest_y, linewidth=2)
+    ax.plot(longest_x, longest_y, linewidth=4)
     print "Longest trajectory TID:", longest_tid
     print "Length:", len(longest_x)
 

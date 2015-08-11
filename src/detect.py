@@ -21,6 +21,8 @@ outfile = None
 startOfFile = True
 time = 0
 
+dots = []
+
 
 def main():
     global cap
@@ -68,6 +70,8 @@ def main():
         # Frame1 gets modified with contours
         if tracking:
             search(frame1, temp_thresh)
+            for dot in dots:
+                cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
 
         cv2.imshow('Feed', frame1)
 
@@ -165,6 +169,7 @@ def search(src, thresh):
 
                     cx = x + float(w) / 2.0
                     cy = -1 * (y + float(h) / 2.0)
+                    dots.append((int(cx), -int(cy)))
 
                     if not startOfFile:
                         outfile.write('\n')
