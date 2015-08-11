@@ -370,7 +370,6 @@ def run():
 
     plot.plot3D(scaled_gp_only, 'Goal Posts')
     plot.plot3D(scaled_gp, '3D Reconstruction')
-    plot.plot3D(scaled, 'Trajectory Only')
     reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
 
     getSpeed(scaled)
@@ -399,12 +398,10 @@ def getSpeed(worldPoints):
 
     # calculate range
     last = prev
-    print first
-    print last
     shotRange = int(sep3D(first, last))
 
     avg = int(sum(speeds) / len(speeds))
-    print "> Range:", str(shotRange) + 'm'
+    print "> Distance Covered:", str(shotRange) + 'm'
     print "> Average speed: ", str(avg) + 'mph'
 
     outfile = open('tests/' + d + '/tracer_stats.txt', 'w')
@@ -602,7 +599,6 @@ def convertFromHomogeneous(points):
 
 # given corners 1, 2, 3, 4, work out the 3d scale factor.
 def getScale(goalPosts):
-    print goalPosts
     p1 = goalPosts[0]  # bottom left
     p2 = goalPosts[1]  # top left
     p3 = goalPosts[2]  # top right
@@ -615,10 +611,8 @@ def getScale(goalPosts):
     rightBar = sep3D(p3, p4)
     baseline = sep3D(p1, p4)
 
-    print "left upright:", leftBar
-    print "right upright:", rightBar
-    print "crossbar:", crossbar
-    print "baseline:", baseline
+    print "left uprights:", leftBar, rightBar
+    print "crossbars:", crossbar, baseline
 
     distances = [leftBar, rightBar, baseline, crossbar]
 
