@@ -30,6 +30,8 @@ def main():
                     [1 / rt2, 1 / rt2, 0],
                     [0, 0, 1]], dtype='float32')
 
+    nothing = np.mat([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype='float32')
+
     z90cc = np.mat([[0, -1, 0], [1, 0, 0], [0, 0, 1]], dtype='float32')
     z90cw = np.mat([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], dtype='float32')
 
@@ -47,14 +49,14 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (0, 0, 1000)
-    rvec1 = (0, 0, 0)
+    tvec1 = (0, 0, 5)
+    # rvec1 = (0, 0, 0)
 
-    tvec2 = (0, 500, 500)
-    rvec2 = (0, 0, 0)
+    tvec2 = (10, 0, 5)
+    # rvec2 = (0, 0, 0)
 
-    img_pts1 = project(data_3d, K, y180, tvec1)
-    img_pts2 = project(data_3d, K, x90cc, tvec2)
+    img_pts1 = project(data_3d, K, nothing, tvec1)
+    img_pts2 = project(data_3d, K, nothing, tvec2)
 
     # img_pts1, jacobian = cv2.projectPoints(
     #     data_3d, rvec1, tvec1, K, dist)
@@ -79,7 +81,6 @@ def project(objectPoints, K, R, t):
     print "--------- MANUAL PROJECTION -----------"
     objectPoints = cv2.convertPointsToHomogeneous(objectPoints)
     objectPoints = fixExtraneousParentheses(objectPoints)
-    print objectPoints
 
     imagePoints = []
     print "K:\n", K
@@ -116,7 +117,7 @@ def getData(folder):
     pts2 = []
     original_3Ddata = []
 
-    with open(path + '3d.txt') as datafile:
+    with open(path + '3d_statics.txt') as datafile:
         data = datafile.read()
         datafile.close()
 

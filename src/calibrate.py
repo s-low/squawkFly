@@ -54,9 +54,25 @@ for i in xrange(len(objpoints)):
     error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
     mean_error += error
 
+nodist = dist
+nodist[0][0] = 0
+nodist[0][1] = 0
+nodist[0][2] = 0
+nodist[0][3] = 0
+nodist[0][4] = 0
+
+no_dist = 0
+for i in xrange(len(objpoints)):
+    imgpoints2, _ = cv2.projectPoints(
+        objpoints[i], rvecs[i], tvecs[i], mtx, nodist)
+    error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+    no_dist += error
+
+
 np.set_printoptions(precision=3, suppress=True)
 print count, "/", len(images), "successful detections"
 print "calibration matrix: \n", mtx
 print "distortion:\n", dist
 print "avg returned reprojection error:", err
 print "avg calculated projection error: ", mean_error / len(objpoints)
+print "and assuming no distortion:", no_dist / len(objpoints)

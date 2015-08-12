@@ -25,18 +25,18 @@ ax = fig.add_subplot(111, projection='3d')
 ax.scatter(X, Y, Z, zdir='z')
 
 # Create cubic bounding box to simulate equal aspect ratio
-# max_range = np.array(
-#     [max(X) - min(X), max(Y) - min(Y), max(Z) - min(Z)]).max()
-# Xb = 0.5 * max_range * \
-#     np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (max(X) + min(X))
-# Yb = 0.5 * max_range * \
-#     np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (max(Y) + min(Y))
-# Zb = 0.5 * max_range * \
-#     np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (max(Z) + min(Z))
+max_range = np.array(
+    [max(X) - min(X), max(Y) - min(Y), max(Z) - min(Z)]).max()
+Xb = 0.5 * max_range * \
+    np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (max(X) + min(X))
+Yb = 0.5 * max_range * \
+    np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (max(Y) + min(Y))
+Zb = 0.5 * max_range * \
+    np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (max(Z) + min(Z))
 
-# # Comment or uncomment following both lines to test the fake bounding box:
-# for xb, yb, zb in zip(Xb, Yb, Zb):
-#     ax.plot([xb], [yb], [zb], 'w')
+# Comment or uncomment following both lines to test the fake bounding box:
+for xb, yb, zb in zip(Xb, Yb, Zb):
+    ax.plot([xb], [yb], [zb], 'w')
 
 ax.set_xlabel('X')
 ax.set_ylabel('Y')

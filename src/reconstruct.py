@@ -249,11 +249,16 @@ if d.isdigit():
     simulation = True
 
 # Calibration matrices:
-K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
-K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
+if d == 'coombe_sim':
+    print "-----Shot Simulation------"
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+else:
+    K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
+    K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
 
-dist_coeffs1 = np.array([-0.039, 0.18, 0, 0, 0])
-dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
+# dist_coeffs1 = np.array([-0.039, 0.18, 0, 0, 0])
+# dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
 
 # If one of the simulation folders, set the calib matrices to sim values
 if simulation:
@@ -264,16 +269,16 @@ if simulation:
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
     d)
 
+pts1 = []
+pts2 = []
+pts3 = []
+pts4 = []
+
 # undistort it
 # pts1_raw = undistortData(pts1_raw, K1, dist_coeffs1)
 # pts2_raw = undistortData(pts2_raw, K2, dist_coeffs2)
 # pts3_raw = undistortData(pts3_raw, K1, dist_coeffs1)
 # pts4_raw = undistortData(pts4_raw, K2, dist_coeffs2)
-
-pts1 = []
-pts2 = []
-pts3 = []
-pts4 = []
 
 # Image coords: (x, y)
 pts1 = np.array(pts1_raw, dtype='float32')
@@ -283,6 +288,10 @@ pts4 = np.array(pts4_raw, dtype='float32')
 postPts1 = np.array(postPts1, dtype='float32')
 postPts2 = np.array(postPts2, dtype='float32')
 
+
+# NOISE
+# pts1 = addNoise(0, 4, pts1)
+# pts2 = addNoise(0, 4, pts2)
 
 # using the trajectories themselves to calculate geometry
 if rec_data is False and simulation is False:
@@ -411,7 +420,7 @@ def getSpeed(worldPoints):
     shotRange = int(sep3D(first, last))
     avg = int(sum(speeds) / len(speeds))
     avgms = avg / 2.237
-    time = float(shotRange) / float(avgms)
+    time = round(float(shotRange) / float(avgms), 1)
 
     print "> Distance Covered:", str(shotRange) + 'm'
     print "> Average speed: ", str(avg) + 'mph'

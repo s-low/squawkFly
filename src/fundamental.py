@@ -86,6 +86,8 @@ def distanceToEpiline(line, pt):
 
     # ax + by + c = 0
     a, b, c = line[0], line[1], line[2]
+    print "a = ", a
+    print "b = ", b
 
     # image point coords
     x = pt[0]
@@ -96,7 +98,12 @@ def distanceToEpiline(line, pt):
     k1 = -c / b
 
     # y = -1/m x + k2 (perpedicular line that runs through p(x,y))
-    m2 = -1 / m1
+    if m1 < 0.0001:
+        # if line1 is horizontal in x then the other line is vertical in x
+        m2 = 99999
+    else:
+        m2 = -1 / m1
+
     k2 = y - (m2 * x)
 
     # x at point of intersection:
@@ -105,6 +112,9 @@ def distanceToEpiline(line, pt):
     # y1(x_intercept) and y2(x_intercept) should be the same
     y_inter1 = (m1 * x_inter) + k1
     y_inter2 = (m2 * x_inter) + k2
+
+    print "y1 = m1x + k1:", m1, k1
+    print "y2 = m2x + k2:", m2, k2
 
     message = "Epiline and perp have different y at x_intercept:" + \
         str(y_inter1) + ' ' + str(y_inter2)
