@@ -14,27 +14,52 @@
 
     <h1>XHTML Hello World</h1>
     <p>
-      With X3D-namespace and case senstive element/node names. Works with self-closing tags (e.g. Viewpoint and Material)
+      Navigation modes: 
+      <ul>
+      <li>e: Examine </li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>w: Walk </li>
+      <li>f: Fly </li>
+      <li>h: Helicopter</li>
+      <li>l: Look at</li>
+      <li>t: Turntable</li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>g: Game</li>
+      </ul>
+
+      Also:
+      <ul>
+        <li>r: reset view</li>
+        <li>a: show all</li>
+        <li>u: upright</li>
+      </ul>
     </p>
 
-    <x3d width='600px' height='400px'> 
+    <x3d width='900px' height='900px'> 
     <scene> 
-        <Viewpoint position='0 0 55'/>
-  
-        <transform translation='0 25 0'>
-          
+    <background skyColor = '0.7 0.89 0.95'></background>
+    <navigationInfo type='"any"' id="navType"></navigationInfo>
+        <Viewpoint position='0 0 80'/>
+        <directionalLight ambientIntensity='0.5' global='true'/>
+            
           <!-- GRASS -->
           <shape>
-          <Disk2D outerRadius ='30' solid='false'></Disk2D>
+          <rectangle2D size='100,100' ></rectangle2D>
             <appearance>
-              <material diffuseColor='0.1 0.7 0.1'></material> 
+              <material diffuseColor='0.1 0.7 0.1' ambientIntensity='0.1'></material> 
             </appearance>
           </shape>
           
+        <transform translation = '0 15.7 0'>
+          
           <!-- UPRIGHT -->
-          <transform rotation='1 0 0 1.57' translation='-3.6 0 1.5'>
+          <transform rotation='1 0 0 1.57' translation='0 0 1.22'>
           <shape>
-            <cylinder radius ='0.1' height='3'></cylinder>
+            <cylinder radius ='0.1' height='1.7'></cylinder>
             <appearance>
               <material diffuseColor='1 1 1'></material> 
             </appearance>
@@ -42,9 +67,9 @@
           </transform>
           
           <!-- UPRIGHT -->
-          <transform rotation='1 0 0 1.57' translation='3.6 0 1.5'>
+          <transform rotation='1 0 0 1.57' translation='6 0 1.22'>
           <shape>
-            <cylinder radius ='0.1' height='3'></cylinder>
+            <cylinder radius ='0.1' height='1.7'></cylinder>
             <appearance>
               <material diffuseColor='1 1 1'></material> 
             </appearance>
@@ -53,82 +78,64 @@
           
           <!-- CROSSBAR -->
           <transform rotation='0 0 1 1.57'>
-          <transform rotation='0 1 0 1.57' translation='0 0 3'>
+          <transform rotation='0 1 0 1.57' translation='0 -3 2.0'>
           <shape>
-            <cylinder radius ='0.1' height='7.2'></cylinder>
+            <cylinder radius ='0.1' height='6.0'></cylinder>
             <appearance>
               <material diffuseColor='1 1 1'></material> 
             </appearance>
           </shape>
           </transform>
           </transform>
-          
+
         </transform>
-
           <!-- BALLS -->
-          <transform translation='0 0 0.2'>
-          <group DEF='ball'>
-          <shape>
-            <sphere radius='0.2'></sphere>
-            <appearance>
-              <material diffuseColor='0 0 1'></material> 
-            </appearance>
-          </shape>
-          </group>
+          <transform translation=''>
+                <group DEF='ball'>
+                <shape>
+                  <sphere radius='0.1'></sphere>
+                  <appearance>
+                    <material diffuseColor='0 0 1'></material> 
+                  </appearance>
+                </shape>
+                </group>
           </transform>
           
-          <transform translation='0 1 0.3'>
+          <transform translation='0.0 0.0 0.0'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 2 0.4'>
+          <transform translation='0.3 1.9 0.4'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 3 0.5'>
+          <transform translation='0.7 4.2 0.9'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 4 0.6'>
-          <group USE='ball'/>
-          </transform>
-  
-
-          <transform translation='0 5 0.7'>
+          <transform translation='1.0 6.1 1.2'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 6 0.8'>
+          <transform translation='1.2 8.0 1.5'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 7 0.9'>
+          <transform translation='1.6 10.0 1.8'>
           <group USE='ball'/>
           </transform>
 
-          <transform translation='0 8 1'>
+          <transform translation='1.9 11.9 2.0'>
           <group USE='ball'/>
           </transform>
-  
-          <transform translation='0 9 1.1'>
+
+          <transform translation='2.3 13.8 2.1'>
           <group USE='ball'/>
           </transform>
-  
-          <transform translation='0 10 1.2'>
+
+          <transform translation='2.8 15.6 1.9'>
           <group USE='ball'/>
           </transform>
-  
-          <transform translation='0 11 1.3'>
-          <group USE='ball'/>
-          </transform>
-  
-          <transform translation='0 12 1.4'>
-          <group USE='ball'/>
-          </transform>
-  
-  
-  
-  
   
 
 
