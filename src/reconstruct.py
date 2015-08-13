@@ -257,9 +257,6 @@ else:
     K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
     K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
 
-# dist_coeffs1 = np.array([-0.039, 0.18, 0, 0, 0])
-# dist_coeffs2 = np.array([0.006, 0.558, 0, 0, 0])
-
 # If one of the simulation folders, set the calib matrices to sim values
 if simulation:
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
@@ -354,40 +351,38 @@ def run():
         pts3 = pts1
         pts4 = pts2
 
-    # add the post point data into the reconstruction for context
-    if len(postPts1) == 4:
-        pts3_gp = np.concatenate((postPts1, pts3), axis=0)
-        pts4_gp = np.concatenate((postPts2, pts4), axis=0)
+    # Triangulate the trajectory
+    p3d = triangulateCV(KP1, KP2, pts3, pts4)
 
-    # alternative triangulation
+    # Triangulate goalposts
     if simulation is False:
-        goal_posts = triangulateCV(KP1, KP2, postPts1, postPts2)
-
-        # with goal posts included
-        p3d_cv_gp = triangulateCV(KP1, KP2, pts3_gp, pts4_gp)
-
-    # just the trajectory
-    p3d_cv = triangulateCV(KP1, KP2, pts3, pts4)
+        goalPosts = triangulateCV(KP1, KP2, postPts1, postPts2)
 
     # SCALING AND PLOTTING
     if simulation:
-        plot.plot3D(p3d_cv, 'Simulation Reconstruction')
-        reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d_cv)
+        plot.plot3D(p3d, 'Simulation Reconstruction')
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d)
 
     else:
-        scale = getScale(goal_posts)
-        scaled_gp_only = [[a * scale for a in inner] for inner in goal_posts]
-        scaled_gp = [[a * scale for a in inner] for inner in p3d_cv_gp]
-        scaled = [[a * scale for a in inner] for inner in p3d_cv]
+        # add the post point data into the reconstruction for context
+        if len(postPts1) == 4:
+            pts3_gp = np.concatenate((postPts1, pts3), axis=0)
+            pts4_gp = np.concatenate((postPts2, pts4), axis=0)
+            p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
+
+        scale = getScale(goalPosts)
+        scaled_gp_only = [[a * scale for a in inner] for inner in goalPosts]
+        scaled_gp = [[a * scale for a in inner] for inner in p3d_gp]
+        scaled = [[a * scale for a in inner] for inner in p3d]
 
         plot.plot3D(scaled_gp_only, 'Goal Posts')
         plot.plot3D(scaled_gp, '3D Reconstruction')
-        reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_cv_gp)
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
         getSpeed(scaled)
 
         scaled_gp = transform(scaled_gp)
-        plot.plot3D(scaled_gp, '3D Reconstruction')
+        plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
 
         # write X Y Z to file
         outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
