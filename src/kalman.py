@@ -38,14 +38,14 @@ d = False
 print "----------KALMAN.PY------------"
 
 
-def verified(corrected_point, next_frame_index):
+def verified(corrected_point, next_frame_index, v_distance):
     try:
         next_frame = frame_array[next_frame_index]
     except IndexError:
         return False
 
     # init the measured sep to an arbitrarily high value
-    min_sep = verify_distance
+    min_sep = v_distance
     vpoint = None
 
     # for each point in the next frame, check the distance between the pair
@@ -58,7 +58,7 @@ def verified(corrected_point, next_frame_index):
         # POINT: X / Y / FRAME / PID
         c = (cx, cy, c_frame, c_pid)
 
-        vflag, sep = point_is_near_point(corrected_point, c, verify_distance)
+        vflag, sep = point_is_near_point(corrected_point, c, v_distance)
 
         # a point may be verified by several points. we want the best one.
         if vflag is True and sep < min_sep:
@@ -92,6 +92,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
     global d
     global new_trajectory
     global n_miss
+    postState = kf.getPostState()
 
     if d and new_trajectory:
         print "\nNEW"
@@ -101,7 +102,6 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "\ntrajectory:\n", this_trajectory
         print "Head:", p0
         print "Arm:", p1
-        postState = kf.getPostState()
         print "Post state:\n", np.asarray(postState[:,:])
 
     # PREDICT location of branch
@@ -111,7 +111,9 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "Predicted:", predicted
 
     # MEASURE location of verifying point
-    p_verification = verified(predicted, frame_index + 1)
+    # v_dist is half current speed
+    v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / 2
+    p_verification = verified(predicted, frame_index + 1, v_dist)
 
     if d:
         print "Verified by:", p_verification
