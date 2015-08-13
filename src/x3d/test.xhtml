@@ -19,12 +19,13 @@
 
     <x3d width='600px' height='400px'> 
     <scene> 
-        <Viewpoint position='0 0 40'/>
-
+        <Viewpoint position='0 0 55'/>
+  
+        <transform rotation='1 0 0 -1'>
         <shape>
-        <Disk2D outerRadius ='10'></Disk2D>
+        <Disk2D outerRadius ='25' solid='false'></Disk2D>
           <appearance>
-            <material diffuseColor='0 1 0' emissiveColor='0 1 0'></material> 
+            <material diffuseColor='0.1 0.7 0.1'></material> 
           </appearance>
         </shape>
         
@@ -54,6 +55,7 @@
             <material diffuseColor='1 1 1'></material> 
           </appearance>
         </shape>
+        </transform>
         </transform>
         </transform>
 

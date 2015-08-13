@@ -356,8 +356,8 @@ def run():
 
     # add the post point data into the reconstruction for context
     if len(postPts1) == 4:
-        pts3_gp = np.concatenate((pts3, postPts1), axis=0)
-        pts4_gp = np.concatenate((pts4, postPts2), axis=0)
+        pts3_gp = np.concatenate((postPts1, pts3), axis=0)
+        pts4_gp = np.concatenate((postPts2, pts4), axis=0)
 
     # alternative triangulation
     if simulation is False:
@@ -386,12 +386,98 @@ def run():
 
         getSpeed(scaled)
 
+        scaled_gp = transform(scaled_gp)
+
+        plot.plot3D(scaled_gp, '3D Reconstruction')
+
         # write X Y Z to file
         outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
         for p in scaled_gp:
             string = str(p[0]) + ' ' + str(p[1]) + ' ' + str(p[2])
             outfile.write(string + '\n')
         outfile.close()
+
+
+# transform the scaled 3d model so that it's orientation is sensible
+def transform(points):
+    # translate everything so bottom left corner is at origin
+    translated = []
+    bl = points[0]
+    br = points[3]
+    print "bottom left:", bl
+    print "bottom right:", br
+    x0 = bl[0]
+    y0 = bl[1]
+    z0 = bl[2]
+
+    print "---Translation---"
+    for p in points:
+        x = p[0] - x0
+        y = p[1] - y0
+        z = p[2] - z0
+
+        translated.append((x, y, z))
+
+    print "new bottom left:\n", translated[0]
+    print "new bottom right:\n", translated[3]
+
+    # eliminate y component of bottom right: Z-X plane
+    print "---Rotate Bottom Right into Z-X Plane---"
+    br = translated[3]
+    x1 = br[0]
+    y1 = br[1]
+    z1 = br[2]
+    L = ((x1 ** 2) + (y1 ** 2)) ** 0.5
+
+    theta = -1 * math.asin(y1 / L)
+    cos = math.cos(theta)
+    sin = math.sin(theta)
+
+    print "rotate by theta around z:", theta
+    rotatedz = []
+    rotz = np.mat([[cos, -sin, 0],
+                   [sin, cos, 0],
+                   [0, 0, 1]], dtype='float32')
+
+    for p in translated:
+        p = np.mat(p)
+        n = rotz * p.T
+        rotatedz.append(n)
+
+    print "new bottom left:\n", rotatedz[0]
+    print "new bottom right:\n", rotatedz[3]
+
+    # eliminate z component of bottom right
+    print "---Rotate Bottom Right into X axis---"
+    br = rotatedz[3]
+    x2 = br[0, 0]
+    y2 = br[1, 0]
+    z2 = br[2, 0]
+    L = ((x2 ** 2) + (z2 ** 2)) ** 0.5
+
+    theta = 1 * math.asin(z2 / L)
+    cos = math.cos(theta)
+    sin = math.sin(theta)
+
+    print "rotate by theta about x:", theta
+    rotatedy = []
+    roty = np.mat([[cos, 0, sin],
+                   [0, 1, 0],
+                   [-sin, 0, cos]], dtype='float32')
+
+    for p in rotatedz:
+        p = np.mat(p)
+        n = roty * p
+        rotatedy.append(n)
+
+    print "new bottom left:\n", rotatedy[0]
+    print "new bottom right:\n", rotatedy[3]
+
+    # bottom corners are on the x axis at z=0, y=0.
+    # now bring the top left corner into the plane (z=0)
+    print "Rotation about X"
+
+    return np.array(rotatedy, dtype='float32')
 
 
 # give the scaled up set of trajectory points, work out the point to point
@@ -460,7 +546,7 @@ def getFundamentalMatrix(pts_1, pts_2):
 
 def getEssentialMatrix(F, K1, K2):
 
-    E = K1.T * np.mat(F) * K2
+    E = K2.T * np.mat(F) * K1
     print "\n> Essential:\n", E
 
     fund.testEssentialReln(E, norm_pts1, norm_pts2)
