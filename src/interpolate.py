@@ -49,7 +49,7 @@ for row in data:
 
 def fit(a, b):
 
-    z = np.polyfit(a, b, 4)
+    z = np.polyfit(a, b, 5)
     func = np.poly1d(z)
 
     a_new = np.linspace(a[0], a[-1], 50)

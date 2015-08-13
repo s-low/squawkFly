@@ -387,13 +387,15 @@ def run():
         getSpeed(scaled)
 
         scaled_gp = transform(scaled_gp)
-
         plot.plot3D(scaled_gp, '3D Reconstruction')
 
         # write X Y Z to file
         outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
         for p in scaled_gp:
-            string = str(p[0]) + ' ' + str(p[1]) + ' ' + str(p[2])
+            p0 = round(p[0], 1)
+            p1 = round(p[1], 1)
+            p2 = round(p[2], 1)
+            string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
             outfile.write(string + '\n')
         outfile.close()
 
@@ -459,7 +461,7 @@ def transform(points):
     cos = math.cos(theta)
     sin = math.sin(theta)
 
-    print "rotate by theta about x:", theta
+    print "rotate by theta about y:", theta
     rotatedy = []
     roty = np.mat([[cos, 0, sin],
                    [0, 1, 0],
@@ -475,9 +477,33 @@ def transform(points):
 
     # bottom corners are on the x axis at z=0, y=0.
     # now bring the top left corner into the plane (z=0)
-    print "Rotation about X"
+    print "\n---Rotate Top Left into X-Y Plane---"
+    tl = rotatedz[1]
+    x3 = tl[0, 0]
+    y3 = tl[1, 0]
+    z3 = tl[2, 0]
+    L = ((y3 ** 2) + (z3 ** 2)) ** 0.5
 
-    return np.array(rotatedy, dtype='float32')
+    theta = 1 * math.asin(z3 / L)
+    cos = math.cos(theta)
+    sin = math.sin(theta)
+
+    print "rotate by theta about x:", theta
+    rotatedx = []
+    rotx = np.mat([[1, 0, 0],
+                   [0, cos, -sin],
+                   [0, sin, cos]], dtype='float32')
+
+    for p in rotatedy:
+        p = np.mat(p)
+        n = rotx * p
+        rotatedx.append((n[0, 0], n[1, 0], n[2, 0] + 25))
+
+    print "bottom left:\n", rotatedx[0]
+    print "top left:\n", rotatedx[1]
+    print "bottom right:\n", rotatedx[3]
+
+    return np.array(rotatedx, dtype='float32')
 
 
 # give the scaled up set of trajectory points, work out the point to point

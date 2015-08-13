@@ -21,24 +21,18 @@
     <scene> 
         <Viewpoint position='0 0 55'/>
   
-        <transform rotation='1 0 0 -1'>
-        <shape>
-        <Disk2D outerRadius ='25' solid='false'></Disk2D>
-          <appearance>
-            <material diffuseColor='0.1 0.7 0.1'></material> 
-          </appearance>
-        </shape>
-        
-        <transform rotation='1 0 0 1.57' translation='-3.5 0 1.5'>
-        <shape>
-          <cylinder radius ='0.1' height='3'></cylinder>
-          <appearance>
-            <material diffuseColor='1 1 1'></material> 
-          </appearance>
-        </shape>
-        </transform>
-        
-          <transform rotation='1 0 0 1.57' translation='3.5 0 1.5'>
+        <transform translation='0 25 0'>
+          
+          <!-- GRASS -->
+          <shape>
+          <Disk2D outerRadius ='30' solid='false'></Disk2D>
+            <appearance>
+              <material diffuseColor='0.1 0.7 0.1'></material> 
+            </appearance>
+          </shape>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='-3.6 0 1.5'>
           <shape>
             <cylinder radius ='0.1' height='3'></cylinder>
             <appearance>
@@ -46,18 +40,98 @@
             </appearance>
           </shape>
           </transform>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='3.6 0 1.5'>
+          <shape>
+            <cylinder radius ='0.1' height='3'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- CROSSBAR -->
+          <transform rotation='0 0 1 1.57'>
+          <transform rotation='0 1 0 1.57' translation='0 0 3'>
+          <shape>
+            <cylinder radius ='0.1' height='7.2'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          </transform>
+          
+        </transform>
+
+          <!-- BALLS -->
+          <transform translation='0 0 0.2'>
+          <group DEF='ball'>
+          <shape>
+            <sphere radius='0.2'></sphere>
+            <appearance>
+              <material diffuseColor='0 0 1'></material> 
+            </appearance>
+          </shape>
+          </group>
+          </transform>
+          
+          <transform translation='0 1 0.3'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 2 0.4'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 3 0.5'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 4 0.6'>
+          <group USE='ball'/>
+          </transform>
   
-        <transform rotation='0 0 1 1.57'>
-        <transform rotation='0 1 0 1.57' translation='0 0 3'>
-        <shape>
-          <cylinder radius ='0.1' height='7'></cylinder>
-          <appearance>
-            <material diffuseColor='1 1 1'></material> 
-          </appearance>
-        </shape>
-        </transform>
-        </transform>
-        </transform>
+
+          <transform translation='0 5 0.7'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 6 0.8'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 7 0.9'>
+          <group USE='ball'/>
+          </transform>
+
+          <transform translation='0 8 1'>
+          <group USE='ball'/>
+          </transform>
+  
+          <transform translation='0 9 1.1'>
+          <group USE='ball'/>
+          </transform>
+  
+          <transform translation='0 10 1.2'>
+          <group USE='ball'/>
+          </transform>
+  
+          <transform translation='0 11 1.3'>
+          <group USE='ball'/>
+          </transform>
+  
+          <transform translation='0 12 1.4'>
+          <group USE='ball'/>
+          </transform>
+  
+  
+  
+  
+  
+
+
 
       </scene>
       </x3d>

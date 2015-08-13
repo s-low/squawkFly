@@ -13,8 +13,8 @@ def plot3D(data_3d, name='3D Plot'):
     fig = plt.figure(name)
     ax = Axes3D(fig)
     # ax = fig.add_subplot(111, projection='3d')
-    ax.set_aspect('equal')
-    ax.scatter(X, Y, Z, zdir='z')
+    # ax.set_aspect('equal')
+    ax.scatter(X, Y, Z)
 
     # Create cubic bounding box to simulate equal aspect ratio
     max_range = np.array(
