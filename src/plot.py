@@ -70,7 +70,7 @@ w = 1280 / dpi
 fig = plt.figure(figsize=(w, h))
 
 ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
-ax.set_title("Ball Candidate Centroids", y=1.03)
+ax.set_title("Ball Detections", y=1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
 if animate_on:

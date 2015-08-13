@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hello World</title>
+        <link rel="stylesheet" type="text/css" href="../../x3dom-1.7.0/x3dom.css" />
+    <script type="text/javascript" src="../../x3dom-1.7.0/x3dom.js"></script>
+    <script type="text/javascript" src="../../x3dom-1.7.0/components/Geometry2D.js"></script>
+  </head>
+       
+<body>
+
+    <h1>XHTML Hello World</h1>
+    <p>
+      With X3D-namespace and case senstive element/node names. Works with self-closing tags (e.g. Viewpoint and Material)
+    </p>
+
+    <x3d width='600px' height='400px'> 
+    <scene> 
+        <Viewpoint position='0 0 40'/>
+
+        <shape>
+        <Disk2D outerRadius ='10'></Disk2D>
+          <appearance>
+            <material diffuseColor='0 1 0' emissiveColor='0 1 0'></material> 
+          </appearance>
+        </shape>
+        
+        <transform rotation='1 0 0 1.57' translation='-3.5 0 1.5'>
+        <shape>
+          <cylinder radius ='0.1' height='3'></cylinder>
+          <appearance>
+            <material diffuseColor='1 1 1'></material> 
+          </appearance>
+        </shape>
+        </transform>
+        
+          <transform rotation='1 0 0 1.57' translation='3.5 0 1.5'>
+          <shape>
+            <cylinder radius ='0.1' height='3'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+  
+        <transform rotation='0 0 1 1.57'>
+        <transform rotation='0 1 0 1.57' translation='0 0 3'>
+        <shape>
+          <cylinder radius ='0.1' height='7'></cylinder>
+          <appearance>
+            <material diffuseColor='1 1 1'></material> 
+          </appearance>
+        </shape>
+        </transform>
+        </transform>
+
+      </scene>
+      </x3d>
+</body>
+</html>

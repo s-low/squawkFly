@@ -70,8 +70,8 @@ def main():
         # Frame1 gets modified with contours
         if tracking:
             search(frame1, temp_thresh)
-            for dot in dots:
-                cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
+            # for dot in dots:
+            #     cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
 
         cv2.imshow('Feed', frame1)
 
