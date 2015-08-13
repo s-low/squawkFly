@@ -382,7 +382,7 @@ def run():
         getSpeed(scaled)
 
         scaled_gp = transform(scaled_gp)
-        plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
+        plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
 
         # write X Y Z to file
         outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
@@ -397,108 +397,101 @@ def run():
 
 # transform the scaled 3d model so that it's orientation is sensible
 def transform(points):
-    # translate everything so bottom left corner is at origin
-    translated = []
-    bl = points[0]
-    br = points[3]
-    print "bottom left:", bl
-    print "bottom right:", br
-    x0 = bl[0]
-    y0 = bl[1]
-    z0 = bl[2]
 
-    print "---Translation---"
+    # STEP ONE: translate everything so that the first ball point
+    translated = []
+    anchor = points[4]
+
+    x0 = anchor[0]
+    y0 = anchor[1]
+    z0 = anchor[2]
+
+    print "\n---Translate Trajectory Anchor to Origin---"
     for p in points:
         x = p[0] - x0
         y = p[1] - y0
         z = p[2] - z0
-
         translated.append((x, y, z))
 
-    print "new bottom left:\n", translated[0]
-    print "new bottom right:\n", translated[3]
+    print "new trajectory anchor:\n", translated[4]
 
-    # eliminate y component of bottom right: Z-X plane
-    print "---Rotate Bottom Right into Z-X Plane---"
-    br = translated[3]
-    x1 = br[0]
-    y1 = br[1]
-    z1 = br[2]
-    L = ((x1 ** 2) + (y1 ** 2)) ** 0.5
+    # STEP TWO: Rotate everything so that bottom-left GP lies on z-axis.
+    # Eliminate y component by rotating around x:
+    print "\n---Eliminate Y from Bottom left---"
+    bl = translated[0]
+    x = bl[0]
+    y = bl[1]
+    z = bl[2]
+    L = ((y ** 2) + (z ** 2)) ** 0.5
 
-    theta = -1 * math.asin(y1 / L)
+    theta = math.asin(y / L)
     cos = math.cos(theta)
     sin = math.sin(theta)
 
-    print "rotate by theta around z:", theta
-    rotatedz = []
-    rotz = np.mat([[cos, -sin, 0],
-                   [sin, cos, 0],
-                   [0, 0, 1]], dtype='float32')
-
-    for p in translated:
-        p = np.mat(p)
-        n = rotz * p.T
-        rotatedz.append(n)
-
-    print "new bottom left:\n", rotatedz[0]
-    print "new bottom right:\n", rotatedz[3]
-
-    # eliminate z component of bottom right
-    print "---Rotate Bottom Right into X axis---"
-    br = rotatedz[3]
-    x2 = br[0, 0]
-    y2 = br[1, 0]
-    z2 = br[2, 0]
-    L = ((x2 ** 2) + (z2 ** 2)) ** 0.5
-
-    theta = 1 * math.asin(z2 / L)
-    cos = math.cos(theta)
-    sin = math.sin(theta)
-
-    print "rotate by theta about y:", theta
-    rotatedy = []
-    roty = np.mat([[cos, 0, sin],
-                   [0, 1, 0],
-                   [-sin, 0, cos]], dtype='float32')
-
-    for p in rotatedz:
-        p = np.mat(p)
-        n = roty * p
-        rotatedy.append(n)
-
-    print "new bottom left:\n", rotatedy[0]
-    print "new bottom right:\n", rotatedy[3]
-
-    # bottom corners are on the x axis at z=0, y=0.
-    # now bring the top left corner into the plane (z=0)
-    print "\n---Rotate Top Left into X-Y Plane---"
-    tl = rotatedz[1]
-    x3 = tl[0, 0]
-    y3 = tl[1, 0]
-    z3 = tl[2, 0]
-    L = ((y3 ** 2) + (z3 ** 2)) ** 0.5
-
-    theta = 1 * math.asin(z3 / L)
-    cos = math.cos(theta)
-    sin = math.sin(theta)
-
-    print "rotate by theta about x:", theta
-    rotatedx = []
+    print "rotate by theta around x:", theta
+    rotated_x = []
     rotx = np.mat([[1, 0, 0],
                    [0, cos, -sin],
                    [0, sin, cos]], dtype='float32')
 
-    for p in rotatedy:
+    for p in translated:
         p = np.mat(p)
-        n = rotx * p
-        rotatedx.append((n[0, 0], n[1, 0], n[2, 0] + 25))
+        n = rotx * p.T
+        rotated_x.append((n[0, 0], n[1, 0], n[2, 0]))
 
-    print "bottom left:\n", rotatedx[0]
-    print "top left:\n", rotatedx[1]
-    print "bottom right:\n", rotatedx[3]
+    print "new bottom left:\n", rotated_x[0]
 
-    return np.array(rotatedx, dtype='float32')
+    # eliminate x component by rotating round y
+    print "\n---Eliminate X from Bottom Left---"
+    bl = rotated_x[0]
+    x = bl[0]
+    y = bl[1]
+    z = bl[2]
+    L = ((x ** 2) + (z ** 2)) ** 0.5
+
+    theta = -1 * math.asin(x / L)
+    cos = math.cos(theta)
+    sin = math.sin(theta)
+
+    print "rotate by theta around y:", theta
+    rotated_y = []
+    roty = np.mat([[cos, 0, sin],
+                   [0, 1, 0],
+                   [-sin, 0, cos]], dtype='float32')
+
+    for p in rotated_x:
+        p = np.mat(p)
+        n = roty * p.T
+        rotated_y.append((n[0, 0], n[1, 0], n[2, 0]))
+
+    print "new bottom left:\n", rotated_y[0]
+
+    # rotate bottom right into Z-X plance (no Y)
+    print "\n---Rotate Bottom into ZX Plane (Floor - No Y)---"
+    br = rotated_y[3]
+    x = br[0]
+    y = br[1]
+    z = br[2]
+    L = ((x ** 2) + (y ** 2)) ** 0.5
+
+    theta = -1 * math.asin(y / L)
+    cos = math.cos(theta)
+    sin = math.sin(theta)
+
+    print "rotate by theta about y:", theta
+    rotated_z = []
+    rotz = np.mat([[cos, -sin, 0],
+                   [sin, cos, 0],
+                   [0, 0, 1]], dtype='float32')
+
+    for p in rotated_y:
+        p = np.mat(p)
+        n = rotz * p.T
+        rotated_z.append((n[0, 0], n[1, 0], n[2, 0]))
+
+    print "new bottom right:\n", rotated_z[3]
+
+    return np.array(rotated_z, dtype='float32')
 
 
 # give the scaled up set of trajectory points, work out the point to point
