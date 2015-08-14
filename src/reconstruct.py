@@ -390,7 +390,7 @@ def run():
             p0 = round(p[0], 1)
             p1 = round(p[1], 1)
             p2 = round(p[2], 1)
-            string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
+            string = str(p0) + ' ' + str(p2) + ' ' + str(p1)
             outfile.write(string + '\n')
         outfile.close()
 
