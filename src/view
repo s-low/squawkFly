@@ -9,4 +9,4 @@ echo tests/coombe_$1/g3_trajectory.txt
 
 ./trace.py ../res/coombe/clips/$1/lumix tests/coombe_$1/lumix_trajectory.txt
 
-./3dsim.py tests/coombe_$1/3dtrajectory.txt
+

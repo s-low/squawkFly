@@ -65,14 +65,14 @@ while (1):
     if ret:
         prev = None
 
-        cv2.putText(frame, avg_speed, (800, 585),
+        cv2.putText(frame, avg_speed, (600, 575),
                     fontFace=cv2.FONT_HERSHEY_DUPLEX,
-                    fontScale=1.0,
+                    fontScale=1.5,
                     thickness=2,
                     color=(255, 255, 255))
-        cv2.putText(frame, distance, (800, 620),
+        cv2.putText(frame, distance, (600, 630),
                     fontFace=cv2.FONT_HERSHEY_DUPLEX,
-                    fontScale=1.0,
+                    fontScale=1.5,
                     thickness=2,
                     color=(255, 255, 255))
 
@@ -101,7 +101,7 @@ while (1):
 
         count += 1
         cv2.imshow('Stream', frame)
-        cv2.waitKey(1)
+        cv2.waitKey()
     else:
         break
 
