@@ -6,6 +6,27 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 
+def pixLength(set_x, set_y):
+
+    length = 0
+    if len(set_x) > 3:
+        x0 = float(set_x.pop(0))
+        y0 = float(set_y.pop(0))
+        for x, y in zip(set_x, set_y):
+            x = float(x)
+            y = float(y)
+
+            dx = abs(x0 - x)
+            dy = abs(y0 - y)
+
+            d = ((dx ** 2) + (dy ** 2)) ** 0.5
+            length += d
+            x0 = x
+            y0 = y
+
+    return length
+
+
 font = {'family': 'normal',
         'weight': 'bold',
         'size': 18}
@@ -58,6 +79,7 @@ set_x = []
 set_y = []
 set_f = []
 
+longest = 0
 longest_x = []
 longest_y = []
 longest_f = []
@@ -81,8 +103,10 @@ for row in trajectories:
     # we've reached the end of the trajectory (also the  veryfirst point)
     else:
 
-        # check to see if the last T was longest yet
-        if len(set_x) > len(longest_x):
+        # check to see if the last T was longest (in pix)
+        length = pixLength(set_x, set_y)
+        if length > longest:
+            longest = length
             longest_x = set_x
             longest_y = set_y
             longest_f = set_f
@@ -109,7 +133,9 @@ for row in trajectories:
 # file over - handle the remainder T:
 
 # is it longer than the longest T yet?
-if len(set_x) > len(longest_x):
+length = pixLength(set_x, set_y)
+if length > longest:
+    longest = length
     longest_x = set_x
     longest_y = set_y
     longest_f = set_f
@@ -128,7 +154,7 @@ if len(set_x) >= min_length and min_length != -1:
 if min_length == -1:
     ax.plot(longest_x, longest_y, linewidth=4)
     print "Longest trajectory TID:", longest_tid
-    print "Length:", len(longest_x)
+    print "Length:", round(longest, 1), 'pix'
 
     # write (x, y, f) to subset file
     for a, b, c in zip(longest_x, longest_y, longest_f):
