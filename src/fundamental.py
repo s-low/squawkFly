@@ -66,6 +66,9 @@ def testFundamentalReln(F, pts_1, pts_2):
     avg1 = sum(distances1) / len(distances1)
     avg2 = sum(distances2) / len(distances2)
 
+    std1 = np.std(distances1)
+    std2 = np.std(distances2)
+
     print "> Average distance to epiline in image 1 and 2 (px):", avg1, avg2
 
     plot.plotOrderedBar(distances1,
@@ -79,6 +82,8 @@ def testFundamentalReln(F, pts_1, pts_2):
 
     # overlay lines1 on pts2
     plot.plotEpilines(lines1, pts_2, 2)
+
+    return avg1, avg2, std1, std2
 
 
 # find the distance between an epiline and image point pair

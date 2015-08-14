@@ -8,7 +8,8 @@ import math
 import matplotlib.pyplot as plt
 from collections import namedtuple
 from mpl_toolkits.mplot3d import Axes3D
-import random
+import os.path
+import numpy.random as random
 
 import fundamental as fund
 import triangulation as tri
@@ -22,6 +23,12 @@ plt.style.use('ggplot')
 Point = namedtuple("Point", "x y")
 
 simulation = False
+
+noise = 0
+try:
+    noise = sys.argv[2]
+except IndexError:
+    pass
 
 
 def synchroniseAtApex(pts_1, pts_2):
@@ -109,11 +116,11 @@ def synchroniseAtApex(pts_1, pts_2):
 
 
 # add some random noise to n image point set
-def addNoise(a, b, points):
+def addNoise(scale, points):
     new = []
     for p in points:
-        n0 = p[0] + random.uniform(a, b)
-        n1 = p[1] + random.uniform(a, b)
+        n0 = p[0] + random.normal(0, scale)
+        n1 = p[1] + random.normal(0, scale)
         n = [n0, n1]
         new.append(n)
 
@@ -253,6 +260,12 @@ if d == 'coombe_sim':
     print "-----Shot Simulation------"
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+
+elif d == 'coombe_sim2':
+    print "-----Shot Simulation------"
+    K1 = np.mat(tools.CalibArray(10, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(10, 640, 360), dtype='float32')
+
 else:
     K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
     K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
@@ -286,14 +299,23 @@ postPts1 = np.array(postPts1, dtype='float32')
 postPts2 = np.array(postPts2, dtype='float32')
 
 
+N = len(pts1)
+statdir = '/stats/N=' + str(N) + '/' + str(noise) + '/'
+
+if not os.path.exists('tests/' + d + statdir):
+    os.makedirs('tests/' + d + statdir)
+
+
 # NOISE
-# pts1 = addNoise(0, 4, pts1)
-# pts2 = addNoise(0, 4, pts2)
+if noise != 0:
+    print "Add Noise:", noise
+    pts1 = addNoise(noise, pts1)
+    pts2 = addNoise(noise, pts2)
 
 # using the trajectories themselves to calculate geometry
-if rec_data is False and simulation is False:
-    pts1, pts2 = synchroniseAtApex(pts1, pts2)
-    pts3, pts4 = synchroniseAtApex(pts3, pts4)
+# if rec_data is False and simulation is False:
+    # pts1, pts2 = synchroniseAtApex(pts1, pts2)
+    # pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -338,7 +360,8 @@ def run():
 
     # SYNCHRONISATION + CORRECTION
     if rec_data:
-        pts3, pts4 = synchroniseAtApex(pts3, pts4)
+        pass
+        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
         # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
 
         # pts3 = pts3.reshape((1, -1, 2))
@@ -383,14 +406,15 @@ def run():
 
         scaled_gp = transform(scaled_gp)
         plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
+        reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
-        outfile = open('tests/' + d + '/3dtrajectory.txt', 'w')
+        outfile = open('tests/' + d + '/3d_out.txt', 'w')
         for p in scaled_gp:
-            p0 = round(p[0], 1)
-            p1 = round(p[1], 1)
-            p2 = round(p[2], 1)
-            string = str(p0) + ' ' + str(p2) + ' ' + str(p1)
+            p0 = round(p[0], 2)
+            p1 = round(p[1], 2)
+            p2 = round(p[2], 2)
+            string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
             outfile.write(string + '\n')
         outfile.close()
 
@@ -491,7 +515,17 @@ def transform(points):
 
     print "new bottom right:\n", rotated_z[3]
 
-    return np.array(rotated_z, dtype='float32')
+    # temporary to bring it into alignment with the main simulation data
+    new = []
+    for i in range(0, 4):
+        p = rotated_z[i]
+        new.append((p[0] + 10, p[1] + 10, p[2]))
+
+    for i in range(4, len(rotated_z)):
+        p = rotated_z[i]
+        new.append((p[0] + 10, p[1] + 10, p[2]))
+
+    return np.array(new, dtype='float32')
 
 
 # give the scaled up set of trajectory points, work out the point to point
@@ -554,7 +588,15 @@ def getFundamentalMatrix(pts_1, pts_2):
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
-    fund.testFundamentalReln(F, pts_1, pts_2)
+    avg1, avg2, std1, std2 = fund.testFundamentalReln(F, pts_1, pts_2)
+
+    outfile = open(
+        'tests/' + d + statdir + 'epilines.txt', 'w')
+    string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
+    string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
+    outfile.write(string1 + '\n' + string2)
+    outfile.close()
+
     return F
 
 
@@ -767,6 +809,22 @@ def sep3D(a, b):
     return dist
 
 
+def reconstructionError(original, reconstructed):
+    seps = []
+    for o, r in zip(original, reconstructed):
+        sep = sep3D(o, r)
+        print o[0], r[0], sep
+        seps.append(sep)
+
+    print sum(seps), '/', len(seps)
+    avg = sum(seps) / len(seps)
+    # avg = np.mean(seps)
+    std = np.std(seps)
+    outfile = open(
+        'tests/' + d + statdir + 'reconstruction.txt', 'w')
+    outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
+
+
 # used for checking the triangulation - provide UNNORMALISED DATA
 def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
 
@@ -811,6 +869,9 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     avg1 = sum(errors1) / len(errors1)
     avg2 = sum(errors2) / len(errors2)
 
+    std1 = np.std(errors1)
+    std2 = np.std(errors2)
+
     print "\n> average reprojection error in image 1:", avg1
     print "\n> average reprojection error in image 2:", avg2
 
@@ -821,6 +882,13 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
                 'Reprojection of Reconstruction onto Image 1')
     plot.plot2D(reprojected2, pts_4,
                 'Reprojection of Reconstruction onto Image 2')
+
+    outfile = open(
+        'tests/' + d + statdir + 'reprojection.txt', 'w')
+    string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
+    string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
+    outfile.write(string1 + '\n' + string2)
+    outfile.close()
 
 
 def BoringCameraArray():

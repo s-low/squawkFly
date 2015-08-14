@@ -20,7 +20,7 @@ def main():
     data_3d = np.array(data_3d, dtype='float32')
 
     # artificial camera with f=5 units, cx = cy = 5 units
-    K = tools.CalibArray(1000, 640, 360)
+    K = tools.CalibArray(10, 640, 360)
     dist = (0, 0, 0, 0)
 
     rt2 = math.sqrt(2)
@@ -49,11 +49,11 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (0, 10, 10)
-    # rvec1 = (0, 0, 0)
+    tvec1 = (0, 15, -2.5)
+    rvec1 = (0, 0, 0)
 
-    tvec2 = (10, 10, 10)
-    # rvec2 = (0, 0, 0)
+    tvec2 = (12, 40, -2.5)
+    rvec2 = (0, 0, 0)
 
     img_pts1 = project(data_3d, K, nothing, tvec1)
     img_pts2 = project(data_3d, K, nothing, tvec2)
@@ -98,7 +98,9 @@ def project(objectPoints, K, R, t):
 
     for X in objectPoints:
         x = np.mat(X).T
+        print x
         x_ = P * x
+        print x_
         imagePoints.append(x_)
 
     # image points are homogeneous (xz, yz, z) -> (x, y, 1)
@@ -117,7 +119,7 @@ def getData(folder):
     pts2 = []
     original_3Ddata = []
 
-    with open(path + '3d.txt') as datafile:
+    with open(path + '3d_GoalPosts.txt') as datafile:
         data = datafile.read()
         datafile.close()
 
@@ -135,7 +137,7 @@ def writeData(folder, pts1, pts2):
     path = 'tests/' + str(folder) + '/'
 
     startoffile = True
-    outfile = open(path + 'pts3.txt', 'w')
+    outfile = open(path + 'postPts1.txt', 'w')
 
     for p in pts1:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
@@ -146,7 +148,7 @@ def writeData(folder, pts1, pts2):
     outfile.close()
 
     startoffile = True
-    outfile = open(path + 'pts4.txt', 'w')
+    outfile = open(path + 'postPts2.txt', 'w')
 
     for p in pts2:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
