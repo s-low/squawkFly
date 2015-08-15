@@ -49,10 +49,10 @@ def main():
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
     # projections into image planes with the camera in different poses
-    tvec1 = (0, 0, 5)
+    tvec1 = (0, 0, -3)
     rvec1 = (0, 0, 0)
 
-    tvec2 = (10, 0, 5)
+    tvec2 = (1, -0.5, -3)
     rvec2 = (0, 0, 0)
 
     img_pts1 = project(data_3d, K, nothing, tvec1)
@@ -119,7 +119,7 @@ def getData(folder):
     pts2 = []
     original_3Ddata = []
 
-    with open(path + '3d_trajectory.txt') as datafile:
+    with open(path + '3d.txt') as datafile:
         data = datafile.read()
         datafile.close()
 
@@ -137,7 +137,7 @@ def writeData(folder, pts1, pts2):
     path = 'tests/' + str(folder) + '/'
 
     startoffile = True
-    outfile = open(path + 'pts3.txt', 'w')
+    outfile = open(path + 'pts1.txt', 'w')
 
     for p in pts1:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
@@ -148,7 +148,7 @@ def writeData(folder, pts1, pts2):
     outfile.close()
 
     startoffile = True
-    outfile = open(path + 'pts4.txt', 'w')
+    outfile = open(path + 'pts2.txt', 'w')
 
     for p in pts2:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])

@@ -118,14 +118,24 @@ def synchroniseAtApex(pts_1, pts_2):
 # add some random noise to n image point set
 def addNoise(scale, points):
     new = []
+    mags = []
     for p in points:
+
         nx = random.normal(0, scale)
         ny = random.normal(0, scale)
+
         print "Add noise:", nx, ny
         n0 = p[0] + nx
         n1 = p[1] + ny
         n = [n0, n1]
         new.append(n)
+        mags.append(abs(nx))
+        mags.append(abs(ny))
+
+    avg_mag = np.mean(mags)
+    outfile = open('tests/' + folder + statdir + 'noise.txt', 'w')
+    outfile.write('Average magnitude of noise: ' + str(avg_mag))
+    outfile.close()
 
     return np.array(new, dtype='float32')
 
@@ -251,20 +261,20 @@ def undistortData(points, K, d):
 
 # INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
-    d = sys.argv[1]
+    folder = sys.argv[1]
 except IndexError:
-    d = 1
+    folder = 1
 
-if d.isdigit():
+if folder.isdigit() or folder == 'errors':
     simulation = True
 
 # Calibration matrices:
-if d == 'coombe_sim':
+if folder == 'coombe_sim':
     print "-----Shot Simulation 1------"
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
-elif d == 'coombe_sim2':
+elif folder == 'coombe_sim2':
     print "-----Shot Simulation 2------"
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
@@ -280,7 +290,7 @@ if simulation:
 
 # get the data from file
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
-    d)
+    folder)
 
 pts1 = []
 pts2 = []
@@ -305,8 +315,8 @@ postPts2 = np.array(postPts2, dtype='float32')
 N = len(pts1)
 statdir = '/stats/N=' + str(N) + '/' + str(noise) + '/'
 
-if not os.path.exists('tests/' + d + statdir):
-    os.makedirs('tests/' + d + statdir)
+if not os.path.exists('tests/' + folder + statdir):
+    os.makedirs('tests/' + folder + statdir)
 
 
 # NOISE
@@ -316,9 +326,9 @@ if noise != 0:
     pts2 = addNoise(noise, pts2)
 
 # using the trajectories themselves to calculate geometry
-# if rec_data is False and simulation is False:
-    # pts1, pts2 = synchroniseAtApex(pts1, pts2)
-    # pts3, pts4 = synchroniseAtApex(pts3, pts4)
+if rec_data is False and simulation is False:
+    pts1, pts2 = synchroniseAtApex(pts1, pts2)
+    pts3, pts4 = synchroniseAtApex(pts3, pts4)
 
 # Normalised homogenous image coords: (x, y, 1)
 norm_pts1 = tools.normalise_homogenise(pts1, K1)
@@ -388,6 +398,8 @@ def run():
     if simulation:
         plot.plot3D(p3d, 'Simulation Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d)
+        p3d = simScale(p3d)
+        plot.plot3D(p3d, 'Scaled Simulation Reconstruction')
 
     else:
         # add the post point data into the reconstruction for context
@@ -413,7 +425,7 @@ def run():
         reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
-        outfile = open('tests/' + d + '/3d_out.txt', 'w')
+        outfile = open('tests/' + folder + '/3d_out.txt', 'w')
         for p in scaled_gp:
             p0 = round(p[0], 2)
             p1 = round(p[1], 2)
@@ -421,6 +433,76 @@ def run():
             string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
             outfile.write(string + '\n')
         outfile.close()
+
+
+# the error simulation is a sphere of unit radius
+def simScale(points):
+    cx = 0
+    cy = 0
+    cz = 0
+    d = 0
+
+    print "---Sim Scale---"
+
+    for p in points:
+        cx += p[0]
+        cy += p[1]
+        cz += p[2]
+
+    # centroid of shape
+    cx = cx / len(points)
+    cy = cy / len(points)
+    cz = cz / len(points)
+
+    print "> Centroid:", cx, cy, cz
+
+    # translate the whole thing to the origin
+    d = 0
+    translated = []
+    for p in points:
+        nx = p[0] - cx
+        ny = p[1] - cy
+        nz = p[2] - cz
+        translated.append((nx, ny, nz))
+
+        nd = ((nx ** 2) + (ny ** 2) + (nz ** 2)) ** 0.5
+        d += nd
+
+    # average distance to origin
+    d = d / len(points)
+    scale = 1 / d
+
+    print "> Average distance to origin:", d
+    print "> Scale by:", scale
+
+    scaled = []
+    for p in translated:
+        n = tuple([a * scale for a in p])
+        scaled.append(n)
+
+    distances = []
+    for p in scaled:
+        d = ((p[0] ** 2) + (p[1] ** 2) + (p[2] ** 2)) ** 0.5
+        distances.append(d)
+
+    avg = np.mean(distances)
+    std = np.std(distances)
+
+    outfile = open('tests/' + folder + statdir + 'reconstruction.txt', 'w')
+    outfile.write('avg distance to origin: ' + str(avg) + '\n')
+    outfile.write('std: ' + str(std) + '\n')
+    outfile.write('distances:\n')
+
+    offset = []
+    for d in distances:
+        offset.append(abs(d - 1))
+
+    plot.plotOrderedBar(offset, name='Offset in Distance to Origin')
+    for o in offset:
+        outfile.write(str(o) + '\n')
+    outfile.close()
+
+    return np.array(scaled, dtype='float32')
 
 
 # transform the scaled 3d model so that it's orientation is sensible
@@ -535,7 +617,7 @@ def transform(points):
 # give the scaled up set of trajectory points, work out the point to point
 # speed and write it to a file
 def getSpeed(worldPoints):
-    outfile = open('tests/' + d + '/speed.txt', 'w')
+    outfile = open('tests/' + folder + '/speed.txt', 'w')
     first = worldPoints.pop(0)
     prev = first
     speeds = []
@@ -564,7 +646,7 @@ def getSpeed(worldPoints):
     print "> Average speed: ", str(avg) + 'mph'
     print "> Distance covered in:", str(time) + 's'
 
-    outfile = open('tests/' + d + '/tracer_stats.txt', 'w')
+    outfile = open('tests/' + folder + '/tracer_stats.txt', 'w')
     outfile.write(str(avg) + '\n')
     outfile.write(str(shotRange))
     outfile.close()
@@ -594,8 +676,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     print "\n> Fundamental:\n", F
     avg1, avg2, std1, std2 = fund.testFundamentalReln(F, pts_1, pts_2)
 
-    outfile = open(
-        'tests/' + d + statdir + 'epilines.txt', 'w')
+    outfile = open('tests/' + folder + statdir + 'epilines.txt', 'w')
     string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
     string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
     outfile.write(string1 + '\n' + string2)
@@ -817,16 +898,19 @@ def reconstructionError(original, reconstructed):
     seps = []
     for o, r in zip(original, reconstructed):
         sep = sep3D(o, r)
-        print o[0], r[0], sep
+        print ""
+        print o
+        print r
+        print sep
         seps.append(sep)
 
     print sum(seps), '/', len(seps)
     avg = sum(seps) / len(seps)
     # avg = np.mean(seps)
     std = np.std(seps)
-    outfile = open(
-        'tests/' + d + statdir + 'reconstruction.txt', 'w')
+    outfile = open('tests/' + folder + statdir + 'reconstruction.txt', 'w')
     outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
+    outfile.close()
 
 
 # used for checking the triangulation - provide UNNORMALISED DATA
@@ -887,8 +971,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     plot.plot2D(reprojected2, pts_4,
                 'Reprojection of Reconstruction onto Image 2')
 
-    outfile = open(
-        'tests/' + d + statdir + 'reprojection.txt', 'w')
+    outfile = open('tests/' + folder + statdir + 'reprojection.txt', 'w')
     string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
     string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
     outfile.write(string1 + '\n' + string2)
