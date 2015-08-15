@@ -15,9 +15,9 @@ data = data.split('\n')
 
 data.pop(-1)
 
-X = [float(row.split(' ')[0]) for row in data]
-Y = [float(row.split(' ')[1]) for row in data]
-Z = [float(row.split(' ')[2]) for row in data]
+X = [float(row.split()[0]) for row in data]
+Y = [float(row.split()[1]) for row in data]
+Z = [float(row.split()[2]) for row in data]
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

@@ -1,0 +1,1 @@
+Average magnitude of noise: 3.7636064963

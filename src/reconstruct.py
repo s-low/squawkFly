@@ -22,7 +22,9 @@ plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
 
+view = True
 simulation = False
+
 
 noise = 0
 try:
@@ -109,8 +111,9 @@ def synchroniseAtApex(pts_1, pts_2):
         syncd1 = longer
         syncd2 = shorter
 
-    plot.plot2D(syncd1, name='First Synced Trajectory')
-    plot.plot2D(syncd2, name='Second Synced Trajectory')
+    if view:
+        plot.plot2D(syncd1, name='First Synced Trajectory')
+        plot.plot2D(syncd2, name='Second Synced Trajectory')
 
     return syncd1, syncd2
 
@@ -347,11 +350,12 @@ def run():
     global pts3
     global pts4
 
-    if simulation:
+    if simulation and view:
         plot.plot3D(data3D, 'Original 3D Data')
 
-    plot.plot2D(pts1_raw, name='First Statics (Noise not shown)')
-    plot.plot2D(pts2_raw, name='Second Statics (Noise not shown)')
+    if view:
+        plot.plot2D(pts1_raw, name='First Statics (Noise not shown)')
+        plot.plot2D(pts2_raw, name='Second Statics (Noise not shown)')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
@@ -396,10 +400,12 @@ def run():
 
     # SCALING AND PLOTTING
     if simulation:
-        plot.plot3D(p3d, 'Simulation Reconstruction')
+        if view:
+            plot.plot3D(p3d, 'Simulation Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d)
         p3d = simScale(p3d)
-        plot.plot3D(p3d, 'Scaled Simulation Reconstruction')
+        if view:
+            plot.plot3D(p3d, 'Scaled Simulation Reconstruction')
 
     else:
         # add the post point data into the reconstruction for context
@@ -414,14 +420,16 @@ def run():
         scaled_gp = [[a * scale for a in inner] for inner in p3d_gp]
         scaled = [[a * scale for a in inner] for inner in p3d]
 
-        plot.plot3D(scaled_gp_only, 'Goal Posts')
-        plot.plot3D(scaled_gp, '3D Reconstruction')
+        if view:
+            plot.plot3D(scaled_gp_only, 'Goal Posts')
+            plot.plot3D(scaled_gp, '3D Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
         getSpeed(scaled)
 
         scaled_gp = transform(scaled_gp)
-        plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
+        if view:
+            plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
         reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
@@ -496,8 +504,8 @@ def simScale(points):
     offset = []
     for d in distances:
         offset.append(abs(d - 1))
-
-    plot.plotOrderedBar(offset, name='Offset in Distance to Origin')
+    if view:
+        plot.plotOrderedBar(offset, name='Offset in Distance to Origin')
     for o in offset:
         outfile.write(str(o) + '\n')
     outfile.close()
@@ -674,12 +682,11 @@ def getFundamentalMatrix(pts_1, pts_2):
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
-    avg1, avg2, std1, std2 = fund.testFundamentalReln(F, pts_1, pts_2)
+    avg, std = fund.testFundamentalReln(F, pts_1, pts_2)
 
     outfile = open('tests/' + folder + statdir + 'epilines.txt', 'w')
-    string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
-    string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
-    outfile.write(string1 + '\n' + string2)
+    string = 'avg:' + str(avg) + ' std1:' + str(std)
+    outfile.write(string)
     outfile.close()
 
     return F
@@ -960,21 +967,27 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     std1 = np.std(errors1)
     std2 = np.std(errors2)
 
+    errors = errors1 + errors2
+    avg = np.mean(errors)
+    std = np.std(errors)
+
     print "\n> average reprojection error in image 1:", avg1
     print "\n> average reprojection error in image 2:", avg2
 
-    plot.plotOrderedBar(errors1, 'Reprojection Error Image 1', 'Index', 'px')
-    plot.plotOrderedBar(errors2, 'Reprojection Error Image 2', 'Index', 'px')
+    if view:
+        plot.plotOrderedBar(
+            errors1, 'Reprojection Error Image 1', 'Index', 'px')
+        plot.plotOrderedBar(
+            errors2, 'Reprojection Error Image 2', 'Index', 'px')
 
-    plot.plot2D(reprojected1, pts_3,
-                'Reprojection of Reconstruction onto Image 1')
-    plot.plot2D(reprojected2, pts_4,
-                'Reprojection of Reconstruction onto Image 2')
+        plot.plot2D(reprojected1, pts_3,
+                    'Reprojection of Reconstruction onto Image 1')
+        plot.plot2D(reprojected2, pts_4,
+                    'Reprojection of Reconstruction onto Image 2')
 
     outfile = open('tests/' + folder + statdir + 'reprojection.txt', 'w')
-    string1 = 'avg1:' + str(avg1) + ' std1:' + str(std1)
-    string2 = 'avg2:' + str(avg2) + ' std2:' + str(std2)
-    outfile.write(string1 + '\n' + string2)
+    string = 'avg:' + str(avg) + '\nstd:' + str(std)
+    outfile.write(string)
     outfile.close()
 
 
@@ -1080,8 +1093,9 @@ def synchroniseGeometric(pts_1, pts_2, F):
 
     print "Synched Trajectory Length:", len(longer), len(shorter)
 
-    plot.plot2D(syncd1, name='First Synced Trajectory')
-    plot.plot2D(syncd2, name='Second Synced Trajectory')
+    if view:
+        plot.plot2D(syncd1, name='First Synced Trajectory')
+        plot.plot2D(syncd2, name='Second Synced Trajectory')
 
     return syncd1, syncd2
 
