@@ -102,7 +102,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "\ntrajectory:\n", this_trajectory
         print "Head:", p0
         print "Arm:", p1
-        print "Post state:\n", np.asarray(postState[:,:])
+        print "Post state:\n", np.asarray(postState[:, :])
 
     # PREDICT location of branch
     kf.predict()
@@ -165,10 +165,25 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         # add verified point to trajectory + continue
         this_trajectory.append(p_verification)
 
-        this_trajectory = build_trajectory(
-            this_trajectory, bridge, kf, frame_index + 1, p1, p_verification, True)
+        this_trajectory = build_trajectory(this_trajectory, bridge, kf,
+                                           frame_index + 1, p1,
+                                           p_verification,
+                                           True)
 
+    # if len(this_trajectory) > 4:
+        # this_trajectory = checkForRoot(this_trajectory)
     return this_trajectory
+
+
+# see if a full trajectory can be extended backwards to it's true source
+def checkForRoot(trajectory):
+    p0 = trajectory[0]
+    p1 = trajectory[1]
+    vx = p0[0] - p1[0]
+    vy = p0[1] - p1[1]
+
+    tx = p0[0] + vx
+    ty = p0[1] + vy  
 
 
 # retrieve output of detection system and parse
