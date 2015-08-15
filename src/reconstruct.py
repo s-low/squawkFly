@@ -26,7 +26,7 @@ simulation = False
 
 noise = 0
 try:
-    noise = sys.argv[2]
+    noise = float(sys.argv[2])
 except IndexError:
     pass
 
@@ -119,8 +119,11 @@ def synchroniseAtApex(pts_1, pts_2):
 def addNoise(scale, points):
     new = []
     for p in points:
-        n0 = p[0] + random.normal(0, scale)
-        n1 = p[1] + random.normal(0, scale)
+        nx = random.normal(0, scale)
+        ny = random.normal(0, scale)
+        print "Add noise:", nx, ny
+        n0 = p[0] + nx
+        n1 = p[1] + ny
         n = [n0, n1]
         new.append(n)
 
@@ -257,14 +260,14 @@ if d.isdigit():
 
 # Calibration matrices:
 if d == 'coombe_sim':
-    print "-----Shot Simulation------"
+    print "-----Shot Simulation 1------"
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
 elif d == 'coombe_sim2':
-    print "-----Shot Simulation------"
-    K1 = np.mat(tools.CalibArray(10, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(10, 640, 360), dtype='float32')
+    print "-----Shot Simulation 2------"
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
 else:
     K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
@@ -337,8 +340,8 @@ def run():
     if simulation:
         plot.plot3D(data3D, 'Original 3D Data')
 
-    plot.plot2D(pts1_raw, name='First Static Correspondences')
-    plot.plot2D(pts2_raw, name='Second Static Correspondences')
+    plot.plot2D(pts1_raw, name='First Statics (Noise not shown)')
+    plot.plot2D(pts2_raw, name='Second Statics (Noise not shown)')
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
@@ -394,6 +397,7 @@ def run():
             p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
 
         scale = getScale(goalPosts)
+
         scaled_gp_only = [[a * scale for a in inner] for inner in goalPosts]
         scaled_gp = [[a * scale for a in inner] for inner in p3d_gp]
         scaled = [[a * scale for a in inner] for inner in p3d]
@@ -422,7 +426,7 @@ def run():
 # transform the scaled 3d model so that it's orientation is sensible
 def transform(points):
 
-    # STEP ONE: translate everything so that the first ball point
+    # STEP ONE: translate everything so that the first ball point is at origin
     translated = []
     anchor = points[4]
 
