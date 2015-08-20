@@ -12,8 +12,8 @@ debugging = False
 tracking = True
 paused = True
 point_index = 0
-
-max_area = 4000
+     
+max_area = 1500
 min_area = 300
 
 outfile = None
@@ -63,6 +63,7 @@ def main():
 
         temp = frame1  # without contours
         current = diff(grayed0, grayed1, grayed2)
+
         current = morph(current)
 
         temp_thresh = current.copy()
@@ -85,6 +86,12 @@ def main():
 
             if key == 112:
                 pause()
+
+            if key == 113:
+                cap.release()
+                cv2.destroyAllWindows()
+                outfile.close()
+                sys.exit()
 
         # Next iteration
         ret, next_frame = cap.read()
@@ -114,12 +121,14 @@ def main():
 # returns a thresholded difference image
 def diff(f0, f1, f2):
     d1 = cv2.absdiff(f2, f1)
+
     d2 = cv2.absdiff(f1, f0)
+
     overlap = cv2.bitwise_and(d1, d2)
 
     # binary threshold(src, thresh, maxval, type)
-    ret, overlap = cv2.threshold(overlap, 40, 255, cv2.THRESH_BINARY)
-    return overlap
+    ret, thresh = cv2.threshold(overlap, 40, 255, cv2.THRESH_BINARY)
+    return thresh
 
 
 # returns a re-thresholded image after blur and open/close/erode/dilate
@@ -182,8 +191,10 @@ def search(src, thresh):
 
 
 def square(h, w):
-    squareness = abs((float(w) / float(h)) - 1)
-    if squareness < 0.6:
+    shorter = min((h, w))
+    longer = max((h, w))
+    squareness = abs((float(longer) / float(shorter)) - 1)
+    if squareness < 0.5:
         return True
     else:
         return False
