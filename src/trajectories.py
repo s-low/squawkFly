@@ -3,16 +3,19 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 
 
 def pixLength(set_x, set_y):
 
+    copy_x = [x for x in set_x]
+    copy_y = [y for y in set_y]
+
     length = 0
     if len(set_x) > 3:
-        x0 = float(set_x.pop(0))
-        y0 = float(set_y.pop(0))
-        for x, y in zip(set_x, set_y):
+        x0 = float(copy_x.pop(0))
+        y0 = float(copy_y.pop(0))
+        for x, y in zip(copy_x, copy_y):
             x = float(x)
             y = float(y)
 
@@ -27,11 +30,11 @@ def pixLength(set_x, set_y):
     return length
 
 
-font = {'family': 'normal',
-        'weight': 'bold',
-        'size': 18}
+# font = {'family': 'normal',
+#         'weight': 'bold',
+#         'size': 18}
 
-plt.rc('font', **font)
+# plt.rc('font', **font)
 
 min_length = 0
 if len(sys.argv) > 1:
@@ -72,8 +75,8 @@ ax.set_ylabel("Graphical Y")
 ax.plot(raw_x, raw_y, 'k.')
 
 # TRAJECTORIES
-last_tid = int(0)
-tid = int(0)
+last_tid = int(1)
+tid = int(1)
 
 set_x = []
 set_y = []
@@ -115,7 +118,7 @@ for row in trajectories:
         # check to see if the last T is above the min selection length
         if len(set_x) >= min_length and min_length != -1:
             displayed_tids.append(last_tid)
-            ax.plot(set_x, set_y, linewidth=4)
+            ax.plot(set_x, set_y, linewidth=2)
 
             # write (x, y, frame) to subset file
             for a, b, c in zip(set_x, set_y, set_f):
@@ -152,7 +155,7 @@ if len(set_x) >= min_length and min_length != -1:
 
 # plot the longest T found if option selected
 if min_length == -1:
-    ax.plot(longest_x, longest_y, linewidth=4)
+    ax.plot(longest_x, longest_y, linewidth=2)
     print "Longest trajectory TID:", longest_tid
     print "Length:", round(longest, 1), 'pix'
 
