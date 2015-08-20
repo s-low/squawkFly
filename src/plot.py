@@ -5,14 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-plt.style.use('ggplot')
+# dark_background, bmh, grayscale, ggplot, fivethirtyeight
+# plt.style.use('ggplot')
 
 
-font = {'family': 'normal',
-        'weight': 'bold',
-        'size': 12}
+# font = {'family': 'normal',
+#         'weight': 'bold',
+#         'size': 12}
 
-plt.rc('font', **font)
+# plt.rc('font', **font)
 
 # FLAGS
 save = False
@@ -73,10 +74,11 @@ ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Candidate Detections", y=1.03)
 ax.set_xlabel("Graphical X")
 ax.set_ylabel("Graphical Y")
+ax.set_aspect('equal')
+
 if animate_on:
     counter = ax.text(710, -40, 'Frame:', fontsize=15)
 scat, = ax.plot([], [], 'k.')
-
 
 x_set = []
 y_set = []
