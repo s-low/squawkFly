@@ -128,7 +128,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
             new_trajectory = True
             bridge = []
 
-        elif n_miss < max_misses:
+        else:
             # keep predicting from the unverified corrected point
             # POINT: X / Y / FRAME / PID
             unverified = (predicted[0], predicted[1], frame_index + 1, 1000)
@@ -170,8 +170,6 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
                                            p_verification,
                                            True)
 
-    # if len(this_trajectory) > 4:
-        # this_trajectory = checkForRoot(this_trajectory)
     return this_trajectory
 
 
@@ -183,7 +181,7 @@ def checkForRoot(trajectory):
     vy = p0[1] - p1[1]
 
     tx = p0[0] + vx
-    ty = p0[1] + vy  
+    ty = p0[1] + vy
 
 
 # retrieve output of detection system and parse
@@ -274,11 +272,13 @@ for frame_index, f0 in enumerate(frame_array):
                 vx = xdiff
                 vy = ydiff
 
-                print "\n-------- INIT Filter --------"
-                print "Points:", b0, b1
+                if d:
+                    print "\n-------- INIT Filter --------"
+                    print "Points:", b0, b1
 
                 kf.setPostState(b1[0], b1[1], vx, vy, 0, 0)
-                print "Post state set:", b1[0], b1[1], vx, vy, 0, 0
+                if d:
+                    print "Post state set:", b1[0], b1[1], vx, vy, 0, 0
 
                 this_t = []
                 bridge = []
@@ -305,7 +305,7 @@ for ti, trajectory in enumerate(trajectories):
 
 print "> Found", ti, "trajectories"
 print ">", count, "are longer than", min_length, "points"
-print "> Longest is", max_length, "long"
+print "> Most Detections:", max_length
 print "> written to data_trajectories.txt\n"
 
 outfile.close()
