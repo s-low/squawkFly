@@ -10,12 +10,15 @@ class KFilter(object):
 
     def __init__(self):
 
+        # create the Kalman filter object
         self.kf = cv.CreateKalman(6, 2, 0)
         self.state = cv.CreateMat(6, 1, cv.CV_32FC1)
-        self.proc_noise = cv.CreateMat(6, 1, cv.CV_32FC1)
         self.measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
 
-        # transition matrix init
+        # unsure how this is being used
+        self.proc_noise = cv.CreateMat(6, 1, cv.CV_32FC1)
+
+        # init the prediction/evolution/transition matrix
         for j in range(6):
             for k in range(6):
                 self.kf.transition_matrix[j, k] = 0
@@ -35,10 +38,12 @@ class KFilter(object):
 
         cv.SetIdentity(self.kf.measurement_matrix)
 
-        # why these values.....
-        processNoiseCovariance = 1e-4
-        measurementNoiseCovariance = 1e-1
-        errorCovariancePost = 0.1
+        # process noise = how good is model
+        processNoiseCovariance = 0.1
+
+        # measurement noise = how good is detection
+        measurementNoiseCovariance = 3
+        errorCovariancePost = 2
 
         cv.SetIdentity(
             self.kf.process_noise_cov, cv.RealScalar(processNoiseCovariance))
@@ -66,7 +71,7 @@ class KFilter(object):
 
     def predict(self):
         self.predicted = cv.KalmanPredict(self.kf)
-
+ 
     def correct(self, x, y):
         self.measurement[0, 0] = x
         self.measurement[1, 0] = y
