@@ -252,6 +252,12 @@ def undistortData(points, K, d):
     return points_
 
 
+'''
+Method: Run
+Action: Flow control for bulk of reconstruction process.
+'''
+
+
 def run():
     global pts3
     global pts4
