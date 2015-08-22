@@ -18,19 +18,12 @@ import plotting as plot
 
 random.seed()
 np.set_printoptions(suppress=True)
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 
 Point = namedtuple("Point", "x y")
 
 view = True
 simulation = False
-
-
-noise = 0
-try:
-    noise = float(sys.argv[2])
-except IndexError:
-    pass
 
 
 def synchroniseAtApex(pts_1, pts_2):
@@ -135,12 +128,9 @@ def addNoise(scale, points):
         mags.append(abs(nx))
         mags.append(abs(ny))
 
-    avg_mag = np.mean(mags)
-    outfile = open('tests/' + folder + statdir + 'noise.txt', 'w')
-    outfile.write('Average magnitude of noise: ' + str(avg_mag))
-    outfile.close()
+    avg_mag = sum(mags) / len(mags)
 
-    return np.array(new, dtype='float32')
+    return np.array(new, dtype='float32'), avg_mag
 
 
 # Get point correspondeces (1+2) from subdir
@@ -262,90 +252,6 @@ def undistortData(points, K, d):
     return points_
 
 
-# INITIALISE ANY GLOBALLY AVAILABLE DATA
-try:
-    folder = sys.argv[1]
-except IndexError:
-    folder = 1
-
-if folder.isdigit() or folder == 'errors':
-    simulation = True
-
-# Calibration matrices:
-if folder == 'coombe_sim':
-    print "-----Shot Simulation 1------"
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-elif folder == 'coombe_sim2':
-    print "-----Shot Simulation 2------"
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-else:
-    K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
-    K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
-
-# If one of the simulation folders, set the calib matrices to sim values
-if simulation:
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-# get the data from file
-data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
-    folder)
-
-pts1 = []
-pts2 = []
-pts3 = []
-pts4 = []
-
-# undistort it
-# pts1_raw = undistortData(pts1_raw, K1, dist_coeffs1)
-# pts2_raw = undistortData(pts2_raw, K2, dist_coeffs2)
-# pts3_raw = undistortData(pts3_raw, K1, dist_coeffs1)
-# pts4_raw = undistortData(pts4_raw, K2, dist_coeffs2)
-
-# Image coords: (x, y)
-pts1 = np.array(pts1_raw, dtype='float32')
-pts2 = np.array(pts2_raw, dtype='float32')
-pts3 = np.array(pts3_raw, dtype='float32')
-pts4 = np.array(pts4_raw, dtype='float32')
-postPts1 = np.array(postPts1, dtype='float32')
-postPts2 = np.array(postPts2, dtype='float32')
-
-
-N = len(pts1)
-statdir = '/stats/N=' + str(N) + '/' + str(noise) + '/'
-
-if not os.path.exists('tests/' + folder + statdir):
-    os.makedirs('tests/' + folder + statdir)
-
-
-# NOISE
-if noise != 0:
-    print "Add Noise:", noise
-    pts1 = addNoise(noise, pts1)
-    pts2 = addNoise(noise, pts2)
-
-# using the trajectories themselves to calculate geometry
-if rec_data is False and simulation is False:
-    pts1, pts2 = synchroniseAtApex(pts1, pts2)
-    pts3, pts4 = synchroniseAtApex(pts3, pts4)
-
-# Normalised homogenous image coords: (x, y, 1)
-norm_pts1 = tools.normalise_homogenise(pts1, K1)
-norm_pts2 = tools.normalise_homogenise(pts2, K2)
-
-# Inhomogenous but normalised K_inv(x, y) (for if you want to calc E
-# directly)
-inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
-inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
-
-# Arrays FOR Rt computation
-W, W_inv, Z = tools.initWZarrays()  # HZ 9.13
-
-
 def run():
     global pts3
     global pts4
@@ -421,16 +327,18 @@ def run():
         scaled = [[a * scale for a in inner] for inner in p3d]
 
         if view:
+            plot.plot3D(p3d_gp, 'Original Reconstruction')
             plot.plot3D(scaled_gp_only, 'Goal Posts')
             plot.plot3D(scaled_gp, '3D Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
-        getSpeed(scaled)
+        getMetrics(scaled, scaled_gp_only)
 
         scaled_gp = transform(scaled_gp)
         if view:
             plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
-        reconstructionError(data3D, scaled_gp)
+        if simulation:
+            reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
         outfile = open('tests/' + folder + '/3d_out.txt', 'w')
@@ -509,6 +417,9 @@ def simScale(points):
     for o in offset:
         outfile.write(str(o) + '\n')
     outfile.close()
+
+    print "statfile:", std
+    statfile.write(str(std) + '\n')
 
     return np.array(scaled, dtype='float32')
 
@@ -610,21 +521,26 @@ def transform(points):
     print "new bottom right:\n", rotated_z[3]
 
     # temporary to bring it into alignment with the main simulation data
+    if simulation:
+        sim_offset = 10
+    else:
+        sim_offset = 0
+
     new = []
     for i in range(0, 4):
         p = rotated_z[i]
-        new.append((p[0] + 10, p[1] + 10, p[2]))
+        new.append((p[0] + sim_offset, p[1] + sim_offset, p[2]))
 
     for i in range(4, len(rotated_z)):
         p = rotated_z[i]
-        new.append((p[0] + 10, p[1] + 10, p[2]))
+        new.append((p[0] + sim_offset, p[1] + sim_offset, p[2]))
 
     return np.array(new, dtype='float32')
 
 
-# give the scaled up set of trajectory points, work out the point to point
-# speed and write it to a file
-def getSpeed(worldPoints):
+# given the scaled up set of trajectory points work out the speed and
+# distance to goal
+def getMetrics(worldPoints, goalPosts):
     outfile = open('tests/' + folder + '/speed.txt', 'w')
     first = worldPoints.pop(0)
     prev = first
@@ -644,8 +560,11 @@ def getSpeed(worldPoints):
     outfile.close()
 
     # calculate range
-    last = prev
-    shotRange = int(sep3D(first, last))
+    bottomLeft = goalPosts[0]
+    bottomRight = goalPosts[3]
+    middleOfGoal = midpoint(bottomLeft, bottomRight)
+    shotRange = int(sep3D(first, middleOfGoal))
+
     avg = int(sum(speeds) / len(speeds))
     avgms = avg / 2.237
     time = round(float(shotRange) / float(avgms), 1)
@@ -658,6 +577,22 @@ def getSpeed(worldPoints):
     outfile.write(str(avg) + '\n')
     outfile.write(str(shotRange))
     outfile.close()
+
+
+def midpoint(a, b):
+    x0 = a[0]
+    y0 = a[1]
+    z0 = a[2]
+
+    x1 = b[0]
+    y1 = b[1]
+    z1 = b[2]
+
+    x = (x0 + x1) / 2
+    y = (y0 + y1) / 2
+    z = (z0 + z1) / 2
+
+    return (x, y, z)
 
 
 # get the Fundamental matrix by the normalised eight point algorithm
@@ -688,6 +623,8 @@ def getFundamentalMatrix(pts_1, pts_2):
     string = 'avg:' + str(avg) + ' std1:' + str(std)
     outfile.write(string)
     outfile.close()
+    print "statfile:", avg, std
+    statfile.write(str(avg) + ' ' + str(std) + ' ')
 
     return F
 
@@ -781,7 +718,6 @@ def getValidRtCombo(R1, R2, t1, t2):
 # which combination of R|t gives us a P pair that works geometrically
 # ie: gives us a positive depth measure in both
 def testRtCombo(R, t, norm_pts1, norm_pts2):
-    print "> RT Test:"
     P1 = BoringCameraArray()
     P2 = CameraArray(R, t)
     points3d = []
@@ -801,10 +737,8 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
 
     # check if any z coord is negative
     for point in points3d:
-        print point[2]
         if point[2] < -0.05:
             return False
-    print ""
     return True
 
 
@@ -989,6 +923,8 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     string = 'avg:' + str(avg) + '\nstd:' + str(std)
     outfile.write(string)
     outfile.close()
+    print "statfile:", avg, std
+    statfile.write(str(avg) + ' ' + str(std) + ' ')
 
 
 def BoringCameraArray():
@@ -1145,5 +1081,126 @@ def autoGetF():
     return F, auto_pts1, auto_pts2
 
 
-print "---------------------------------------------"
+# ----------------------------------------------------------------------
+# ------------------- MAIN PROGRAM STARTS HERE -------------------------
+# ----------------------------------------------------------------------
+
+# INITIALISE ANY GLOBALLY AVAILABLE DATA
+try:
+    folder = sys.argv[1]
+except IndexError:
+    folder = 1
+
+if folder.isdigit() or folder == 'errors':
+    simulation = True
+
+# Calibration matrices:
+if folder == 'coombe_sim':
+    print "-----Shot Simulation 1------"
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+
+elif folder == 'coombe_sim2':
+    print "-----Shot Simulation 2------"
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+
+else:
+    K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
+    K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
+
+# If one of the simulation folders, set the calib matrices to sim values
+if simulation:
+    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
+
+# get the data from file
+# data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
+#     folder)
+
+# pts1 = []
+# pts2 = []
+# pts3 = []
+# pts4 = []
+
+# Image coords: (x, y)
+# pts1 = np.array(pts1_raw, dtype='float32')
+# pts2 = np.array(pts2_raw, dtype='float32')
+# pts3 = np.array(pts3_raw, dtype='float32')
+# pts4 = np.array(pts4_raw, dtype='float32')
+# postPts1 = np.array(postPts1, dtype='float32')
+# postPts2 = np.array(postPts2, dtype='float32')
+
+noise = 0
+try:
+    noise = float(sys.argv[2])
+except IndexError:
+    pass
+
+statdir = '/stats/'
+
+if not os.path.exists('tests/' + folder + statdir):
+    os.makedirs('tests/' + folder + statdir)
+
+statfile = open('tests/' + folder + statdir + 'run10.txt', 'w')
+statfile.write(
+    'N GaussianNoiseScale MeanNoiseMag MeanPLineDist Std MeanRepErr Std StdRec\n')
+
+# write a noise loop here
+# for n in xrange(0, 30):
+#     noise = n
+
+# get the data completely resh from file
+data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
+    folder)
+
+pts1 = []
+pts2 = []
+pts3 = []
+pts4 = []
+
+# Image coords: (x, y)
+pts1 = np.array(pts1_raw, dtype='float32')
+pts2 = np.array(pts2_raw, dtype='float32')
+pts3 = np.array(pts3_raw, dtype='float32')
+pts4 = np.array(pts4_raw, dtype='float32')
+postPts1 = np.array(postPts1, dtype='float32')
+postPts2 = np.array(postPts2, dtype='float32')
+
+N = len(pts1)
+print "statfile:", N
+statfile.write(str(N) + ' ')
+
+print "statfile:", noise
+statfile.write(str(noise) + ' ')
+
+# NOISE
+if noise != 0:
+    print "Add Noise:", noise
+    pts1, avg_mag1 = addNoise(noise, pts1)
+    pts2, avg_mag2 = addNoise(noise, pts2)
+    avg_mag = (avg_mag1 + avg_mag2) / 2
+    print "statfile:", avg_mag
+    statfile.write(str(avg_mag) + ' ')
+
+# using the trajectories themselves to calculate geometry
+if rec_data is False and simulation is False:
+    pts1, pts2 = synchroniseAtApex(pts1, pts2)
+    pts3, pts4 = synchroniseAtApex(pts3, pts4)
+
+# Normalised homogenous image coords: (x, y, 1)
+norm_pts1 = tools.normalise_homogenise(pts1, K1)
+norm_pts2 = tools.normalise_homogenise(pts2, K2)
+
+# Inhomogenous but normalised K_inv(x, y) (for if you want to calc E
+# directly)
+inhomog_norm_pts1 = np.delete(norm_pts1, 2, 1)
+inhomog_norm_pts2 = np.delete(norm_pts2, 2, 1)
+
+# Arrays FOR Rt computation
+W, W_inv, Z = tools.initWZarrays()  # HZ 9.13
+
 run()
+
+statfile.close()
+print "---------------------------------------------"
