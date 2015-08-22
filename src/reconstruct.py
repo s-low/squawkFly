@@ -282,16 +282,15 @@ def run():
     print "\n> KP2:\n", KP2
 
     # SYNCHRONISATION + CORRECTION
-    if rec_data:
-        pass
-        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
+    if rec_data and simulation is False:
+        pts3, pts4 = synchroniseAtApex(pts3, pts4)
         # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
 
-        # pts3 = pts3.reshape((1, -1, 2))
-        # pts4 = pts4.reshape((1, -1, 2))
-        # newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
-        # pts3 = newPoints3.reshape((-1, 2))
-        # pts4 = newPoints4.reshape((-1, 2))
+        pts3 = pts3.reshape((1, -1, 2))
+        pts4 = pts4.reshape((1, -1, 2))
+        newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
+        pts3 = newPoints3.reshape((-1, 2))
+        pts4 = newPoints4.reshape((-1, 2))
 
     elif simulation:
         pts3 = pts1
@@ -327,9 +326,9 @@ def run():
         scaled = [[a * scale for a in inner] for inner in p3d]
 
         if view:
-            plot.plot3D(p3d_gp, 'Original Reconstruction')
-            plot.plot3D(scaled_gp_only, 'Goal Posts')
-            plot.plot3D(scaled_gp, '3D Reconstruction')
+            plot.plot3D(p3d_gp, 'Original (Unscaled) Reconstruction')
+            plot.plot3D(scaled_gp_only, 'Scaled Goal Posts')
+            plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
         getMetrics(scaled, scaled_gp_only)
@@ -598,22 +597,9 @@ def midpoint(a, b):
 # get the Fundamental matrix by the normalised eight point algorithm
 def getFundamentalMatrix(pts_1, pts_2):
 
-    # 8point normalisation
-    # pts1_, T1 = eightPointNormalisation(pts1)
-    # pts2_, T2 = eightPointNormalisation(pts2)
-
-    # plot.plot2D(pts1, pts1_, '8pt Normalisation on Image 1')
-    # plot.plot2D(pts2, pts2_, '8pt Normalisation on Image 2')
-
     # normalised 8-point algorithm
     F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv.CV_FM_8POINT)
     tools.is_singular(F)
-
-    # F, pts_1, pts_2 = autoGetF()
-
-    # denormalise
-    # F = T2.T * np.mat(F_) * T1
-    # F = F / F[2, 2]
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
@@ -1113,23 +1099,6 @@ else:
 if simulation:
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-# get the data from file
-# data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
-#     folder)
-
-# pts1 = []
-# pts2 = []
-# pts3 = []
-# pts4 = []
-
-# Image coords: (x, y)
-# pts1 = np.array(pts1_raw, dtype='float32')
-# pts2 = np.array(pts2_raw, dtype='float32')
-# pts3 = np.array(pts3_raw, dtype='float32')
-# pts4 = np.array(pts4_raw, dtype='float32')
-# postPts1 = np.array(postPts1, dtype='float32')
-# postPts2 = np.array(postPts2, dtype='float32')
 
 noise = 0
 try:
