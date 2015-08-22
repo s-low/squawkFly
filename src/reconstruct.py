@@ -299,6 +299,7 @@ def run():
         pts4 = newPoints4.reshape((-1, 2))
 
     elif simulation:
+        print "> Simulation: Use whole point set for reconstruction"
         pts3 = pts1
         pts4 = pts2
 
@@ -321,9 +322,11 @@ def run():
     else:
         # add the post point data into the reconstruction for context
         if len(postPts1) == 4:
+            print "> Concatenate goal posts to trajectory"
             pts3_gp = np.concatenate((postPts1, pts3), axis=0)
             pts4_gp = np.concatenate((postPts2, pts4), axis=0)
             p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
+
 
         scale = getScale(goalPosts)
 
@@ -763,7 +766,6 @@ def triangulateCV(KP1, KP2, pts_1, pts_2):
     points4d = points4d.T
     points3d = convertFromHomogeneous(points4d)
     points3d = points3d.tolist()
-
     return points3d
 
 

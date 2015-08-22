@@ -25,6 +25,17 @@ x = [row.split()[0] for row in data]
 y = [row.split()[1] for row in data]
 z = [row.split()[2] for row in data]
 
+
+blx = x[0]
+blz = z[0]
+tlx = x[1]
+tlz = z[1]
+trx = x[2]
+trz = z[2]
+brx = x[3]
+brz = z[3]
+
+
 x0 = x[4]
 z0 = z[4]
 
@@ -38,6 +49,10 @@ print x0, z0
 print x1, z1
 
 ax.plot([x0, x1], [z0, z1])
+ax.plot([tlx, trx], [tlz, trz], c='k')
+ax.plot([blx, tlx], [blz, tlz], c='k')
+ax.plot([brx, trx], [brz, trz], c='k')
+
 
 ax.set_xlabel("X / m")
 ax.set_ylabel("Z / m")
