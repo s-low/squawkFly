@@ -4,7 +4,7 @@ import sys
 import matplotlib.pyplot as plt
 import plotting as plot
 
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 
 
 filename = sys.argv[1]
@@ -21,8 +21,8 @@ y = [row.split()[1] for row in data]
 fig = plt.figure('Show.py')
 ax = plt.axes()
 # ax.set_title("Simple 2D Plot", y=1.03)
-ax.set_xlabel("X")
-ax.set_ylabel("Y")
-ax.plot(x, y, 'r.')
+ax.set_xlabel("Graphical X")
+ax.set_ylabel("Graphical Y")
+ax.plot(x, y, 'k.')
 
 plt.show()

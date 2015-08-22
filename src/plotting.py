@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -11,10 +10,10 @@ def plot3D(data_3d, name='3D Plot'):
     Z = [point[2] for point in data_3d]
 
     fig = plt.figure(name)
-    ax = Axes3D(fig)
-    # ax = fig.add_subplot(111, projection='3d')
+    # ax = Axes3D(fig)
+    ax = fig.add_subplot(111, projection='3d')
     # ax.set_aspect('equal')
-    ax.scatter(X, Y, Z)
+    ax.scatter(X, Y, Z, marker='o', c='b')
 
     # Create cubic bounding box to simulate equal aspect ratio
     max_range = np.array(
@@ -34,6 +33,7 @@ def plot3D(data_3d, name='3D Plot'):
     ax.set_ylabel('Y (m)')
     ax.set_zlabel('Z (m)')
 
+    plt.locator_params(nbins=4)
     plt.show()
 
 
