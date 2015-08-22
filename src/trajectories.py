@@ -157,7 +157,8 @@ if len(set_x) >= min_length and min_length != -1:
 if min_length == -1:
     ax.plot(longest_x, longest_y, linewidth=2)
     print "Longest trajectory TID:", longest_tid
-    print "Length:", round(longest, 1), 'pix'
+    print "Pixel Length:", round(longest, 1), 'pix'
+    print "Detection Length:", len(longest_x)
 
     # write (x, y, f) to subset file
     for a, b, c in zip(longest_x, longest_y, longest_f):
