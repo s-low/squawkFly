@@ -12,7 +12,6 @@ class KFilter(object):
 
         # create the Kalman filter object
         self.kf = cv.CreateKalman(6, 2, 0)
-        self.state = cv.CreateMat(6, 1, cv.CV_32FC1)
         self.measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
 
         # unsure how this is being used
