@@ -60,6 +60,8 @@ def submit(*args):
 
     os.system("./calibrate.py " + cal1 + ' user/camera1.txt')
     os.system("./calibrate.py " + cal2 + ' user/camera2.txt')
+    os.system("./postPoints.py " + vid1 + ' user/postPts1.txt')
+    os.system("./postPoints.py " + vid2 + ' user/postPts2.txt')
     os.system("./detect.py " + vid1 + ' user/detections1.txt')
     os.system("./detect.py " + vid2 + ' user/detections2.txt')
     os.system("./kalman.py user/detections1.txt user/trajectories1.txt")

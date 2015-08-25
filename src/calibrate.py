@@ -83,7 +83,8 @@ print "and assuming no distortion:", no_dist / len(objpoints)
 
 try:
     outfile = open(sys.argv[2], 'w')
-    outfile.write(str(mtx[0, 0]) + ' ' + str(mtx[0, 2]) + ' ' + str(mtx[1, 2]))
+    outfile.write(
+        str(mtx[0, 0]) + ' ' + str(mtx[0, 2]) + ' -' + str(mtx[1, 2]))
     outfile.close()
 
 except IndexError:
