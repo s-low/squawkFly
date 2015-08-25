@@ -46,7 +46,7 @@ for image in images:
         cv2.drawChessboardCorners(img, (9, 6), corners, ret)
         cv2.imshow('success', img)
 
-        cv2.waitKey(500)
+        cv2.waitKey(30)
 
 err, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
@@ -80,3 +80,11 @@ print "distortion:\n", dist
 print "avg returned reprojection error:", err
 print "avg calculated projection error: ", mean_error / len(objpoints)
 print "and assuming no distortion:", no_dist / len(objpoints)
+
+try:
+    outfile = open(sys.argv[2], 'w')
+    outfile.write(str(mtx[0, 0]) + ' ' + str(mtx[0, 2]) + ' ' + str(mtx[1, 2]))
+    outfile.close()
+
+except IndexError:
+    pass

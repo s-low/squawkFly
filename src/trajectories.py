@@ -3,7 +3,6 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-# plt.style.use('ggplot')
 
 
 def pixLength(set_x, set_y):
@@ -40,23 +39,41 @@ min_length = 0
 if len(sys.argv) > 1:
     min_length = int(sys.argv[1])
 
+try:
+    infile_detections = sys.argv[2]
+except IndexError:
+    infile_detections = 'data/data_detections.txt'
+
+try:
+    infile_trajectories = sys.argv[3]
+except IndexError:
+    infile_trajectories = 'data/data_trajectories.txt'
+
+try:
+    outfilename = sys.argv[4]
+except IndexError:
+    outfilename = 'data_trajectories_subset.txt'
+
 # get the trajectory data
-with open("data/data_trajectories.txt") as datafile:
+with open(infile_trajectories) as datafile:
     trajectories = datafile.read()
     datafile.close()
 
 # Get the original data points for overlay
-with open("data/data_detections.txt") as datafile:
+with open(infile_detections) as datafile:
     raw = datafile.read()
     datafile.close()
 
-outfile = open('data_trajectories_subset.txt', 'w')
+outfile = open(outfilename, 'w')
 
 trajectories = trajectories.split('\n')
 raw = raw.split('\n')
 
-# remove the newline at end of trajectory file
-trajectories.pop(-1)
+# get rid of any empty line at the end of file
+if raw[-1] in ['\n', '\r\n', '']:
+    raw.pop(-1)
+if trajectories[-1] in ['\n', '\r\n', '']:
+    trajectories.pop(-1)
 
 # RAW / ORIGINAL
 raw_x = [row.split(' ')[0] for row in raw]

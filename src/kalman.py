@@ -31,7 +31,7 @@ max_misses = 6
 min_length = 2
 
 # debug mode
-d = True
+d = False
 
 
 # create a fresh kalman filter object and return it
@@ -258,6 +258,11 @@ def get_data(filename):
 
     data = data.split('\n')
 
+    # get rid of any empty line at the end of file
+    if data[-1] in ['\n', '\r\n', '']:
+        print "pop"
+        data.pop(-1)
+
     # data_detections in form: X / Y / FRAME / PID
     all_x = [row.split(' ')[0] for row in data]
     all_y = [row.split(' ')[1] for row in data]
@@ -296,8 +301,18 @@ def get_data(filename):
 
 print "----------KALMAN.PY------------"
 
-frame_array = get_data('data/data_detections.txt')
-outfile = open('data/data_trajectories.txt', 'w')
+try:
+    infilename = sys.argv[1]
+except IndexError:
+    infilename = 'data/data_detections.txt'
+
+try:
+    outfilename = sys.argv[2]
+except IndexError:
+    outfilename = 'data/data_trajectories.txt'
+
+frame_array = get_data(infilename)
+outfile = open(outfilename, 'w')
 trajectories = []
 
 # create OpenCV Kalman object
@@ -383,6 +398,6 @@ for ti, trajectory in enumerate(trajectories):
 print "> Found", ti, "trajectories"
 print ">", count, "are longer than", min_length, "points"
 print "> Most Detections:", max_length
-print "> written to data_trajectories.txt\n"
+print "> written to: ", outfilename
 
 outfile.close()

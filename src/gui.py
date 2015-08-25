@@ -42,21 +42,33 @@ def choose4():
 
 def submit(*args):
     print "--Submit--"
+
+    cal1 = calib1.get()
+    cal2 = calib2.get()
+    vid1 = clip1.get()
+    vid2 = clip2.get()
+
+    if not cal1 or not cal2 or not vid1 or not vid2:
+        print "WARN: Please select all four files"
+        return
+
     # escape any spaces in the path
     cal1 = handleSpaces(calib1.get())
     cal2 = handleSpaces(calib2.get())
-    # vid1 = handleSpaces(clip1.get())
-    # vid2 = handleSpaces(clip2.get())
+    vid1 = handleSpaces(clip1.get())
+    vid2 = handleSpaces(clip2.get())
 
-    os.system("./calibrate.py " + cal1)
-    os.system("./calibrate.py " + cal2)
+    os.system("./calibrate.py " + cal1 + ' user/camera1.txt')
+    os.system("./calibrate.py " + cal2 + ' user/camera2.txt')
+    os.system("./detect.py " + vid1 + ' user/detections1.txt')
+    os.system("./detect.py " + vid2 + ' user/detections2.txt')
+    os.system("./kalman.py user/detections1.txt user/trajectories1.txt")
+    os.system("./kalman.py user/detections2.txt user/trajectories2.txt")
+    os.system("./trajectories.py -1 user/detections1.txt \
+        user/trajectories1.txt user/trajectory1.txt")
+    os.system("./trajectories.py -1 user/detections2.txt \
+        user/trajectories2.txt user/trajectory2.txt")
 
-
-# try:
-# value = float(feet.get())
-# meters.set((0.3048 * value * 10000.0 + 0.5) / 10000.0)
-# except ValueError:
-# pass
 
 frame = ttk.Frame(root, padding="3 3 12 12")
 frame.grid(column=0, row=0, sticky=(N, W, E, S))
@@ -67,6 +79,11 @@ calib1 = StringVar()
 calib2 = StringVar()
 clip1 = StringVar()
 clip2 = StringVar()
+
+calib1.set('/Users/samlow/Google Drive/res/lumix')
+calib2.set('/Users/samlow/Google Drive/res/g3')
+clip1.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/lumix')
+clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 
 calib1_entry = ttk.Entry(frame, width=15, textvariable=calib1)
 clip1_entry = ttk.Entry(frame, width=15, textvariable=clip1)

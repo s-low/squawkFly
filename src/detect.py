@@ -10,9 +10,9 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 cap = 0
 debugging = False
 tracking = True
-paused = True
+paused = False
 point_index = 0
-     
+
 max_area = 1500
 min_area = 250
 
@@ -22,6 +22,7 @@ startOfFile = True
 time = 0
 
 dots = []
+detections = []
 
 
 def main():
@@ -29,8 +30,8 @@ def main():
     global outfile
     keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
 
-    if len(sys.argv) != 2:
-        print "Usage : python detect.py <video_file> or <image_sequence>"
+    if len(sys.argv) != 2 and len(sys.argv) != 3:
+        print "Usage : python detect.py <image_sequence> *<outfile>*"
         sys.exit(0)
 
     path = sys.argv[1]
@@ -143,6 +144,7 @@ def morph(image):
 
 # search a frame for candidates
 def search(src, thresh):
+    global detections
     global point_index
     global outfile
     global startOfFile
@@ -171,15 +173,17 @@ def search(src, thresh):
                 # filter by squareness
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.putText(src, str(area), (x, y), cv2.FONT_HERSHEY_PLAIN,
-                                0.8, (255, 255, 255))
+                            0.8, (255, 255, 255))
                 if square(h, w) and circular(area, h, w):
                     point_index += 1
                     cv2.rectangle(src, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                    
 
                     cx = x + float(w) / 2.0
                     cy = -1 * (y + float(h) / 2.0)
                     dots.append((int(cx), -int(cy)))
+
+                    d = (cx, cy, time, point_index)
+                    detections.append(d)
 
                     if not startOfFile:
                         outfile.write('\n')
@@ -250,3 +254,16 @@ def quit():
 
 # Procedural body
 main()
+
+# optionally specify a dedicated outfile
+try:
+    outfile = open(sys.argv[2], 'w')
+
+    for d in detections:
+        outfile.write(str(d[0]) + ' ' + str(d[1]) + ' ' +
+                      str(d[2]) + ' ' + str(d[3]) + '\n')
+
+    outfile.close()
+
+except IndexError:
+    pass
