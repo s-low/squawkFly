@@ -1081,6 +1081,30 @@ def autoGetF():
     return F, auto_pts1, auto_pts2
 
 
+def importCalibration(folder):
+    if user_run:
+        path1 = 'user/camera1.txt'
+        path2 = 'user/camera2.txt'
+    else:
+        path1 = 'tests/' + str(folder) + '/camera1.txt'
+        path2 = 'tests/' + str(folder) + '/camera2.txt'
+
+    with open(path1) as datafile:
+        cam1 = datafile.read()
+        datafile.close()
+
+    with open(path2) as datafile:
+        cam2 = datafile.read()
+        datafile.close()
+
+    cam1 = cam1.split()
+    cam2 = cam2.split()
+
+    K1 = np.mat(tools.CalibArray(cam1[0], cam1[1], cam1[2]), dtype='float32')
+    K2 = np.mat(tools.CalibArray(cam2[0], cam2[1], cam2[2]), dtype='float32')
+
+    return K1, K2
+
 # ----------------------------------------------------------------------
 # ------------------- MAIN PROGRAM STARTS HERE -------------------------
 # ----------------------------------------------------------------------
@@ -1091,34 +1115,26 @@ try:
 except IndexError:
     folder = 1
 
+# Is the program being called by the GUI
+try:
+    with_gui = sys.argv[2]
+except IndexError:
+    with_gui = None
+
+if with_gui is not None:
+    user_run = True
+else:
+    user_run = False
+
+
 if folder.isdigit() or folder == 'errors':
     simulation = True
 
-# Calibration matrices:
-if folder == 'coombe_sim':
-    print "-----Shot Simulation 1------"
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-elif folder == 'coombe_sim2':
-    print "-----Shot Simulation 2------"
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
-else:
-    K1 = np.mat(tools.CalibArray(950, 640, -360), dtype='float32')  # lumix
-    K2 = np.mat(tools.CalibArray(1091, 640, -360), dtype='float32')  # g3
-
-# If one of the simulation folders, set the calib matrices to sim values
-if simulation:
-    K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-    K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
-
+K1, K2 = importCalibration(folder)
 
 print "> Set Camera Matrices"
 print K1
 print K2
-
 
 noise = 0
 try:
