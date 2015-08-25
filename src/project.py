@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import structureTools as tools
 
 np.set_printoptions(suppress=True)
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 
 
 def main():
@@ -58,18 +58,14 @@ def main():
     img_pts1 = project(data_3d, K, nothing, tvec1)
     img_pts2 = project(data_3d, K, nothing, tvec2)
 
-    # img_pts1, jacobian = cv2.projectPoints(
-    #     data_3d, rvec1, tvec1, K, dist)
-
-    # img_pts2, jacobian = cv2.projectPoints(
-    #     data_3d, rvec2, tvec2, K, dist)
-
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
 
     plotSimulation(data_3d)
     plotImagePoints(img_pts1)
     plotImagePoints(img_pts2)
+
+    sys.exit()
 
     writeData(folder, img_pts1, img_pts2)
 

@@ -7,13 +7,7 @@ y-z plane.
 
 import sys
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
 
-font = {'family': 'normal',
-        'weight': 'bold',
-        'size': 16}
-
-plt.rc('font', **font)
 
 filename = sys.argv[1]
 
