@@ -54,8 +54,9 @@ ax.plot([blx, tlx], [blz, tlz], c='k')
 ax.plot([brx, trx], [brz, trz], c='k')
 
 
-ax.set_xlabel("X / m")
-ax.set_ylabel("Z / m")
+ax.set_xlabel("Lateral Movement / m")
+ax.set_ylabel("Distance Travelled to Goal / m")
+ax.set_ylim([0, 25])
 ax.plot(x, z, 'k.')
 
 

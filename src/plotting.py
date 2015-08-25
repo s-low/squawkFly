@@ -59,8 +59,8 @@ def plot2D(pts1, pts2=[], name='2D Plot', lims=(0, 0)):
     ax.scatter(x1, y1, color='r')
     if not onlyoneset:
         ax.scatter(x2, y2, color='b')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
+    ax.set_xlabel('X (px)')
+    ax.set_ylabel('Y (px)')
 
     plt.show()
 

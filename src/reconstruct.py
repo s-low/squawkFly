@@ -20,6 +20,12 @@ random.seed()
 np.set_printoptions(suppress=True)
 # plt.style.use('ggplot')
 
+font = {'family': 'normal',
+        'weight': 'normal',
+        'size': 14}
+
+plt.rc('font', **font)
+
 Point = namedtuple("Point", "x y")
 
 view = True
@@ -1108,6 +1114,12 @@ if simulation:
     K1 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
     K2 = np.mat(tools.CalibArray(1000, 640, 360), dtype='float32')
 
+
+print "> Set Camera Matrices"
+print K1
+print K2
+
+
 noise = 0
 try:
     noise = float(sys.argv[2])
@@ -1119,7 +1131,7 @@ statdir = '/stats/'
 if not os.path.exists('tests/' + folder + statdir):
     os.makedirs('tests/' + folder + statdir)
 
-statfile = open('tests/' + folder + statdir + 'run10.txt', 'w')
+statfile = open('tests/' + folder + statdir + 'newstats.txt', 'w')
 statfile.write(
     'N GaussianNoiseScale MeanNoiseMag MeanPLineDist Std MeanRepErr Std StdRec\n')
 

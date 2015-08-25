@@ -14,7 +14,7 @@ paused = True
 point_index = 0
      
 max_area = 1500
-min_area = 300
+min_area = 250
 
 outfile = None
 
@@ -170,11 +170,12 @@ def search(src, thresh):
             if area < max_area and area > min_area:
                 # filter by squareness
                 x, y, w, h = cv2.boundingRect(contour)
+                cv2.putText(src, str(area), (x, y), cv2.FONT_HERSHEY_PLAIN,
+                                0.8, (255, 255, 255))
                 if square(h, w) and circular(area, h, w):
                     point_index += 1
                     cv2.rectangle(src, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                    cv2.putText(src, str(area), (x, y), cv2.FONT_HERSHEY_PLAIN,
-                                0.8, (255, 255, 255))
+                    
 
                     cx = x + float(w) / 2.0
                     cy = -1 * (y + float(h) / 2.0)

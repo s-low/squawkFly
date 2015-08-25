@@ -18,8 +18,6 @@ import cv2.cv as cv
 import numpy as np
 import plotting as plot
 
-from kfilter import KFilter
-
 # Kalman Parameters
 init_dist = 400
 verify_distance = 50
@@ -33,9 +31,77 @@ max_misses = 6
 min_length = 2
 
 # debug mode
-d = False
+d = True
 
-print "----------KALMAN.PY------------"
+
+# create a fresh kalman filter object and return it
+def KalmanFilter():
+    kf = cv.CreateKalman(6, 2, 0)
+
+    '''
+    init the prediction/evolution/transition matrix
+    | 1 0 1 0 0 0 | x  |   | x  + vx  |
+    | 0 1 0 1 0 0 | y  | = | y  + vy  |
+    | 0 0 1 0 1 0 | vx |   | vx + ax  |
+    | 0 0 0 1 0 1 | vy |   | vy + ay  |
+    | 0 0 0 0 1 0 | ax |   |    ax    |
+    | 0 0 0 0 0 1 | ay |   |    ay    |
+    '''
+
+    # diagonals
+    for j in range(6):
+        for k in range(6):
+            kf.transition_matrix[j, k] = 0
+        kf.transition_matrix[j, j] = 1
+
+    # off-diagonals
+    kf.transition_matrix[0, 2] = 1
+    kf.transition_matrix[1, 3] = 1
+    kf.transition_matrix[2, 4] = 1
+    kf.transition_matrix[3, 5] = 1
+
+    # process noise = how good is model and how good is noise
+    process_noise_cov = 0.1
+    measure_noise_cov = 3
+    error_cov_post = 2
+
+    cv.SetIdentity(kf.measurement_matrix)
+    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(process_noise_cov))
+    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(measure_noise_cov))
+    cv.SetIdentity(kf.error_cov_post, cv.RealScalar(error_cov_post))
+
+    return kf
+
+
+# Manually set the KF post-state to initalise it
+def setPostState(x, y, vx, vy, ax, ay):
+    global kf
+    kf.state_post[0, 0] = x
+    kf.state_post[1, 0] = y
+    kf.state_post[2, 0] = vx
+    kf.state_post[3, 0] = vy
+    kf.state_post[4, 0] = ax
+    kf.state_post[5, 0] = ay
+
+
+# kalman filter predict and return as tuple
+def predict(kf):
+    predicted = cv.KalmanPredict(kf)
+    return (predicted[0, 0], predicted[1, 0],
+            predicted[2, 0], predicted[3, 0],
+            predicted[4, 0], predicted[5, 0])
+
+
+# KF correct and return as tuple
+def correct(kf, x, y):
+    global measurement
+    measurement[0, 0] = x
+    measurement[1, 0] = y
+
+    corrected = cv.KalmanCorrect(kf, measurement)
+    return (corrected[0, 0], corrected[1, 0],
+            corrected[2, 0], corrected[3, 0],
+            corrected[4, 0], corrected[5, 0])
 
 
 def verified(corrected_point, next_frame_index, v_distance):
@@ -92,7 +158,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
     global d
     global new_trajectory
     global n_miss
-    postState = kf.getPostState()
+    postState = kf.state_post
 
     if d and new_trajectory:
         print "\nNEW"
@@ -105,8 +171,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "Post state:\n", np.asarray(postState[:, :])
 
     # PREDICT location of branch
-    kf.predict()
-    predicted = kf.getPredicted()
+    predicted = predict(kf)
     if d:
         print "Predicted:", predicted
 
@@ -144,8 +209,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         # CORRECT filter against the verifying (but noisy) measurement
         x = p_verification[0]
         y = p_verification[1]
-        kf.correct(x, y)
-        corrected = kf.getCorrected()
+        corrected = correct(kf, x, y)
         if d:
             print "Corrected against P_ver:", corrected
 
@@ -224,9 +288,23 @@ def get_data(filename):
     return frame_array
 
 
+'''
+-------------------------------------------------------------------------------
+-------------------------Main program begins here------------------------------
+-------------------------------------------------------------------------------
+'''
+
+print "----------KALMAN.PY------------"
+
 frame_array = get_data('data/data_detections.txt')
 outfile = open('data/data_trajectories.txt', 'w')
 trajectories = []
+
+# create OpenCV Kalman object
+state = cv.CreateMat(6, 1, cv.CV_32FC1)
+measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
+predicted = None
+corrected = None
 
 # FOR each frame F0:
 for frame_index, f0 in enumerate(frame_array):
@@ -267,8 +345,8 @@ for frame_index, f0 in enumerate(frame_array):
 
             if sep < init_dist:
 
-                # init kalman and try to build a single trajectory
-                kf = KFilter()
+                # init new kalman filter and try to build a single trajectory
+                kf = KalmanFilter()
                 vx = xdiff
                 vy = ydiff
 
@@ -276,7 +354,7 @@ for frame_index, f0 in enumerate(frame_array):
                     print "\n-------- INIT Filter --------"
                     print "Points:", b0, b1
 
-                kf.setPostState(b1[0], b1[1], vx, vy, 0, 0)
+                setPostState(b1[0], b1[1], vx, vy, 0, 0)
                 if d:
                     print "Post state set:", b1[0], b1[1], vx, vy, 0, 0
 
@@ -295,7 +373,6 @@ count = 0
 ti = 0
 
 # write: TID / X / Y / FRAME / PID
-
 for ti, trajectory in enumerate(trajectories):
     if len(trajectory) > min_length:
         count += 1
