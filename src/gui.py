@@ -2,37 +2,55 @@
 from Tkinter import *
 import ttk
 from tkFileDialog import askopenfilename
+from tkFileDialog import askdirectory
+import os
 
 root = Tk()
 root.title("squawkFly")
 
 
+def handleSpaces(string):
+    i = string.find(' ')
+    new = string[:i] + '\\' + string[i:]
+
+    i = new.find(' ')
+    if new.find('\ ') != i - 1:
+        new = handleSpaces(new)
+
+    return new
+
+
 def choose1():
-    filename = askopenfilename()
+    filename = askdirectory()
     calib1.set(filename)
 
 
 def choose2():
-    filename = askopenfilename()
+    filename = askdirectory()
     clip1.set(filename)
 
 
 def choose3():
-    filename = askopenfilename()
+    filename = askdirectory()
     calib2.set(filename)
 
 
 def choose4():
-    filename = askopenfilename()
+    filename = askdirectory()
     clip2.set(filename)
 
 
 def submit(*args):
     print "--Submit--"
-    print calib1.get()
-    print calib2.get()
-    print clip1.get()
-    print clip2.get()
+    # escape any spaces in the path
+    cal1 = handleSpaces(calib1.get())
+    cal2 = handleSpaces(calib2.get())
+    # vid1 = handleSpaces(clip1.get())
+    # vid2 = handleSpaces(clip2.get())
+
+    os.system("./calibrate.py " + cal1)
+    os.system("./calibrate.py " + cal2)
+
 
 # try:
 # value = float(feet.get())
