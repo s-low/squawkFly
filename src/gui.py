@@ -68,6 +68,8 @@ def submit(*args):
         user/trajectories1.txt user/trajectory1.txt")
     os.system("./trajectories.py -1 user/detections2.txt \
         user/trajectories2.txt user/trajectory2.txt")
+    os.system("./interpolate.py user/trajectory1.txt 30")
+    os.system("./interpolate.py user/trajectory2.txt 30")
 
 
 frame = ttk.Frame(root, padding="3 3 12 12")

@@ -18,12 +18,15 @@ except IndexError:
     print "Usage: ./interpolate <file> <framerate>"
     sys.exit()
 
+try:
+    outfilename = sys.argv[3]
+except IndexError:
+    name, ext = os.path.splitext(filename)
+    outfilename = name + "_interpolated.txt"
+
 if abs(frame_rate - 24) < 0.01:
     frame_rate = 23.976
 
-name, ext = os.path.splitext(filename)
-
-outfilename = name + "_interpolated.txt"
 frame_length_ms = float(1000) / float(frame_rate)
 
 print "Frame Rate:", frame_rate
@@ -35,6 +38,11 @@ with open(filename) as datafile:
     datafile.close()
 
 data = data.split('\n')
+# get rid of any empty line at the end of file
+if data[-1] in ['\n', '\r\n', '']:
+    print "pop"
+    data.pop(-1)
+
 points = []
 interpolated_points = []
 
