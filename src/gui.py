@@ -5,9 +5,6 @@ from tkFileDialog import askopenfilename
 from tkFileDialog import askdirectory
 import os
 
-root = Tk()
-root.title("squawkFly")
-
 
 def handleSpaces(string):
     i = string.find(' ')
@@ -60,8 +57,8 @@ def submit(*args):
 
     os.system("./calibrate.py " + cal1 + ' user/camera1.txt')
     os.system("./calibrate.py " + cal2 + ' user/camera2.txt')
-    os.system("./postPoints.py " + vid1 + ' user/postPts1.txt')
-    os.system("./postPoints.py " + vid2 + ' user/postPts2.txt')
+    os.system("./postPoints.py " + vid1 + ' user/postPts1.txt user/image1.png')
+    os.system("./postPoints.py " + vid2 + ' user/postPts2.txt user/image2.png')
     os.system("./detect.py " + vid1 + ' user/detections1.txt')
     os.system("./detect.py " + vid2 + ' user/detections2.txt')
     os.system("./kalman.py user/detections1.txt user/trajectories1.txt")
@@ -70,14 +67,14 @@ def submit(*args):
         user/trajectories1.txt user/trajectory1.txt")
     os.system("./trajectories.py -1 user/detections2.txt \
         user/trajectories2.txt user/trajectory2.txt")
-    os.system("./interpolate.py user/trajectory1.txt 30")
-    os.system("./interpolate.py user/trajectory2.txt 30")
+    os.system("./interpolate.py user/trajectory1.txt 30 user/trajectory1.txt")
+    os.system("./interpolate.py user/trajectory2.txt 30 user/trajectory2.txt")
 
+root = Tk()
+root.title("squawkFly")
 
 frame = ttk.Frame(root, padding="3 3 12 12")
 frame.grid(column=0, row=0, sticky=(N, W, E, S))
-frame.columnconfigure(0, weight=1)
-frame.rowconfigure(0, weight=1)
 
 calib1 = StringVar()
 calib2 = StringVar()
@@ -89,11 +86,11 @@ calib2.set('/Users/samlow/Google Drive/res/g3')
 clip1.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/lumix')
 clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 
-calib1_entry = ttk.Entry(frame, width=15, textvariable=calib1)
-clip1_entry = ttk.Entry(frame, width=15, textvariable=clip1)
+calib1_entry = ttk.Entry(frame, width=45, textvariable=calib1)
+clip1_entry = ttk.Entry(frame, width=45, textvariable=clip1)
 
-calib2_entry = ttk.Entry(frame, width=15, textvariable=calib2)
-clip2_entry = ttk.Entry(frame, width=15, textvariable=clip2)
+calib2_entry = ttk.Entry(frame, width=45, textvariable=calib2)
+clip2_entry = ttk.Entry(frame, width=45, textvariable=clip2)
 
 calib1_entry.grid(column=2, row=1, sticky=(W, E))
 clip1_entry.grid(column=2, row=2, sticky=(W, E))
@@ -124,10 +121,16 @@ ttk.Label(frame, text="FK Video 1").grid(column=1, row=2, sticky=E)
 ttk.Label(frame, text="Calibration Video 2").grid(column=1, row=3, sticky=E)
 ttk.Label(frame, text="FK Video 2").grid(column=1, row=4, sticky=E)
 
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+frame.columnconfigure(2, weight=1)
+
 for child in frame.winfo_children():
     child.grid_configure(padx=5, pady=5)
 
+root.update()
+root.minsize(root.winfo_width(), root.winfo_height())
+
 calib1_entry.focus()
 root.bind('<Return>', submit)
-
 root.mainloop()

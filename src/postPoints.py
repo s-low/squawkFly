@@ -36,12 +36,13 @@ red = (0, 0, 255)
 white = (255, 255, 255)
 font = cv2.FONT_HERSHEY_DUPLEX
 
-if len(sys.argv) != 3:
-    print "Usage : /postPoints.py <infile> <outfile>"
+if len(sys.argv) != 4:
+    print "Usage : /postPoints.py <infile> <points outfile> <image_outfile>"
     sys.exit(0)
 
 infilename = sys.argv[1]
 outfilename = sys.argv[2]
+image_outfile = sys.argv[3]
 
 # supplied path can be a directory containing an image sequence: 00001.png
 if os.path.isdir(infilename):
@@ -53,12 +54,16 @@ counter = 0
 cap = cv2.VideoCapture(infilename)
 
 ret, original = cap.read()
+
 frame0 = original.copy()
 frame1 = original.copy()
 frame2 = original.copy()
 frame3 = original.copy()
 frame4 = original.copy()
 frame5 = original.copy()
+
+print "Write image:", image_outfile
+cv2.imwrite(image_outfile, original)
 
 cv2.namedWindow('Click the Goalpost Corners')
 cv2.setMouseCallback('Click the Goalpost Corners', click)

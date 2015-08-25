@@ -260,7 +260,6 @@ def get_data(filename):
 
     # get rid of any empty line at the end of file
     if data[-1] in ['\n', '\r\n', '']:
-        print "pop"
         data.pop(-1)
 
     # data_detections in form: X / Y / FRAME / PID

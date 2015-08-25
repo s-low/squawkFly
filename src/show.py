@@ -14,6 +14,8 @@ with open(filename) as datafile:
     datafile.close()
 
 data = data.split('\n')
+if data[-1] in ['\n', '\r\n', '']:
+    data.pop(-1)
 
 x = [row.split()[0] for row in data]
 y = [row.split()[1] for row in data]

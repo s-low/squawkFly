@@ -151,42 +151,50 @@ def getData(folder):
     postPts2 = []
     data3D = []
 
-    with open(path + 'statics1.txt') as datafile:
-        data = datafile.read()
-        datafile.close()
-
-    data = data.split('\n')
-    for row in data:
-        x = float(row.split()[0])
-        y = float(row.split()[1])
-        pts1.append([x, y])
-
-    with open(path + 'statics2.txt') as datafile:
-        data = datafile.read()
-        datafile.close()
-
-    data = data.split('\n')
-    for row in data:
-        x = float(row.split()[0])
-        y = float(row.split()[1])
-        pts2.append([x, y])
-
-    try:
-        with open(path + '3d.txt') as datafile:
+    # get the static correspondences from file
+    if not user_run:
+        with open(path + 'statics1.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
         data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
         for row in data:
             x = float(row.split()[0])
             y = float(row.split()[1])
-            z = float(row.split()[2])
-            data3D.append([x, y, z])
+            pts1.append([x, y])
 
-        print "> 3D reference data provided. Simulation."
+        with open(path + 'statics2.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
 
-    except IOError:
-        print "> No 3D reference data provided. Not a simulation."
+        data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            pts2.append([x, y])
+
+        try:
+            with open(path + '3d.txt') as datafile:
+                data = datafile.read()
+                datafile.close()
+
+            data = data.split('\n')
+            if data[-1] in ['\n', '\r\n', '']:
+                data.pop(-1)
+            for row in data:
+                x = float(row.split()[0])
+                y = float(row.split()[1])
+                z = float(row.split()[2])
+                data3D.append([x, y, z])
+
+            print "> 3D reference data provided. Simulation."
+
+        except IOError:
+            print "> No 3D reference data provided. Not a simulation."
 
     try:
         with open(path + 'trajectory1.txt') as datafile:
@@ -194,6 +202,8 @@ def getData(folder):
             datafile.close()
 
         data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
         for row in data:
             x = float(row.split()[0])
             y = float(row.split()[1])
@@ -204,13 +214,15 @@ def getData(folder):
             datafile.close()
 
         data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
         for row in data:
             x = float(row.split()[0])
             y = float(row.split()[1])
             pts4.append([x, y])
 
         rec_data = True
-        print "> Designated reconstruction correspondences provided."
+        print "> Designated trajectory correspondences provided."
 
     except IOError:
         print "> No reconstruction points provided. Using full point set."
@@ -223,6 +235,8 @@ def getData(folder):
             data = datafile.read()
             datafile.close()
         data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
         for row in data:
             x = float(row.split()[0])
             y = float(row.split()[1])
@@ -235,12 +249,21 @@ def getData(folder):
             data = datafile.read()
             datafile.close()
         data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
         for row in data:
             x = float(row.split()[0])
             y = float(row.split()[1])
             postPts2.append([x, y])
     except IOError:
         pass
+
+    # use the trajectory itself as the static points
+    if user_run:
+        print "user_run"
+        pts1 = pts3
+        pts2 = pts4
+        pts1, pts2 = synchroniseAtApex(pts1, pts2)
 
     return data3D, pts1, pts2, pts3, pts4, postPts1, postPts2, rec_data
 
@@ -277,6 +300,7 @@ def run():
 
     # FUNDAMENTAL MATRIX
     F = getFundamentalMatrix(pts1, pts2)
+    # F, pts1, pts2 = autoGetF(pts1, pts2)
 
     # ESSENTIAL MATRIX (HZ 9.12)
     E, w, u, vt = getEssentialMatrix(F, K1, K2)
@@ -333,7 +357,6 @@ def run():
             pts4_gp = np.concatenate((postPts2, pts4), axis=0)
             p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
 
-
         scale = getScale(goalPosts)
 
         scaled_gp_only = [[a * scale for a in inner] for inner in goalPosts]
@@ -347,7 +370,6 @@ def run():
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
         getMetrics(scaled, scaled_gp_only)
-
         scaled_gp = transform(scaled_gp)
         if view:
             plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
@@ -738,7 +760,7 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
 
     # check if any z coord is negative
     for point in points3d:
-        if point[2] < -0.05:
+        if point[2] < 0:
             return False
     return True
 
@@ -1063,22 +1085,35 @@ def autoGetCorrespondences(img1, img2):
             auto_pts2.append(kp2[m.trainIdx].pt)
             auto_pts1.append(kp1[m.queryIdx].pt)
 
+    intpts1 = np.int32(auto_pts1)
+    intpts2 = np.int32(auto_pts2)
+
+    img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
+    img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
+
+    for p1, p2 in zip(intpts1, intpts2):
+        color = tuple(np.random.randint(0, 255, 3).tolist())
+        cv2.circle(img1, tuple(p1), 5, color, -1)
+        cv2.circle(img2, tuple(p2), 5, color, -1)
+
+    plt.subplot(121), plt.imshow(img1)
+    plt.subplot(122), plt.imshow(img2)
+    plt.show()
+
     return np.float32(auto_pts1), np.float32(auto_pts2)
 
 
-def autoGetF():
-    img1 = cv2.imread('../res/mvb/d5000.png', 0)
-    img2 = cv2.imread('../res/mvb/g3.png', 0)
+def autoGetF(pts_1, pts_2):
 
-    auto_pts1, auto_pts2 = autoGetCorrespondences(img1, img2)
-
-    F, mask = cv2.findFundamentalMat(auto_pts1, auto_pts2, cv2.FM_LMEDS)
+    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv2.FM_LMEDS)
 
     # We select only inlier points
-    auto_pts1 = auto_pts1[mask.ravel() == 1]
-    auto_pts2 = auto_pts2[mask.ravel() == 1]
+    pts_1 = pts_1[mask.ravel() == 1]
+    pts_2 = pts_2[mask.ravel() == 1]
 
-    return F, auto_pts1, auto_pts2
+    avg, std = fund.testFundamentalReln(F, pts_1, pts_2)
+
+    return F, pts_1, pts_2
 
 
 def importCalibration(folder):
@@ -1137,10 +1172,10 @@ print K1
 print K2
 
 noise = 0
-try:
-    noise = float(sys.argv[2])
-except IndexError:
-    pass
+# try:
+#     noise = float(sys.argv[2])
+# except IndexError:
+# pass
 
 statdir = '/stats/'
 

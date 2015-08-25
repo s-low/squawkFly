@@ -40,7 +40,6 @@ with open(filename) as datafile:
 data = data.split('\n')
 # get rid of any empty line at the end of file
 if data[-1] in ['\n', '\r\n', '']:
-    print "pop"
     data.pop(-1)
 
 points = []
@@ -73,14 +72,10 @@ def fit(a, b):
 
 def interpolate(start, end, func):
     global interpolated_points
-    print "INTERPOLATE between:", start, end
 
     for i in range(start, end):
         p = points[i]  # this point
         n = points[i + 1]  # next point
-
-        print "\np: ", p
-        print "n: ", n, "\n"
 
         x = p[0]
         y = p[1]
@@ -95,8 +90,6 @@ def interpolate(start, end, func):
 
         interpolated_points.append(p)
 
-        if num_between != 0:
-            print "> adding points:"
         for j in range(0, num_between):
             new_point = [None] * 3
             new_point[0] = x + dx
@@ -104,7 +97,6 @@ def interpolate(start, end, func):
             new_point[2] = p[2]
             x = x + dx
             interpolated_points.append(new_point)
-            print new_point
 
     # plot the current interpolated set of points with f overlain
     arr = np.array(interpolated_points)
@@ -141,9 +133,6 @@ for i, ay in enumerate(y):
 
     if ay < prev and ay < nex:
         ax = x[i]
-        print "\nBounce at:", ax, ay
-        print "Previous, next y:", prev, nex
-        print "Index:", i
         bounc_i.append(i)
 
 # Split at the bounces and interpolate each individually
@@ -152,12 +141,9 @@ root = 0
 # for each bounce
 for count, i in enumerate(bounc_i):
 
-    print "\n---New Segment---"
     # get the segment
     seg_x = x[root:i + 1]
     seg_y = y[root:i + 1]
-    print "Start:", root
-    print "End:", i
 
     # fit it
     f = fit(seg_x, seg_y)
@@ -168,11 +154,9 @@ for count, i in enumerate(bounc_i):
     root = i
 
 # corner case: no bounces / last bounce
-print "\n---New Segment---"
 seg_x = x[root:]
 seg_y = y[root:]
-print "Start:", root
-print "End:", len(x)
+
 f = fit(seg_x, seg_y)
 interpolate(root, len(x) - 1, f)
 
