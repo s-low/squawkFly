@@ -151,7 +151,7 @@ def getData(folder):
     postPts2 = []
     data3D = []
 
-    with open(path + 'pts1.txt') as datafile:
+    with open(path + 'statics1.txt') as datafile:
         data = datafile.read()
         datafile.close()
 
@@ -161,7 +161,7 @@ def getData(folder):
         y = float(row.split()[1])
         pts1.append([x, y])
 
-    with open(path + 'pts2.txt') as datafile:
+    with open(path + 'statics2.txt') as datafile:
         data = datafile.read()
         datafile.close()
 
@@ -189,7 +189,7 @@ def getData(folder):
         print "> No 3D reference data provided. Not a simulation."
 
     try:
-        with open(path + 'pts3.txt') as datafile:
+        with open(path + 'trajectory1.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
@@ -199,7 +199,7 @@ def getData(folder):
             y = float(row.split()[1])
             pts3.append([x, y])
 
-        with open(path + 'pts4.txt') as datafile:
+        with open(path + 'trajectory2.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
