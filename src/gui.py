@@ -58,20 +58,14 @@ def submit(*args):
     vid2 = handleSpaces(clip2.get())
 
     # paths
-    session = "sessions/" + session
-    clip = session + '/' + clip
+    p_session = "sessions/" + session
+    p_clip = p_session + '/' + clip
 
-    print "Session:", session
-    print "Clip:", clip
+    print "Session:", p_session
+    print "Clip:", p_clip
 
-    if not os.path.exists(session):
-        os.makedirs(session)
-
-    if not os.path.exists(clip):
-        os.makedirs(clip)
-
-    session = ' ' + session + '/'
-    clip = ' ' + clip + '/'
+    session = ' ' + p_session + '/'
+    clip = ' ' + p_clip + '/'
 
     args_cal1 = cal1 + session + 'camera1.txt'
     args_cal2 = cal2 + session + 'camera2.txt'
@@ -87,25 +81,30 @@ def submit(*args):
     args_interp1 = clip + 'trajectory1.txt 30' + clip + 'trajectory1.txt'
     args_interp2 = clip + 'trajectory2.txt 30' + clip + 'trajectory2.txt'
 
-    os.system("./calibrate.py " + args_cal1)
-    os.system("./calibrate.py " + args_cal2)
+    # New session, create the scene data
+    if not os.path.exists(p_session):
+        os.makedirs(p_session)
+        os.system("./calibrate.py " + args_cal1)
+        os.system("./calibrate.py " + args_cal2)
+        os.system("./postPoints.py " + args_posts1)
+        os.system("./postPoints.py " + args_posts2)
+        os.system("./manualMatch.py " + args_match)
 
-    os.system("./postPoints.py " + args_posts1)
-    os.system("./postPoints.py " + args_posts2)
+    # New clip, create the trajectory data
+    if not os.path.exists(p_clip):
+        os.makedirs(p_clip)
 
-    os.system("./manualMatch.py " + args_match)
+        os.system("./detect.py " + args_detect1)
+        os.system("./detect.py " + args_detect2)
+        os.system("./kalman.py" + args_kalman1)
+        os.system("./kalman.py" + args_kalman2)
+        os.system("./trajectories.py -1" + args_traj1)
+        os.system("./trajectories.py -1" + args_traj2)
+        os.system("./interpolate.py" + args_interp1)
+        os.system("./interpolate.py" + args_interp2)
 
-    os.system("./detect.py " + args_detect1)
-    os.system("./detect.py " + args_detect2)
-
-    os.system("./kalman.py" + args_kalman1)
-    os.system("./kalman.py" + args_kalman2)
-
-    os.system("./trajectories.py -1" + args_traj1)
-    os.system("./trajectories.py -1" + args_traj2)
-
-    os.system("./interpolate.py" + args_interp1)
-    os.system("./interpolate.py" + args_interp2)
+    else:
+        print "That clip already exists"
 
 root = Tk()
 root.title("squawkFly")
