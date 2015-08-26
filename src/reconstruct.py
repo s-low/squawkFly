@@ -27,14 +27,14 @@ font = {'family': 'normal',
 plt.rc('font', **font)
 
 Point = namedtuple("Point", "x y")
-
-view = True
 simulation = False
+
+# debug and graphical modes
+view = True
+d = False
 
 
 def synchroniseAtApex(pts_1, pts_2):
-    print "APEX SYNCHRONISATION"
-
     syncd1 = []
     syncd2 = []
     shorter = []
@@ -51,7 +51,6 @@ def synchroniseAtApex(pts_1, pts_2):
         short_flag = 2
 
     diff = len(longer) - len(shorter)
-    print "Difference in lengths:", diff
     # find the highest y value in each point set
     apex1 = max(float(p[1]) for p in shorter)
     apex2 = max(float(p[1]) for p in longer)
@@ -59,38 +58,44 @@ def synchroniseAtApex(pts_1, pts_2):
     apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
     apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
 
-    print "\nAPEXES"
-    print "Short:", apex1, apex1_i, "of", len(shorter)
-    print "Long:", apex2, apex2_i, "of", len(longer)
+    if d:
+        print "\n------Apexes------"
+        print "> Short:", apex1, apex1_i, "of", len(shorter)
+        print "> Long:", apex2, apex2_i, "of", len(longer)
 
     shift = apex2_i[0] - apex1_i[0]
 
     # remove the front end dangle
-    print "\nShift by:", shift
+    if d:
+        print "\nShift by:", shift
 
     if shift > 0:
         longer = longer[shift:]
-        print "Longer front trimmed, new length:", len(longer)
+        if d:
+            print "Longer front trimmed, new length:", len(longer)
     else:
         shorter = shorter[abs(shift):]
-        print "Shorter front trimmed, new length:", len(shorter)
+        if d:
+            print "Shorter front trimmed, new length:", len(shorter)
 
     remainder = diff - shift
 
     # remove the rear end dangle
     if remainder >= 0:
-        print "\nTrim longer by remainder:", remainder
+        if d:
+            print "\nTrim longer by remainder:", remainder
         index = len(longer) - remainder
-        print "Trim to index:", index
         longer = longer[:index]
 
     if remainder < 0:
         index = len(shorter) - abs(remainder)
-        print "\nShift > diff in lengths, trim the shorter end to:", index
+        if d:
+            print "\nShift > diff in lengths, trim the shorter end to:", index
         shorter = shorter[:index]
 
-    print "New length of shorter:", len(shorter)
-    print "New length of longer:", len(longer)
+    if d:
+        print "New length of shorter:", len(shorter)
+        print "New length of longer:", len(longer)
 
     # find the highest y value in each point set
     apex1 = max(float(p[1]) for p in shorter)
@@ -99,9 +104,10 @@ def synchroniseAtApex(pts_1, pts_2):
     apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
     apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
 
-    print "\nNew apex positions:"
-    print apex1, apex1_i
-    print apex2, apex2_i
+    if d:
+        print "\nNew apex positions:"
+        print apex1, apex1_i
+        print apex2, apex2_i
 
     if short_flag == 1:
         syncd1 = shorter
@@ -141,8 +147,10 @@ def addNoise(scale, points):
 
 # Get point correspondeces (1+2) from subdir
 # Optionally: original 3d set, correspondences to be reconstructed (3+4)
-def getData(folder):
-    path = 'tests/' + str(folder) + '/'
+def getData(session, clip):
+    session = 'sessions/' + str(session) + '/'
+    clip = 'sessions/' + str(clip) + '/'
+
     pts1 = []
     pts2 = []
     pts3 = []
@@ -151,53 +159,54 @@ def getData(folder):
     postPts2 = []
     data3D = []
 
-    # get the static correspondences from file
-    if not user_run:
-        with open(path + 'statics1.txt') as datafile:
-            data = datafile.read()
-            datafile.close()
+    # get the static correspondences from session directory
+    with open(session + 'statics1.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
 
-        data = data.split('\n')
-        if data[-1] in ['\n', '\r\n', '']:
-            data.pop(-1)
-        for row in data:
-            x = float(row.split()[0])
-            y = float(row.split()[1])
-            pts1.append([x, y])
+    data = data.split('\n')
+    if data[-1] in ['\n', '\r\n', '']:
+        data.pop(-1)
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        pts1.append([x, y])
 
-        with open(path + 'statics2.txt') as datafile:
-            data = datafile.read()
-            datafile.close()
+    with open(session + 'statics2.txt') as datafile:
+        data = datafile.read()
+        datafile.close()
 
-        data = data.split('\n')
-        if data[-1] in ['\n', '\r\n', '']:
-            data.pop(-1)
-        for row in data:
-            x = float(row.split()[0])
-            y = float(row.split()[1])
-            pts2.append([x, y])
+    data = data.split('\n')
+    if data[-1] in ['\n', '\r\n', '']:
+        data.pop(-1)
+    for row in data:
+        x = float(row.split()[0])
+        y = float(row.split()[1])
+        pts2.append([x, y])
 
-        try:
-            with open(path + '3d.txt') as datafile:
-                data = datafile.read()
-                datafile.close()
-
-            data = data.split('\n')
-            if data[-1] in ['\n', '\r\n', '']:
-                data.pop(-1)
-            for row in data:
-                x = float(row.split()[0])
-                y = float(row.split()[1])
-                z = float(row.split()[2])
-                data3D.append([x, y, z])
-
-            print "> 3D reference data provided. Simulation."
-
-        except IOError:
-            print "> No 3D reference data provided. Not a simulation."
-
+    # Try and get the 3D ground truth if exists
     try:
-        with open(path + 'trajectory1.txt') as datafile:
+        with open(clip + '3d.txt') as datafile:
+            data = datafile.read()
+            datafile.close()
+
+        data = data.split('\n')
+        if data[-1] in ['\n', '\r\n', '']:
+            data.pop(-1)
+        for row in data:
+            x = float(row.split()[0])
+            y = float(row.split()[1])
+            z = float(row.split()[2])
+            data3D.append([x, y, z])
+
+        print "> 3D reference data provided. Simulation."
+
+    except IOError:
+        print "> No 3D reference data provided. Not a simulation."
+
+    # Get the trajectory correspondences for the clip
+    try:
+        with open(clip + 'trajectory1.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
@@ -209,7 +218,7 @@ def getData(folder):
             y = float(row.split()[1])
             pts3.append([x, y])
 
-        with open(path + 'trajectory2.txt') as datafile:
+        with open(clip + 'trajectory2.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
@@ -224,14 +233,16 @@ def getData(folder):
         rec_data = True
         print "> Designated trajectory correspondences provided."
 
+    # If no trajectory data, just reconstruct the static points (for testing)
     except IOError:
         print "> No reconstruction points provided. Using full point set."
         pts3 = pts1
         pts4 = pts2
         rec_data = False
 
+    # Try and get the goalPost corners from /sessions/session/
     try:
-        with open(path + 'postPts1.txt') as datafile:
+        with open(session + 'postPts1.txt') as datafile:
             data = datafile.read()
             datafile.close()
         data = data.split('\n')
@@ -245,7 +256,7 @@ def getData(folder):
         pass
 
     try:
-        with open(path + 'postPts2.txt') as datafile:
+        with open(session + 'postPts2.txt') as datafile:
             data = datafile.read()
             datafile.close()
         data = data.split('\n')
@@ -257,13 +268,6 @@ def getData(folder):
             postPts2.append([x, y])
     except IOError:
         pass
-
-    # use the trajectory itself as the static points
-    if user_run:
-        print "user_run"
-        pts1 = pts3
-        pts2 = pts4
-        pts1, pts2 = synchroniseAtApex(pts1, pts2)
 
     return data3D, pts1, pts2, pts3, pts4, postPts1, postPts2, rec_data
 
@@ -377,7 +381,7 @@ def run():
             reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
-        outfile = open('tests/' + folder + '/3d_out.txt', 'w')
+        outfile = open('sessions/' + session + '/3d_out.txt', 'w')
         for p in scaled_gp:
             p0 = round(p[0], 2)
             p1 = round(p[1], 2)
@@ -440,7 +444,7 @@ def simScale(points):
     avg = np.mean(distances)
     std = np.std(distances)
 
-    outfile = open('tests/' + folder + statdir + 'reconstruction.txt', 'w')
+    outfile = open('sessions/' + clip + statdir + 'reconstruction.txt', 'w')
     outfile.write('avg distance to origin: ' + str(avg) + '\n')
     outfile.write('std: ' + str(std) + '\n')
     outfile.write('distances:\n')
@@ -577,7 +581,7 @@ def transform(points):
 # given the scaled up set of trajectory points work out the speed and
 # distance to goal
 def getMetrics(worldPoints, goalPosts):
-    outfile = open('tests/' + folder + '/speed.txt', 'w')
+    outfile = open('sessions/' + session + '/speed.txt', 'w')
     first = worldPoints.pop(0)
     prev = first
     speeds = []
@@ -609,7 +613,7 @@ def getMetrics(worldPoints, goalPosts):
     print "> Average speed: ", str(avg) + 'mph'
     print "> Distance covered in:", str(time) + 's'
 
-    outfile = open('tests/' + folder + '/tracer_stats.txt', 'w')
+    outfile = open('sessions/' + session + '/tracer_stats.txt', 'w')
     outfile.write(str(avg) + '\n')
     outfile.write(str(shotRange))
     outfile.close()
@@ -642,7 +646,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     print "\n> Fundamental:\n", F
     avg, std = fund.testFundamentalReln(F, pts_1, pts_2)
 
-    outfile = open('tests/' + folder + statdir + 'epilines.txt', 'w')
+    outfile = open('sessions/' + clip + statdir + 'epilines.txt', 'w')
     string = 'avg:' + str(avg) + ' std1:' + str(std)
     outfile.write(string)
     outfile.close()
@@ -871,7 +875,7 @@ def reconstructionError(original, reconstructed):
     avg = sum(seps) / len(seps)
     # avg = np.mean(seps)
     std = np.std(seps)
-    outfile = open('tests/' + folder + statdir + 'reconstruction.txt', 'w')
+    outfile = open('sessions/' + clip + statdir + 'reconstruction.txt', 'w')
     outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
     outfile.close()
 
@@ -941,7 +945,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
         plot.plot2D(reprojected2, pts_4,
                     'Reprojection of Reconstruction onto Image 2')
 
-    outfile = open('tests/' + folder + statdir + 'reprojection.txt', 'w')
+    outfile = open('sessions/' + clip + statdir + 'reprojection.txt', 'w')
     string = 'avg:' + str(avg) + '\nstd:' + str(std)
     outfile.write(string)
     outfile.close()
@@ -1116,13 +1120,13 @@ def autoGetF(pts_1, pts_2):
     return F, pts_1, pts_2
 
 
-def importCalibration(folder):
+def importCalibration(session):
     if user_run:
         path1 = 'user/camera1.txt'
         path2 = 'user/camera2.txt'
     else:
-        path1 = 'tests/' + str(folder) + '/camera1.txt'
-        path2 = 'tests/' + str(folder) + '/camera2.txt'
+        path1 = 'sessions/' + str(session) + '/camera1.txt'
+        path2 = 'sessions/' + str(session) + '/camera2.txt'
 
     with open(path1) as datafile:
         cam1 = datafile.read()
@@ -1146,13 +1150,23 @@ def importCalibration(folder):
 
 # INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
-    folder = sys.argv[1]
+    session = sys.argv[1]
+    clip = sys.argv[2]
+    clip = session + '/' + clip
 except IndexError:
-    folder = 1
+    print "./reconstruct.py <session> <clip> <'with_gui'>"
+    sys.exit()
+
+print "Session:", session
+print "Clip:", clip
+
+if not os.path.exists('sessions/' + clip):
+    print "Clip does not exist."
+    sys.exit()
 
 # Is the program being called by the GUI
 try:
-    with_gui = sys.argv[2]
+    with_gui = sys.argv[3]
 except IndexError:
     with_gui = None
 
@@ -1161,11 +1175,11 @@ if with_gui is not None:
 else:
     user_run = False
 
-
-if folder.isdigit() or folder == 'errors':
+if session.isdigit() or session == 'errors':
     simulation = True
 
-K1, K2 = importCalibration(folder)
+# get the calibration data from the session directory
+K1, K2 = importCalibration(session)
 
 print "> Set Camera Matrices"
 print K1
@@ -1177,12 +1191,13 @@ noise = 0
 # except IndexError:
 # pass
 
+
 statdir = '/stats/'
 
-if not os.path.exists('tests/' + folder + statdir):
-    os.makedirs('tests/' + folder + statdir)
+if not os.path.exists('sessions/' + clip + statdir):
+    os.makedirs('sessions/' + clip + statdir)
 
-statfile = open('tests/' + folder + statdir + 'newstats.txt', 'w')
+statfile = open('sessions/' + clip + statdir + 'newstats.txt', 'w')
 statfile.write(
     'N GaussianNoiseScale MeanNoiseMag MeanPLineDist Std MeanRepErr Std StdRec\n')
 
@@ -1192,7 +1207,7 @@ statfile.write(
 
 # get the data completely resh from file
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
-    folder)
+    session, clip)
 
 pts1 = []
 pts2 = []
