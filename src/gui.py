@@ -40,6 +40,7 @@ def choose4():
 def submit(*args):
     print "--Submit--"
 
+    new_session = False
     session = session_name.get()
     clip = clip_name.get()
     cal1 = calib1.get()
@@ -47,13 +48,27 @@ def submit(*args):
     vid1 = clip1.get()
     vid2 = clip2.get()
 
-    if not cal1 or not cal2 or not vid1 or not vid2:
-        print "WARN: Please select all four files"
-        return
+    # paths
+    p_session = "sessions/" + session
+    p_clip = p_session + '/' + clip
 
-    # escape any spaces in the path
-    cal1 = handleSpaces(calib1.get())
-    cal2 = handleSpaces(calib2.get())
+    # unless the session already exists, all four input fields necessary
+    if not os.path.exists(p_session):
+        new_session = True
+        if not cal1 or not cal2 or not vid1 or not vid2:
+            print "WARN: Invalid input. To create a session you must submit all four files with a valid clip name."
+            return
+
+    else:
+        new_session = False
+        if not vid1 or not vid2:
+            print "WARN: Invalid input. To create a new clip in an existing session you must submit both free kick videos."
+            return
+
+    if new_session:
+        cal1 = handleSpaces(calib1.get())
+        cal2 = handleSpaces(calib2.get())
+
     vid1 = handleSpaces(clip1.get())
     vid2 = handleSpaces(clip2.get())
 
