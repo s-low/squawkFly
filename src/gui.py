@@ -48,6 +48,9 @@ def submit(*args):
     vid1 = clip1.get()
     vid2 = clip2.get()
 
+    print session
+    return
+
     # paths
     p_session = "sessions/" + session
     p_clip = p_session + '/' + clip
@@ -139,8 +142,9 @@ calib2.set('/Users/samlow/Google Drive/res/g3')
 clip1.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/lumix')
 clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 
-session_entry = ttk.Entry(frame, width=30, textvariable=session_name)
+session_entry = ttk.Combobox(frame, textvariable=session_name)
 session_entry.grid(column=2, row=1, sticky=(W, E))
+session_entry['values'] = ('USA', 'Canada', 'Australia')
 
 clip_entry = ttk.Entry(frame, width=30, textvariable=clip_name)
 clip_entry.grid(column=2, row=2, sticky=(W, E))
