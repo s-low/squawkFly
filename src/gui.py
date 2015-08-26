@@ -52,6 +52,8 @@ def submit(*args):
     print "--Submit--"
 
     new_session = False
+    new_clip = False
+    
     session = session_name.get()
     clip = clip_name.get()
     cal1 = calib1.get()
@@ -70,8 +72,8 @@ def submit(*args):
             print "WARN: Invalid input. To create a session you must submit all four files with a valid clip name."
             return
 
-    else:
-        new_session = False
+    if not os.path.exists(p_clip):
+        new_clip = True
         if not vid1 or not vid2:
             print "WARN: Invalid input. To create a new clip in an existing session you must submit both free kick videos."
             return
@@ -80,8 +82,9 @@ def submit(*args):
         cal1 = handleSpaces(calib1.get())
         cal2 = handleSpaces(calib2.get())
 
-    vid1 = handleSpaces(clip1.get())
-    vid2 = handleSpaces(clip2.get())
+    if new_clip:
+        vid1 = handleSpaces(clip1.get())
+        vid2 = handleSpaces(clip2.get())
 
     # paths
     p_session = "sessions/" + session
@@ -119,7 +122,6 @@ def submit(*args):
     # New clip, create the trajectory data
     if not os.path.exists(p_clip):
         os.makedirs(p_clip)
-
         os.system("./detect.py " + args_detect1)
         os.system("./detect.py " + args_detect2)
         os.system("./kalman.py" + args_kalman1)
@@ -130,7 +132,7 @@ def submit(*args):
         os.system("./interpolate.py" + args_interp2)
 
     else:
-        print "That clip already exists"
+        os.system("./reconstruct.py " + session_name.get() + ' ' + clip_name.get())
 
 root = Tk()
 root.title("squawkFly")
