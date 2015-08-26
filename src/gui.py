@@ -37,6 +37,17 @@ def choose4():
     clip2.set(filename)
 
 
+def changeClipOptions(event):
+    session_value = session_name.get()
+    lst = get_subdirectories('sessions/' + session_value)
+    clip_entry['values'] = lst
+
+
+def get_subdirectories(folder):
+    return [sub for sub in os.listdir(folder)
+            if os.path.isdir(os.path.join(folder, sub))]
+
+
 def submit(*args):
     print "--Submit--"
 
@@ -144,8 +155,9 @@ clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 session_entry = ttk.Combobox(frame, textvariable=session_name)
 session_entry.grid(column=2, row=1, sticky=(W, E))
 session_entry['values'] = lst
+session_entry.bind('<<ComboboxSelected>>', changeClipOptions)
 
-clip_entry = ttk.Entry(frame, width=30, textvariable=clip_name)
+clip_entry = ttk.Combobox(frame, textvariable=clip_name)
 clip_entry.grid(column=2, row=2, sticky=(W, E))
 
 calib1_entry = ttk.Entry(frame, width=45, textvariable=calib1)
