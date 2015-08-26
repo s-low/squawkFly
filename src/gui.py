@@ -48,9 +48,6 @@ def submit(*args):
     vid1 = clip1.get()
     vid2 = clip2.get()
 
-    print session
-    return
-
     # paths
     p_session = "sessions/" + session
     p_clip = p_session + '/' + clip
@@ -127,6 +124,8 @@ def submit(*args):
 root = Tk()
 root.title("squawkFly")
 
+lst = os.listdir('sessions')
+
 frame = ttk.Frame(root, padding="3 3 12 12")
 frame.grid(column=0, row=0, sticky=(N, W, E, S))
 
@@ -144,11 +143,10 @@ clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 
 session_entry = ttk.Combobox(frame, textvariable=session_name)
 session_entry.grid(column=2, row=1, sticky=(W, E))
-session_entry['values'] = ('USA', 'Canada', 'Australia')
+session_entry['values'] = lst
 
 clip_entry = ttk.Entry(frame, width=30, textvariable=clip_name)
 clip_entry.grid(column=2, row=2, sticky=(W, E))
-
 
 calib1_entry = ttk.Entry(frame, width=45, textvariable=calib1)
 clip1_entry = ttk.Entry(frame, width=45, textvariable=clip1)
