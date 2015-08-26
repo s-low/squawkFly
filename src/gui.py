@@ -57,16 +57,24 @@ def submit(*args):
 
     os.system("./calibrate.py " + cal1 + ' user/camera1.txt')
     os.system("./calibrate.py " + cal2 + ' user/camera2.txt')
+
     os.system("./postPoints.py " + vid1 + ' user/postPts1.txt user/image1.png')
     os.system("./postPoints.py " + vid2 + ' user/postPts2.txt user/image2.png')
+
+    os.system("./manualMatch.py " + vid1 + ' ' + vid2 +
+              ' user/statics1_.txt user/statics2_.txt')
+
     os.system("./detect.py " + vid1 + ' user/detections1.txt')
     os.system("./detect.py " + vid2 + ' user/detections2.txt')
+
     os.system("./kalman.py user/detections1.txt user/trajectories1.txt")
     os.system("./kalman.py user/detections2.txt user/trajectories2.txt")
+
     os.system("./trajectories.py -1 user/detections1.txt \
         user/trajectories1.txt user/trajectory1.txt")
     os.system("./trajectories.py -1 user/detections2.txt \
         user/trajectories2.txt user/trajectory2.txt")
+
     os.system("./interpolate.py user/trajectory1.txt 30 user/trajectory1.txt")
     os.system("./interpolate.py user/trajectory2.txt 30 user/trajectory2.txt")
 
