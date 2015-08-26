@@ -98,20 +98,31 @@ def submit(*args):
 
     args_cal1 = cal1 + session + 'camera1.txt'
     args_cal2 = cal2 + session + 'camera2.txt'
+
     args_posts1 = vid1 + session + 'postPts1.txt' + session + 'image1.png'
     args_posts2 = vid2 + session + 'postPts2.txt' + session + 'image2.png'
+
     args_match = vid1 + ' ' + vid2 + session + \
         'statics1_.txt' + session + 'statics2_.txt'
+
     args_detect1 = vid1 + clip + 'detections1.txt'
     args_detect2 = vid2 + clip + 'detections2.txt'
+
     args_kalman1 = clip + "detections1.txt" + clip + "trajectories1.txt"
     args_kalman2 = clip + "detections2.txt" + clip + "trajectories2.txt"
+
     args_traj1 = clip + "detections1.txt" + clip + \
         "trajectories1.txt" + clip + "trajectory1.txt"
     args_traj2 = clip + "detections2.txt" + clip + \
         "trajectories2.txt" + clip + "trajectory2.txt"
+
     args_interp1 = clip + 'trajectory1.txt 30' + clip + 'trajectory1.txt'
     args_interp2 = clip + 'trajectory2.txt 30' + clip + 'trajectory2.txt'
+
+    args_reconstruct = session_name.get() + ' ' + clip_name.get()
+
+    args_topdown = clip + '3d_out.txt ' + clip + 'graphs/top_down.pdf'
+    args_sideon = clip + '3d_out.txt ' + clip + 'graphs/side_on.pdf'
 
     # New session, create the scene data
     if not os.path.exists(p_session):
@@ -134,7 +145,13 @@ def submit(*args):
         os.system("./interpolate.py" + args_interp1)
         os.system("./interpolate.py" + args_interp2)
 
-    os.system("./reconstruct.py " + session_name.get() + ' ' + clip_name.get())
+    # os.system("./reconstruct.py " + args_reconstruct)
+
+    if not os.path.isdir(p_clip + '/graphs'):
+        os.makedirs(p_clip + '/graphs')
+
+    os.system("./top_down.py " + args_topdown)
+    os.system("./side_on.py " + args_sideon)
 
 root = Tk()
 root.title("squawkFly")

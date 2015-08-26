@@ -118,5 +118,6 @@ while(1):
     if cv2.waitKey(20) & 0xFF == 113:
         break
 
+cap.release()
 cv2.destroyAllWindows()
 outfile.close()

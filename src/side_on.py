@@ -9,9 +9,14 @@ import sys
 import matplotlib.pyplot as plt
 
 
-filename = sys.argv[1]
+infilename = sys.argv[1]
+outfilename = None
+try:
+    outfilename = sys.argv[2]
+except IndexError:
+    pass
 
-with open(filename) as datafile:
+with open(infilename) as datafile:
     data = datafile.read()
     datafile.close()
 
@@ -54,5 +59,7 @@ ax.plot(z, y, 'k.')
 ax.plot([9.14, 9.14], [0, 1.82], c='r', linewidth=2)
 ax.plot([avgz, avgz], [0, 2.44], c='k', linewidth=2)
 
-
 plt.show()
+if outfilename is not None:
+    print "Save:", outfilename
+    fig.savefig(outfilename)

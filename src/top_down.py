@@ -8,9 +8,15 @@ x-z plane.
 import sys
 import matplotlib.pyplot as plt
 
-filename = sys.argv[1]
 
-with open(filename) as datafile:
+infilename = sys.argv[1]
+outfilename = None
+try:
+    outfilename = sys.argv[2]
+except IndexError:
+    pass
+
+with open(infilename) as datafile:
     data = datafile.read()
     datafile.close()
 
@@ -61,3 +67,6 @@ ax.plot(x, z, 'k.')
 
 
 plt.show()
+if outfilename is not None:
+    print "Save:", outfilename
+    fig.savefig(outfilename)

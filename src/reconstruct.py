@@ -381,7 +381,7 @@ def run():
             reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
-        outfile = open('sessions/' + session + '/3d_out.txt', 'w')
+        outfile = open('sessions/' + clip + '/3d_out.txt', 'w')
         for p in scaled_gp:
             p0 = round(p[0], 2)
             p1 = round(p[1], 2)
