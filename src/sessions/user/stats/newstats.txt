@@ -1,0 +1,2 @@
+N GaussianNoiseScale MeanNoiseMag MeanPLineDist Std MeanRepErr Std StdRec
+19 0 1.54737578067 1.38356261201 69.2199732723 19.8489937621 
