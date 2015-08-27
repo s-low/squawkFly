@@ -76,8 +76,8 @@ if trajectories[-1] in ['\n', '\r\n', '']:
     trajectories.pop(-1)
 
 # RAW / ORIGINAL
-raw_x = [row.split(' ')[0] for row in raw]
-raw_y = [row.split(' ')[1] for row in raw]
+raw_x = [row.split()[0] for row in raw]
+raw_y = [row.split()[1] for row in raw]
 
 dpi = 113
 h = 800 / dpi
@@ -109,10 +109,10 @@ displayed_tids = []
 
 # Rows are: TID, X, Y, FRAME, PID
 for row in trajectories:
-    tid = int(row.split(' ')[0])
-    x = row.split(' ')[1]
-    y = row.split(' ')[2]
-    f = row.split(' ')[3]
+    tid = int(row.split()[0])
+    x = row.split()[1]
+    y = row.split()[2]
+    f = row.split()[3]
 
     # add the point to the current trajectory
     if tid == last_tid:
