@@ -613,7 +613,7 @@ def getMetrics(worldPoints, goalPosts):
     print "> Average speed: ", str(avg) + 'mph'
     print "> Distance covered in:", str(time) + 's'
 
-    outfile = open('sessions/' + session + '/tracer_stats.txt', 'w')
+    outfile = open('sessions/' + clip + '/tracer_stats.txt', 'w')
     outfile.write(str(avg) + '\n')
     outfile.write(str(shotRange))
     outfile.close()
