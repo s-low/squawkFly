@@ -13,12 +13,17 @@ import plotting as plot
 # 1. A video clip or image sequence
 # 2. The the 2D trajectory corresponding to that clip
 
-if len(sys.argv) != 3:
-    print "Usage : python trace.py <image_sequence> <trajectory>"
+if len(sys.argv) < 3:
+    print "Usage : python trace.py <image_sequence> <trajectory> <outfile>"
     sys.exit(0)
 
 clip = sys.argv[1]
 trajectory = sys.argv[2]
+
+try:
+    outfilename = sys.argv[3]
+except:
+    pass
 
 t_dir = os.path.dirname(trajectory)
 tracer_stats = t_dir + '/tracer_stats.txt'
@@ -58,6 +63,15 @@ for row in data:
 cap = cv2.VideoCapture(clip)
 count = 0
 dots = []
+save = False
+
+if outfilename is not None:
+    save = True
+    fps = 30.0
+    capsize = (1280, 720)
+    fourcc = cv2.cv.CV_FOURCC('m', 'p', '4', 'v')
+    vout = cv2.VideoWriter()
+    success = vout.open(outfilename, fourcc, fps, capsize, True)
 
 while (1):
     ret, frame = cap.read()
@@ -100,9 +114,16 @@ while (1):
             pass
 
         count += 1
-        cv2.imshow('Stream', frame)
-        cv2.waitKey()
+        if save:
+            vout.write(frame)
+        else:
+            cv2.imshow('Stream', frame)
+            cv2.waitKey(1)
     else:
         break
 
 cap.release()
+if save:
+    vout.release()
+    vout = None
+cv2.destroyAllWindows()
