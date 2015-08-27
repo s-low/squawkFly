@@ -17,6 +17,7 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 import plotting as plot
+import matplotlib.pyplot as plt
 
 # Kalman Parameters
 init_dist = 400
@@ -32,6 +33,9 @@ min_length = 2
 
 # debug mode
 d = False
+predictions = []
+detections = []
+corrections = []
 
 
 # create a fresh kalman filter object and return it
@@ -40,12 +44,12 @@ def KalmanFilter():
 
     '''
     init the prediction/evolution/transition matrix
-    | 1 0 1 0 0 0 | x  |   | x  + vx  |
-    | 0 1 0 1 0 0 | y  | = | y  + vy  |
-    | 0 0 1 0 1 0 | vx |   | vx + ax  |
-    | 0 0 0 1 0 1 | vy |   | vy + ay  |
-    | 0 0 0 0 1 0 | ax |   |    ax    |
-    | 0 0 0 0 0 1 | ay |   |    ay    |
+    | 1  0  1  0 .5  0 | x  |   | x  + vx  + .5ax |
+    | 0  1  0  1  0 .5 | y  | = | y  + vy  + .5ay |
+    | 0  0  1  0  1  0 | vx |   | vx + ax         |
+    | 0  0  0  1  0  1 | vy |   | vy + ay         |
+    | 0  0  0  0  1  0 | ax |   |    ax           |
+    | 0  0  0  0  0  1 | ay |   |    ay           |
     '''
 
     # diagonals
@@ -56,19 +60,44 @@ def KalmanFilter():
 
     # off-diagonals
     kf.transition_matrix[0, 2] = 1
+    kf.transition_matrix[0, 4] = 0.5
     kf.transition_matrix[1, 3] = 1
+    kf.transition_matrix[1, 5] = 0.5
     kf.transition_matrix[2, 4] = 1
     kf.transition_matrix[3, 5] = 1
 
-    # process noise = how good is model and how good is noise
-    process_noise_cov = 0.1
-    measure_noise_cov = 3
-    error_cov_post = 2
+    print np.asarray(kf.transition_matrix)
 
-    cv.SetIdentity(kf.measurement_matrix)
-    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(process_noise_cov))
-    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(measure_noise_cov))
-    cv.SetIdentity(kf.error_cov_post, cv.RealScalar(error_cov_post))
+    '''
+    measurement matrix H: mean = H * state
+    | 1 0 | x |   | x |
+    | 0 1 | y | = | y |
+    '''
+    kf.measurement_matrix[0, 0] = 1
+    kf.measurement_matrix[1, 1] = 1
+
+    # process noise cov matrix Q: models the EXTERNAL uncertainty
+    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(4))
+
+    # measurement noise cov matrix R: covariance of SENSOR noise
+    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(10))
+
+    '''
+    error estimate covariance matrix P: relates the correlation of state vars
+    priori: before measurement
+    posteriori: after measurement
+    | xx  xy  xvx  xvy  xax  xay  |   | 1 0 1 0 0 0 |
+    | yx  yy  yvx  yvy  yax  yay  |   | 0 1 0 1 0 0 |
+    | vxx vxy vxvx vxvy vxax vxay | = | 1 0 1 0 0 0 |
+    | vyx vyy vyvx vyvy vyax vyay |   | 0 1 0 1 0 0 |
+    | axx axy axvx axvy axax axay |   | 0 0 0 0 1 0 |
+    | ayx ayy ayvx ayvy ayax ayay |   | 0 0 0 0 0 1 |
+    '''
+    cv.SetIdentity(kf.error_cov_post, cv.RealScalar(1))
+    kf.error_cov_post[0, 2] = 1
+    kf.error_cov_post[1, 3] = 1
+    kf.error_cov_post[2, 0] = 1
+    kf.error_cov_post[3, 1] = 1
 
     return kf
 
@@ -155,29 +184,37 @@ def point_is_near_point(point1, point2, dist):
 # given a valid pair of nearby points, try to build the next step in trajectory
 def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
+    global predictions
+    global detections
+    global corrections
     global d
     global new_trajectory
     global n_miss
     postState = kf.state_post
+    preState = kf.state_pre
+
+    # if p1[3] == 71:
+    #     d = True
 
     if d and new_trajectory:
         print "\nNEW"
-        raw_input()
 
     if d:
         print "\ntrajectory:\n", this_trajectory
         print "Head:", p0
         print "Arm:", p1
         print "Post state:\n", np.asarray(postState[:, :])
+        print "Pre state:\n", np.asarray(preState[:, :])
 
     # PREDICT location of branch
     predicted = predict(kf)
+    predictions.append((predicted[0], predicted[1]))
     if d:
         print "Predicted:", predicted
 
     # MEASURE location of verifying point
     # v_dist is half current speed
-    v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / 2
+    v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / 2.5
     p_verification = verified(predicted, frame_index + 1, v_dist)
 
     if d:
@@ -202,6 +239,19 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
                 print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
 
+            # x = [p[0] for p in detections]
+            # y = [p[1] for p in detections]
+            # plt.plot(x, y, 'r')
+
+            # x = [p[0] for p in corrections]
+            # y = [p[1] for p in corrections]
+            # plt.plot(x, y, 'b')
+
+            # x = [p[0] for p in predictions]
+            # y = [p[1] for p in predictions]
+            # plt.plot(x, y, 'g')
+            # plt.show()
+
             this_trajectory = build_trajectory(
                 this_trajectory, bridge, kf, frame_index + 1, p1, unverified, False)
 
@@ -210,6 +260,8 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         x = p_verification[0]
         y = p_verification[1]
         corrected = correct(kf, x, y)
+        corrections.append((corrected[0], corrected[1]))
+
         if d:
             print "Corrected against P_ver:", corrected
 
@@ -228,12 +280,28 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
         # add verified point to trajectory + continue
         this_trajectory.append(p_verification)
+        detections.append((x, y))
+
+        # x = [p[0] for p in detections]
+        # y = [p[1] for p in detections]
+        # plt.plot(x, y, 'r')
+
+        # x = [p[0] for p in corrections]
+        # y = [p[1] for p in corrections]
+        # plt.plot(x, y, 'b')
+
+        # x = [p[0] for p in predictions]
+        # y = [p[1] for p in predictions]
+        # plt.plot(x, y, 'g')
+        # plt.show()
 
         this_trajectory = build_trajectory(this_trajectory, bridge, kf,
                                            frame_index + 1, p1,
                                            p_verification,
                                            True)
-
+        detections = []
+        predictions = []
+        corrections = []
     return this_trajectory
 
 
@@ -263,10 +331,10 @@ def get_data(filename):
         data.pop(-1)
 
     # data_detections in form: X / Y / FRAME / PID
-    all_x = [row.split(' ')[0] for row in data]
-    all_y = [row.split(' ')[1] for row in data]
-    all_frames = [row.split(' ')[2] for row in data]
-    all_pid = [row.split(' ')[3] for row in data]
+    all_x = [row.split()[0] for row in data]
+    all_y = [row.split()[1] for row in data]
+    all_frames = [row.split()[2] for row in data]
+    all_pid = [row.split()[3] for row in data]
 
     # now translate into 'frame array' (each element is a frame)
     max_frame = int(all_frames[-1])
@@ -280,10 +348,10 @@ def get_data(filename):
 
     # for each detection, get x/y/pid and dump it into the appropriate dict
     for row in data:
-        x = row.split(' ')[0]
-        y = row.split(' ')[1]
-        f = int(row.split(' ')[2])
-        p_id = row.split(' ')[3]
+        x = row.split()[0]
+        y = row.split()[1]
+        f = int(row.split()[2])
+        p_id = row.split()[3]
 
         frame_array[f]["x"].append(x)
         frame_array[f]["y"].append(y)
@@ -302,6 +370,7 @@ print "----------KALMAN.PY------------"
 
 try:
     infilename = sys.argv[1]
+    print "Getting detections:", infilename
 except IndexError:
     infilename = 'data/data_detections.txt'
 
