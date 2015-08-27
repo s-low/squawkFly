@@ -31,7 +31,13 @@ simulation = False
 
 # debug and graphical modes
 view = True
-d = False
+try:
+    if sys.argv[3] == 'suppress':
+        view = False
+except IndexError:
+    pass
+
+debug = False
 
 
 def synchroniseAtApex(pts_1, pts_2):
@@ -58,7 +64,7 @@ def synchroniseAtApex(pts_1, pts_2):
     apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
     apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
 
-    if d:
+    if debug:
         print "\n------Apexes------"
         print "> Short:", apex1, apex1_i, "of", len(shorter)
         print "> Long:", apex2, apex2_i, "of", len(longer)
@@ -66,34 +72,34 @@ def synchroniseAtApex(pts_1, pts_2):
     shift = apex2_i[0] - apex1_i[0]
 
     # remove the front end dangle
-    if d:
+    if debug:
         print "\nShift by:", shift
 
     if shift > 0:
         longer = longer[shift:]
-        if d:
+        if debug:
             print "Longer front trimmed, new length:", len(longer)
     else:
         shorter = shorter[abs(shift):]
-        if d:
+        if debug:
             print "Shorter front trimmed, new length:", len(shorter)
 
     remainder = diff - shift
 
     # remove the rear end dangle
     if remainder >= 0:
-        if d:
+        if debug:
             print "\nTrim longer by remainder:", remainder
         index = len(longer) - remainder
         longer = longer[:index]
 
     if remainder < 0:
         index = len(shorter) - abs(remainder)
-        if d:
+        if debug:
             print "\nShift > diff in lengths, trim the shorter end to:", index
         shorter = shorter[:index]
 
-    if d:
+    if debug:
         print "New length of shorter:", len(shorter)
         print "New length of longer:", len(longer)
 
@@ -104,7 +110,7 @@ def synchroniseAtApex(pts_1, pts_2):
     apex1_i = [i for i, y in enumerate(shorter) if y[1] == apex1]
     apex2_i = [i for i, y in enumerate(longer) if y[1] == apex2]
 
-    if d:
+    if debug:
         print "\nNew apex positions:"
         print apex1, apex1_i
         print apex2, apex2_i
@@ -116,7 +122,7 @@ def synchroniseAtApex(pts_1, pts_2):
         syncd1 = longer
         syncd2 = shorter
 
-    if view:
+    if view and debug:
         plot.plot2D(syncd1, name='First Synced Trajectory')
         plot.plot2D(syncd2, name='Second Synced Trajectory')
 
@@ -368,15 +374,13 @@ def run():
         scaled = [[a * scale for a in inner] for inner in p3d]
 
         if view:
-            plot.plot3D(p3d_gp, 'Original (Unscaled) Reconstruction')
-            plot.plot3D(scaled_gp_only, 'Scaled Goal Posts')
             plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
         reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
 
         getMetrics(scaled, scaled_gp_only)
         scaled_gp = transform(scaled_gp)
         if view:
-            plot.plot3D(scaled_gp, 'Scaled and Reorientated 3D Reconstruction')
+            plot.plot3D(scaled_gp, 'Final (Reorientated) 3D Reconstruction')
         if simulation:
             reconstructionError(data3D, scaled_gp)
 
@@ -452,7 +456,7 @@ def simScale(points):
     offset = []
     for d in distances:
         offset.append(abs(d - 1))
-    if view:
+    if view and debug:
         plot.plotOrderedBar(offset, name='Offset in Distance to Origin')
     for o in offset:
         outfile.write(str(o) + '\n')
@@ -644,7 +648,7 @@ def getFundamentalMatrix(pts_1, pts_2):
 
     # test on original coordinates
     print "\n> Fundamental:\n", F
-    avg, std = fund.testFundamentalReln(F, pts_1, pts_2)
+    avg, std = fund.testFundamentalReln(F, pts_1, pts_2, view)
 
     outfile = open('sessions/' + clip + statdir + 'epilines.txt', 'w')
     string = 'avg:' + str(avg) + ' std1:' + str(std)
@@ -934,7 +938,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     print "\n> average reprojection error in image 1:", avg1
     print "\n> average reprojection error in image 2:", avg2
 
-    if view:
+    if view and debug:
         plot.plotOrderedBar(
             errors1, 'Reprojection Error Image 1', 'Index', 'px')
         plot.plotOrderedBar(
@@ -1121,12 +1125,9 @@ def autoGetF(pts_1, pts_2):
 
 
 def importCalibration(session):
-    if user_run:
-        path1 = 'user/camera1.txt'
-        path2 = 'user/camera2.txt'
-    else:
-        path1 = 'sessions/' + str(session) + '/camera1.txt'
-        path2 = 'sessions/' + str(session) + '/camera2.txt'
+
+    path1 = 'sessions/' + str(session) + '/camera1.txt'
+    path2 = 'sessions/' + str(session) + '/camera2.txt'
 
     with open(path1) as datafile:
         cam1 = datafile.read()
@@ -1163,17 +1164,6 @@ print "Clip:", clip
 if not os.path.exists('sessions/' + clip):
     print "Clip does not exist."
     sys.exit()
-
-# Is the program being called by the GUI
-try:
-    with_gui = sys.argv[3]
-except IndexError:
-    with_gui = None
-
-if with_gui is not None:
-    user_run = True
-else:
-    user_run = False
 
 if session.isdigit() or session == 'errors':
     simulation = True

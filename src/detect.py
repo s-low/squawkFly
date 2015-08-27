@@ -24,14 +24,22 @@ time = 0
 dots = []
 detections = []
 
+# default to showing the detection streams
+view = True
+try:
+    if sys.argv[3] == 'suppress':
+        view = False
+except IndexError:
+    pass
+
 
 def main():
     global cap
     global outfile
     keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
 
-    if len(sys.argv) != 2 and len(sys.argv) != 3:
-        print "Usage : python detect.py <image_sequence> *<outfile>*"
+    if len(sys.argv) < 3:
+        print "Usage : ./detect.py <image_sequence> *<outfile>* *<view>*"
         sys.exit(0)
 
     path = sys.argv[1]
@@ -75,12 +83,13 @@ def main():
             # for dot in dots:
             #     cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
 
-        cv2.imshow('Feed', frame1)
+        if view:
+            cv2.imshow('Feed', frame1)
 
-        if debugging:
-            cv2.imshow('Threshold Image', current)  # why does this go odd
-        else:
-            cv2.destroyWindow('Threshold Image')
+            if debugging:
+                cv2.imshow('Threshold Image', current)  # why does this go odd
+            else:
+                cv2.destroyWindow('Threshold Image')
 
         if paused:
             key = cv2.waitKey()

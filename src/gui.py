@@ -7,7 +7,6 @@ import os
 import shutil
 
 
-
 def handleSpaces(string):
     i = string.find(' ')
     new = string[:i] + '\\' + string[i:]
@@ -54,11 +53,12 @@ def delete():
 
     clip = clip_name.get()
     session = session_name.get()
-    p_session = "sessions/" + session
-    p_clip = p_session + '/' + clip
+    if session is not None and session != '':
+        p_session = "sessions/" + session
+        p_clip = p_session + '/' + clip
 
-    print "Delete:", p_clip
-    shutil.rmtree(p_clip)
+        print "Delete:", p_clip
+        shutil.rmtree(p_clip)
 
 
 def submit(*args):
@@ -73,6 +73,7 @@ def submit(*args):
     cal2 = calib2.get()
     vid1 = clip1.get()
     vid2 = clip2.get()
+    view = viewer.get()
 
     # paths
     p_session = "sessions/" + session
@@ -113,36 +114,40 @@ def submit(*args):
     session = ' ' + p_session + '/'
     clip = ' ' + p_clip + '/'
 
-    args_cal1 = cal1 + session + 'camera1.txt'
-    args_cal2 = cal2 + session + 'camera2.txt'
+    args_cal1 = cal1 + session + 'camera1.txt ' + view
+    args_cal2 = cal2 + session + 'camera2.txt ' + view
 
     args_posts1 = vid1 + session + 'postPts1.txt' + session + 'image1.png'
     args_posts2 = vid2 + session + 'postPts2.txt' + session + 'image2.png'
 
     args_match = vid1 + ' ' + vid2 + session + \
-        'statics1_.txt' + session + 'statics2_.txt'
+        'statics1.txt' + session + 'statics2.txt'
 
-    args_detect1 = vid1 + clip + 'detections1.txt'
-    args_detect2 = vid2 + clip + 'detections2.txt'
+    args_detect1 = vid1 + clip + 'detections1.txt ' + view
+    args_detect2 = vid2 + clip + 'detections2.txt ' + view
 
     args_kalman1 = clip + "detections1.txt" + clip + "trajectories1.txt"
     args_kalman2 = clip + "detections2.txt" + clip + "trajectories2.txt"
 
     args_traj1 = clip + "detections1.txt" + clip + \
-        "trajectories1.txt" + clip + "trajectory1.txt"
+        "trajectories1.txt" + clip + "trajectory1.txt " + view
     args_traj2 = clip + "detections2.txt" + clip + \
-        "trajectories2.txt" + clip + "trajectory2.txt"
+        "trajectories2.txt" + clip + "trajectory2.txt " + view
 
-    args_interp1 = clip + 'trajectory1.txt 30' + clip + 'trajectory1.txt'
-    args_interp2 = clip + 'trajectory2.txt 30' + clip + 'trajectory2.txt'
+    args_interp1 = clip + 'trajectory1.txt 30' + \
+        clip + 'trajectory1.txt ' + view
+    args_interp2 = clip + 'trajectory2.txt 30' + \
+        clip + 'trajectory2.txt ' + view
 
-    args_reconstruct = session_name.get() + ' ' + clip_name.get()
+    args_reconstruct = session_name.get() + ' ' + clip_name.get() + ' ' + view
 
     args_topdown = clip + '3d_out.txt ' + clip + 'graphs/top_down.pdf'
     args_sideon = clip + '3d_out.txt ' + clip + 'graphs/side_on.pdf'
 
-    args_trace1 = vid1 + ' ' + clip + 'trajectory1.txt ' + clip + 'graphs/trace1.mov'
-    args_trace2 = vid2 + ' ' + clip + 'trajectory2.txt ' + clip + 'graphs/trace2.mov'
+    args_trace1 = vid1 + ' ' + clip + \
+        'trajectory1.txt ' + clip + 'graphs/trace1.mov'
+    args_trace2 = vid2 + ' ' + clip + \
+        'trajectory2.txt ' + clip + 'graphs/trace2.mov'
 
     # New session: create the scene data
     if not os.path.exists(p_session):
@@ -205,11 +210,11 @@ session_entry.bind('<<ComboboxSelected>>', changeClipOptions)
 clip_entry = ttk.Combobox(frame, textvariable=clip_name)
 clip_entry.grid(column=2, row=2, sticky=(W, E))
 
-calib1_entry = ttk.Entry(frame, width=45, textvariable=calib1)
-clip1_entry = ttk.Entry(frame, width=45, textvariable=clip1)
+calib1_entry = ttk.Entry(frame, width=60, textvariable=calib1)
+clip1_entry = ttk.Entry(frame, width=60, textvariable=clip1)
 
-calib2_entry = ttk.Entry(frame, width=45, textvariable=calib2)
-clip2_entry = ttk.Entry(frame, width=45, textvariable=clip2)
+calib2_entry = ttk.Entry(frame, width=60, textvariable=calib2)
+clip2_entry = ttk.Entry(frame, width=60, textvariable=clip2)
 
 calib1_entry.grid(column=2, row=3, sticky=(W, E))
 clip1_entry.grid(column=2, row=4, sticky=(W, E))
@@ -234,8 +239,18 @@ choose4.grid(column=3, row=6, sticky=(W, E))
 button_sub = ttk.Button(frame, text="Analyse", command=submit)
 button_sub.grid(column=2, row=7, sticky=(W, E))
 
+viewer = StringVar()
+button_view = ttk.Checkbutton(frame,
+                              text="View process?",
+                              variable=viewer,
+                              onvalue='view',
+                              offvalue='suppress')
+button_view.grid(column=3, row=7, sticky=(W, E))
+button_view.instate(['disabled'])
+viewer.set('suppress')
+
 button_del = ttk.Button(frame, text="Delete current analysis", command=delete)
-button_del.grid(column=3, row=7, sticky=(W, E))
+button_del.grid(column=3, row=8, sticky=(W, E))
 
 ttk.Label(frame, text="Session Name").grid(column=1, row=1, sticky=E)
 ttk.Label(frame, text="Clip Name").grid(column=1, row=2, sticky=E)
@@ -252,6 +267,7 @@ for child in frame.winfo_children():
     child.grid_configure(padx=5, pady=5)
 
 root.update()
+root.resizable(0, 0)
 root.minsize(root.winfo_width(), root.winfo_height())
 
 calib1_entry.focus()

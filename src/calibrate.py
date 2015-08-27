@@ -9,12 +9,13 @@ import cv2.cv as cv
 import numpy as np
 import glob
 
-view = False
+# default to showing the calibration images
+view = True
 try:
-    if sys.argv[3] == 'view':
-        view = True
+    if sys.argv[3] == 'suppress':
+        view = False
 except IndexError:
-    view = False
+    pass
 
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)

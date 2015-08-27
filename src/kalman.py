@@ -37,6 +37,13 @@ predictions = []
 detections = []
 corrections = []
 
+# default to showing the detection streams
+view = True
+try:
+    if sys.argv[3] == 'suppress':
+        view = False
+except IndexError:
+    pass
 
 # create a fresh kalman filter object and return it
 def KalmanFilter():
@@ -65,8 +72,6 @@ def KalmanFilter():
     kf.transition_matrix[1, 5] = 0.5
     kf.transition_matrix[2, 4] = 1
     kf.transition_matrix[3, 5] = 1
-
-    print np.asarray(kf.transition_matrix)
 
     '''
     measurement matrix H: mean = H * state

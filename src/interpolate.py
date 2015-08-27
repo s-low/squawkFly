@@ -24,6 +24,14 @@ except IndexError:
     name, ext = os.path.splitext(filename)
     outfilename = name + "_interpolated.txt"
 
+# default to showing the detection streams
+view = True
+try:
+    if sys.argv[4] == 'suppress':
+        view = False
+except IndexError:
+    pass
+
 if abs(frame_rate - 24) < 0.01:
     frame_rate = 23.976
 
@@ -62,10 +70,10 @@ def fit(a, b):
     a_new = np.linspace(a[0], a[-1], 50)
     b_new = func(a_new)
 
-    plt.plot(a, b, 'o', a_new, b_new)
-    plt.xlim([a[0] - 1, a[-1] + 1])
-
-    plt.show()
+    if view:
+        plt.plot(a, b, 'o', a_new, b_new)
+        plt.xlim([a[0] - 1, a[-1] + 1])
+        plt.show()
 
     return func
 
@@ -105,12 +113,10 @@ def interpolate(start, end, func):
 
     x_new = np.linspace(seg_x[0], seg_x[-1], 50)
     y_new = func(x_new)
-
-    plt.plot(x, y, 'o', x_new, y_new)
-
-    # plt.xlim([seg_x[0] - 1, seg_x[-1] + 1])
-
-    plt.show()
+    if view:
+        plt.plot(x, y, 'o', x_new, y_new)
+        # plt.xlim([seg_x[0] - 1, seg_x[-1] + 1])
+        plt.show()
 
 
 # Find any bounces in the trajectory

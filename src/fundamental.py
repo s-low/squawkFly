@@ -7,7 +7,7 @@ import plotting as plot
 import structureTools as tools
 
 
-def testFundamentalReln(F, pts_1, pts_2):
+def testFundamentalReln(F, pts_1, pts_2, view):
     # check that xFx = 0 for homog coords x x'
     F = np.mat(F)
     tools.is_singular(F)
@@ -37,10 +37,11 @@ def testFundamentalReln(F, pts_1, pts_2):
     print "> x'Fx = 0:", err
 
     # inspec the error distribution
-    plot.plotOrderedBar(errors,
-                        name='x\'Fx = 0 Test Results ',
-                        ylabel='Deflection from zero',
-                        xlabel='Point Index')
+    if view:
+        plot.plotOrderedBar(errors,
+                            name='x\'Fx = 0 Test Results ',
+                            ylabel='Deflection from zero',
+                            xlabel='Point Index')
 
     # test the epilines
     pts1_epi = pts_1.reshape((-1, 1, 2))
@@ -76,17 +77,18 @@ def testFundamentalReln(F, pts_1, pts_2):
     print "> Average distance to epiline in image 1 and 2 (px):", avg1, avg2
     print "> Averaged:", avg
 
-    plot.plotOrderedBar(distances1,
-                        'Image 1: Point-Epiline Distances', 'Index', 'px')
+    if view:
+        plot.plotOrderedBar(distances1,
+                            'Image 1: Point-Epiline Distances', 'Index', 'px')
 
-    plot.plotOrderedBar(distances2,
-                        'Image 2: Point-Epiline Distances', 'Index', 'px')
+        plot.plotOrderedBar(distances2,
+                            'Image 2: Point-Epiline Distances', 'Index', 'px')
 
-    # overlay lines2 on pts1
-    plot.plotEpilines(lines2, pts_1, 1)
+        # overlay lines2 on pts1
+        plot.plotEpilines(lines2, pts_1, 1)
 
-    # overlay lines1 on pts2
-    plot.plotEpilines(lines1, pts_2, 2)
+        # overlay lines1 on pts2
+        plot.plotEpilines(lines1, pts_2, 2)
 
     return avg, std
 
