@@ -9,6 +9,13 @@ import cv2.cv as cv
 import numpy as np
 import glob
 
+view = False
+try:
+    if sys.argv[3] == 'view':
+        view = True
+except IndexError:
+    view = False
+
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -43,10 +50,10 @@ for image in images:
         imgpoints.append(corners)
 
         # Draw and display the corners
-        cv2.drawChessboardCorners(img, (9, 6), corners, ret)
-        cv2.imshow('success', img)
-
-        cv2.waitKey(30)
+        if view:
+            cv2.drawChessboardCorners(img, (9, 6), corners, ret)
+            cv2.imshow('success', img)
+            cv2.waitKey(30)
 
 err, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
