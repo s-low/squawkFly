@@ -7,6 +7,11 @@ import os
 import shutil
 
 
+def setStatus(string):
+    status.set(string)
+    status_label.update()
+
+
 def handleSpaces(string):
     i = string.find(' ')
     new = string[:i] + '\\' + string[i:]
@@ -152,23 +157,38 @@ def submit(*args):
     # New session: create the scene data
     if not os.path.exists(p_session):
         os.makedirs(p_session)
+
+        setStatus('Calibrating...')
         os.system("./calibrate.py " + args_cal1)
         os.system("./calibrate.py " + args_cal2)
+
+        setStatus('Matching goalposts...')
         os.system("./postPoints.py " + args_posts1)
         os.system("./postPoints.py " + args_posts2)
+
+        setStatus('Matching scene points...')
         os.system("./manualMatch.py " + args_match)
 
     # New clip: create the clip and reconstruction data
     if not os.path.exists(p_clip):
         os.makedirs(p_clip)
+        setStatus('Detecting...')
         os.system("./detect.py " + args_detect1)
         os.system("./detect.py " + args_detect2)
+
+        setStatus('Generating trajectories...')
         os.system("./kalman.py" + args_kalman1)
         os.system("./kalman.py" + args_kalman2)
+
+        setStatus('Selecting the best trajectory...')
         os.system("./trajectories.py -1" + args_traj1)
         os.system("./trajectories.py -1" + args_traj2)
+
+        setStatus('Interpolating...')
         os.system("./interpolate.py" + args_interp1)
         os.system("./interpolate.py" + args_interp2)
+
+        setStatus('Reconstructing...')
         os.system("./reconstruct.py " + args_reconstruct)
 
     # Clip never analysed before: Create the graphs directory
@@ -177,10 +197,13 @@ def submit(*args):
 
     # Everything's there: Visualise it
     if videos:
+        setStatus('Generating and saving tracer videos...')
         os.system("./trace.py " + args_trace1)
         os.system("./trace.py " + args_trace2)
+    setStatus('Generating and saving views...')
     os.system("./top_down.py " + args_topdown)
     os.system("./side_on.py " + args_sideon)
+    setStatus("Done!")
 
 root = Tk()
 root.title("squawkFly")
@@ -202,14 +225,17 @@ calib2.set('/Users/samlow/Google Drive/res/g3')
 clip1.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/lumix')
 clip2.set('/Users/samlow/Google Drive/res/coombe/clips/crossbar/g3')
 
+# SESSION NAME
 session_entry = ttk.Combobox(frame, textvariable=session_name)
 session_entry.grid(column=2, row=1, sticky=(W, E))
 session_entry['values'] = lst
 session_entry.bind('<<ComboboxSelected>>', changeClipOptions)
 
+# CLIP NAME
 clip_entry = ttk.Combobox(frame, textvariable=clip_name)
 clip_entry.grid(column=2, row=2, sticky=(W, E))
 
+# PATH ENRTRY BOXES
 calib1_entry = ttk.Entry(frame, width=60, textvariable=calib1)
 clip1_entry = ttk.Entry(frame, width=60, textvariable=clip1)
 
@@ -239,6 +265,7 @@ choose4.grid(column=3, row=6, sticky=(W, E))
 button_sub = ttk.Button(frame, text="Analyse", command=submit)
 button_sub.grid(column=2, row=7, sticky=(W, E))
 
+# TOGGLE PROCESS VIEWING
 viewer = StringVar()
 button_view = ttk.Checkbutton(frame,
                               text="View process?",
@@ -249,15 +276,22 @@ button_view.grid(column=3, row=7, sticky=(W, E))
 button_view.instate(['disabled'])
 viewer.set('suppress')
 
+# DELETE BUTTON
 button_del = ttk.Button(frame, text="Delete current analysis", command=delete)
 button_del.grid(column=3, row=8, sticky=(W, E))
 
+# STATIC LABELS
 ttk.Label(frame, text="Session Name").grid(column=1, row=1, sticky=E)
 ttk.Label(frame, text="Clip Name").grid(column=1, row=2, sticky=E)
 ttk.Label(frame, text="Calibration Video 1").grid(column=1, row=3, sticky=E)
 ttk.Label(frame, text="FK Video 1").grid(column=1, row=4, sticky=E)
 ttk.Label(frame, text="Calibration Video 2").grid(column=1, row=5, sticky=E)
 ttk.Label(frame, text="FK Video 2").grid(column=1, row=6, sticky=E)
+
+# STATUS LABEL
+status = StringVar()
+status_label = ttk.Label(frame, textvariable=status)
+status_label.grid(column=2, row=8)
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)

@@ -5,6 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# default to showing the detection streams
+view = True
+try:
+    if sys.argv[5] == 'suppress':
+        view = False
+except IndexError:
+    pass
+
+
 def pixLength(set_x, set_y):
 
     copy_x = [x for x in set_x]
@@ -185,4 +194,5 @@ else:
     print "Showing trajectories:", displayed_tids
 
 outfile.close()
-plt.show()
+if view:
+    plt.show()

@@ -112,13 +112,13 @@ while (1):
 
         except ValueError, e:
             pass
-
+        cv2.imshow('Stream', frame)
+        cv2.waitKey(1)
         count += 1
         if save:
             vout.write(frame)
-        else:
-            cv2.imshow('Stream', frame)
-            cv2.waitKey(1)
+
+        
     else:
         break
 
