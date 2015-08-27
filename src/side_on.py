@@ -8,7 +8,6 @@ y-z plane.
 import sys
 import matplotlib.pyplot as plt
 
-
 infilename = sys.argv[1]
 outfilename = None
 try:
@@ -24,7 +23,6 @@ data = data.split('\n')
 
 # get rid of any empty line at the end of file
 if data[-1] in ['\n', '\r\n', '']:
-    print "pop"
     data.pop(-1)
 
 x = [row.split()[0] for row in data]
@@ -51,9 +49,6 @@ ax = fig.add_subplot(111, aspect='equal')
 ax.set_xlabel("Distance Travelled to Goal / m")
 ax.set_ylabel("Height / m")
 ax.plot(z, y, 'k.')
-# ax.plot([tlz, trz], [tly, try_], c='k')
-# ax.plot([blz, tlz], [bly, tly], c='k')
-# ax.plot([brz, trz], [bry, try_], c='k')
 
 # 2.14m wall at 9.14m
 ax.plot([9.14, 9.14], [0, 1.82], c='r', linewidth=2)

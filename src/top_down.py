@@ -24,7 +24,6 @@ data = data.split('\n')
 
 # get rid of any empty line at the end of file
 if data[-1] in ['\n', '\r\n', '']:
-    print "pop"
     data.pop(-1)
 
 x = [row.split()[0] for row in data]
@@ -51,20 +50,15 @@ z1 = z[-1]
 fig = plt.figure('Top Down Projection')
 ax = fig.add_subplot(111, aspect='equal')
 
-print x0, z0
-print x1, z1
-
 ax.plot([x0, x1], [z0, z1])
 ax.plot([tlx, trx], [tlz, trz], c='k')
 ax.plot([blx, tlx], [blz, tlz], c='k')
 ax.plot([brx, trx], [brz, trz], c='k')
 
-
 ax.set_xlabel("Lateral Movement / m")
 ax.set_ylabel("Distance Travelled to Goal / m")
 ax.set_ylim([0, 25])
 ax.plot(x, z, 'k.')
-
 
 plt.show()
 if outfilename is not None:
