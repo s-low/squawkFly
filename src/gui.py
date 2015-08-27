@@ -5,6 +5,7 @@ from tkFileDialog import askopenfilename
 from tkFileDialog import askdirectory
 import os
 import shutil
+import subprocess
 
 
 def setStatus(string):
@@ -204,6 +205,10 @@ def submit(*args):
     os.system("./top_down.py " + args_topdown)
     os.system("./side_on.py " + args_sideon)
     setStatus("Done!")
+
+    # finish by revealing the results in finder
+    subprocess.call(["open", "-R", p_clip + '/graphs'])
+
 
 root = Tk()
 root.title("squawkFly")
