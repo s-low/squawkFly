@@ -4,6 +4,8 @@ import ttk
 from tkFileDialog import askopenfilename
 from tkFileDialog import askdirectory
 import os
+import shutil
+
 
 
 def handleSpaces(string):
@@ -48,12 +50,23 @@ def get_subdirectories(folder):
             if os.path.isdir(os.path.join(folder, sub))]
 
 
+def delete():
+
+    clip = clip_name.get()
+    session = session_name.get()
+    p_session = "sessions/" + session
+    p_clip = p_session + '/' + clip
+
+    print "Delete:", p_clip
+    shutil.rmtree(p_clip)
+
+
 def submit(*args):
     print "--Submit--"
 
     new_session = False
     new_clip = False
-
+    videos = False
     session = session_name.get()
     clip = clip_name.get()
     cal1 = calib1.get()
@@ -64,6 +77,9 @@ def submit(*args):
     # paths
     p_session = "sessions/" + session
     p_clip = p_session + '/' + clip
+
+    if vid1 and vid2:
+        videos = True
 
     # unless the session already exists, all four input fields necessary
     if not os.path.exists(p_session):
@@ -82,7 +98,8 @@ def submit(*args):
         cal1 = handleSpaces(calib1.get())
         cal2 = handleSpaces(calib2.get())
 
-    if new_clip:
+    # technically, could supply these for the visualisation of an old clip
+    if videos:
         vid1 = handleSpaces(clip1.get())
         vid2 = handleSpaces(clip2.get())
 
@@ -124,7 +141,10 @@ def submit(*args):
     args_topdown = clip + '3d_out.txt ' + clip + 'graphs/top_down.pdf'
     args_sideon = clip + '3d_out.txt ' + clip + 'graphs/side_on.pdf'
 
-    # New session, create the scene data
+    args_trace1 = vid1 + ' ' + clip + 'trajectory1.txt ' + clip + 'graphs/trace1.mov'
+    args_trace2 = vid2 + ' ' + clip + 'trajectory2.txt ' + clip + 'graphs/trace2.mov'
+
+    # New session: create the scene data
     if not os.path.exists(p_session):
         os.makedirs(p_session)
         os.system("./calibrate.py " + args_cal1)
@@ -133,7 +153,7 @@ def submit(*args):
         os.system("./postPoints.py " + args_posts2)
         os.system("./manualMatch.py " + args_match)
 
-    # New clip, create the trajectory data
+    # New clip: create the clip and reconstruction data
     if not os.path.exists(p_clip):
         os.makedirs(p_clip)
         os.system("./detect.py " + args_detect1)
@@ -144,12 +164,16 @@ def submit(*args):
         os.system("./trajectories.py -1" + args_traj2)
         os.system("./interpolate.py" + args_interp1)
         os.system("./interpolate.py" + args_interp2)
+        os.system("./reconstruct.py " + args_reconstruct)
 
-    # os.system("./reconstruct.py " + args_reconstruct)
-
+    # Clip never analysed before: Create the graphs directory
     if not os.path.isdir(p_clip + '/graphs'):
         os.makedirs(p_clip + '/graphs')
 
+    # Everything's there: Visualise it
+    if videos:
+        os.system("./trace.py " + args_trace1)
+        os.system("./trace.py " + args_trace2)
     os.system("./top_down.py " + args_topdown)
     os.system("./side_on.py " + args_sideon)
 
@@ -207,8 +231,11 @@ choose4 = ttk.Button(frame, text="Choose", command=choose4)
 choose4.grid(column=3, row=6, sticky=(W, E))
 
 # ANALYSE BUTTON
-button = ttk.Button(frame, text="Analyse", command=submit)
-button.grid(column=2, row=7, sticky=(W, E))
+button_sub = ttk.Button(frame, text="Analyse", command=submit)
+button_sub.grid(column=2, row=7, sticky=(W, E))
+
+button_del = ttk.Button(frame, text="Delete current analysis", command=delete)
+button_del.grid(column=3, row=7, sticky=(W, E))
 
 ttk.Label(frame, text="Session Name").grid(column=1, row=1, sticky=E)
 ttk.Label(frame, text="Clip Name").grid(column=1, row=2, sticky=E)
