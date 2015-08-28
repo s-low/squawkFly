@@ -1,13 +1,26 @@
 #!/usr/local/bin/python
 
-# Calibration test script. Retrieve camera matrix based on a checkerboard
-# pattern.
+'''
+Calibrate.py
+
+Supplied with either a video file or a sequence of photographs of a calibration
+pattern, retrieve the camera intrinsics and write to file if supplied.
+
+arg1 = input video or dir of photographs
+arg2 = designated outfile destination *optional*
+
+Note that if an image sequence is supplied (directory of every frame in a
+video) then it will be interpreted as a dir of photographs and every frame will
+be used up to a maximum of 50.
+'''
+
 
 import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
 import glob
+import os
 
 # default to showing the calibration images
 view = True
@@ -28,15 +41,55 @@ objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 
 objpoints = []  # 3d points in real space
 imgpoints = []  # 2d points in image plane
+images = []
+num_images = 0
 
-folder = sys.argv[1]
-folder = folder + '/*.png'
-print "Calibrate:", folder
+source = sys.argv[1]
 
-images = glob.glob(folder)
-count = 0
+# if the source is a directory
+if os.path.isdir(source):
+    is_video = False
+    folder = source + '/*.png'
+    print "Calibrate from images:", folder
+    images = glob.glob(folder)
+
+# if the source is a file (should be video)
+elif os.path.isfile(source):
+
+    is_video = True
+    print "Calibrate from video:", source
+    cap = cv2.VideoCapture(source)
+    count = 0
+
+    while(cap.isOpened()):
+        ret, img = cap.read()
+        count += 1
+        # take every 30th frame (roughly a second at 30FPS)
+        if count % 30 == 0:
+            num_images += 1
+            images.append(img)
+            sys.stdout.write("\rGetting images: " + str(num_images))
+            sys.stdout.flush()
+            if num_images > 49:
+                break
+
+    cap.release()
+
+else:
+    print "WARN: Neither a file nor a directory."
+    sys.exit()
+
+num_images = 0
+success_count = 0
+
 for image in images:
-    img = cv2.imread(image)
+    num_images += 1
+
+    if is_video:
+        img = image
+    else:
+        img = cv2.imread(image)
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, corners = cv2.findChessboardCorners(
         gray, (9, 6),
@@ -44,7 +97,7 @@ for image in images:
 
     # If found, add object points, image points (after refining them)
     if ret is True:
-        count += 1
+        success_count += 1
         objpoints.append(objp)
 
         cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
@@ -55,6 +108,10 @@ for image in images:
             cv2.drawChessboardCorners(img, (9, 6), corners, ret)
             cv2.imshow('success', img)
             cv2.waitKey(30)
+
+    if num_images > 50:
+        print "> 50 calibration images processed. Stopping."
+        break
 
 err, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
@@ -82,7 +139,7 @@ for i in xrange(len(objpoints)):
 
 
 np.set_printoptions(precision=3, suppress=True)
-print count, "/", len(images), "successful detections"
+print success_count, "/", len(images), "successful detections"
 print "calibration matrix: \n", mtx
 print "distortion:\n", dist
 print "avg returned reprojection error:", err
