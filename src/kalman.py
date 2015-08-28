@@ -33,7 +33,7 @@ max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 30
+max_misses = 10
 min_length = 8
 
 
