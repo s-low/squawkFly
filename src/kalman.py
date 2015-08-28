@@ -21,29 +21,29 @@ import matplotlib.pyplot as plt
 
 # Kalman Parameters
 init_dist = 400
-verify_distance = 50
+denom = 2.5
+min_v_dist = 6
+
+Sensor_Cov = 10
+PN_Cov = 4
+horizontal_acc_const = -0.04
 
 # Program markers
 max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 6
-min_length = 2
+max_misses = 30
+min_length = 8
+
 
 # debug mode
 d = False
+graphs = False
 predictions = []
 detections = []
 corrections = []
 
-# default to showing the detection streams
-view = True
-try:
-    if sys.argv[3] == 'suppress':
-        view = False
-except IndexError:
-    pass
 
 # create a fresh kalman filter object and return it
 def KalmanFilter():
@@ -55,7 +55,7 @@ def KalmanFilter():
     | 0  1  0  1  0 .5 | y  | = | y  + vy  + .5ay |
     | 0  0  1  0  1  0 | vx |   | vx + ax         |
     | 0  0  0  1  0  1 | vy |   | vy + ay         |
-    | 0  0  0  0  1  0 | ax |   |    ax           |
+    | 0  0  k  0  0  0 | ax |   |   k*vx          |
     | 0  0  0  0  0  1 | ay |   |    ay           |
     '''
 
@@ -65,13 +65,23 @@ def KalmanFilter():
             kf.transition_matrix[j, k] = 0
         kf.transition_matrix[j, j] = 1
 
-    # off-diagonals
+    # x + vx + 0.5ax
     kf.transition_matrix[0, 2] = 1
     kf.transition_matrix[0, 4] = 0.5
+
+    # y + vy + 0.5ay
     kf.transition_matrix[1, 3] = 1
     kf.transition_matrix[1, 5] = 0.5
+
+    # vx + ax
     kf.transition_matrix[2, 4] = 1
+
+    # vy + ay
     kf.transition_matrix[3, 5] = 1
+
+    # predict ax = k * vx
+    kf.transition_matrix[4, 4] = 0
+    kf.transition_matrix[4, 2] = horizontal_acc_const
 
     '''
     measurement matrix H: mean = H * state
@@ -82,10 +92,10 @@ def KalmanFilter():
     kf.measurement_matrix[1, 1] = 1
 
     # process noise cov matrix Q: models the EXTERNAL uncertainty
-    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(4))
+    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(PN_Cov))
 
     # measurement noise cov matrix R: covariance of SENSOR noise
-    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(10))
+    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(Sensor_Cov))
 
     '''
     error estimate covariance matrix P: relates the correlation of state vars
@@ -219,7 +229,9 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
     # MEASURE location of verifying point
     # v_dist is half current speed
-    v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / 2.5
+    v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / denom
+    if v_dist < min_v_dist:
+        v_dist = min_v_dist
     p_verification = verified(predicted, frame_index + 1, v_dist)
 
     if d:
@@ -234,28 +246,44 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
             n_miss = 0
             new_trajectory = True
             bridge = []
+            predictions = []
 
         else:
             # keep predicting from the unverified corrected point
             # POINT: X / Y / FRAME / PID
             unverified = (predicted[0], predicted[1], frame_index + 1, 1000)
-            new_trajectory = False
+            # new_trajectory = False
             if d:
                 print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
 
-            # x = [p[0] for p in detections]
-            # y = [p[1] for p in detections]
-            # plt.plot(x, y, 'r')
+            # set the x-acceleration to zero to account for poor modelling
+            # essentially drop to constant velocity in x
+            # kf.state_post[4, 0] = 0
 
-            # x = [p[0] for p in corrections]
-            # y = [p[1] for p in corrections]
-            # plt.plot(x, y, 'b')
+            if graphs:
+                plt.plot(all_x, all_y, '.')
 
-            # x = [p[0] for p in predictions]
-            # y = [p[1] for p in predictions]
-            # plt.plot(x, y, 'g')
-            # plt.show()
+                x = [t[0] for t in this_trajectory]
+                y = [t[1] for t in this_trajectory]
+                plt.plot(x, y, 'r.')
+                plt.plot([p0[0], p1[0]], [p0[1], p1[1]], 'm.')
+
+                x = [p[0] for p in detections]
+                y = [p[1] for p in detections]
+                plt.plot(x, y, 'r')
+
+                x = [p[0] for p in corrections]
+                y = [p[1] for p in corrections]
+                plt.plot(x, y, 'b')
+
+                x = [p[0] for p in predictions]
+                y = [p[1] for p in predictions]
+                # p = predictions[-1]
+                # x = p[0]
+                # y = p[1]
+                plt.plot(x, y, 'g.')
+                plt.show()
 
             this_trajectory = build_trajectory(
                 this_trajectory, bridge, kf, frame_index + 1, p1, unverified, False)
@@ -287,18 +315,28 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         this_trajectory.append(p_verification)
         detections.append((x, y))
 
-        # x = [p[0] for p in detections]
-        # y = [p[1] for p in detections]
-        # plt.plot(x, y, 'r')
+        if graphs:
+            plt.plot(all_x, all_y, '.')
+            x = [t[0] for t in this_trajectory]
+            y = [t[1] for t in this_trajectory]
+            plt.plot(x, y, 'r.')
+            plt.plot([p0[0], p1[0]], [p0[1], p1[1]], 'm.')
 
-        # x = [p[0] for p in corrections]
-        # y = [p[1] for p in corrections]
-        # plt.plot(x, y, 'b')
+            x = [p[0] for p in detections]
+            y = [p[1] for p in detections]
+            plt.plot(x, y, 'r')
 
-        # x = [p[0] for p in predictions]
-        # y = [p[1] for p in predictions]
-        # plt.plot(x, y, 'g')
-        # plt.show()
+            x = [p[0] for p in corrections]
+            y = [p[1] for p in corrections]
+            plt.plot(x, y, 'b')
+
+            # x = [p[0] for p in predictions]
+            # y = [p[1] for p in predictions]
+            p = predictions[-1]
+            x = p[0]
+            y = p[1]
+            plt.plot(x, y, 'g.')
+            plt.show()
 
         this_trajectory = build_trajectory(this_trajectory, bridge, kf,
                                            frame_index + 1, p1,
@@ -362,7 +400,7 @@ def get_data(filename):
         frame_array[f]["y"].append(y)
         frame_array[f]["pid"].append(p_id)
 
-    return frame_array
+    return frame_array, all_x, all_y
 
 
 '''
@@ -384,7 +422,7 @@ try:
 except IndexError:
     outfilename = 'data/data_trajectories.txt'
 
-frame_array = get_data(infilename)
+frame_array, all_x, all_y = get_data(infilename)
 outfile = open(outfilename, 'w')
 trajectories = []
 
