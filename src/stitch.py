@@ -89,9 +89,7 @@ def stitch():
                                 changed = True
                                 if d:
                                     print "\n PARTIAL MATCH between TIDS:", A, B
-                                if d:
                                     print "PID:", A_points[-1]
-                                if d:
                                     raw_input()
                                 del B_points[0:1]
 
@@ -119,15 +117,11 @@ def stitch():
                                 # change tid of B to match A and remove dupes
                                 if d:
                                     print "\n> MATCH between TIDS:", A, B
-                                if d:
                                     print "First PID:", A_points[-1]
-                                if d:
                                     print "\n> Points in match:", offset + 1
-                                if d:
                                     raw_input()
                                 if not d:
                                     sys.stdout.write("\r" + str(matches))
-                                if not d:
                                     sys.stdout.flush()
 
                                 del B_points[0:offset + 1]
