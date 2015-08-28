@@ -24,23 +24,43 @@ def handleSpaces(string):
     return new
 
 
-def choose1():
+def d_choose1():
     filename = askdirectory()
     calib1.set(filename)
 
 
-def choose2():
+def d_choose2():
     filename = askdirectory()
     clip1.set(filename)
 
 
-def choose3():
+def d_choose3():
     filename = askdirectory()
     calib2.set(filename)
 
 
-def choose4():
+def d_choose4():
     filename = askdirectory()
+    clip2.set(filename)
+
+
+def f_choose1():
+    filename = askopenfilename()
+    calib1.set(filename)
+
+
+def f_choose2():
+    filename = askopenfilename()
+    clip1.set(filename)
+
+
+def f_choose3():
+    filename = askopenfilename()
+    calib2.set(filename)
+
+
+def f_choose4():
+    filename = askopenfilename()
     clip2.set(filename)
 
 
@@ -63,8 +83,11 @@ def delete():
         p_session = "sessions/" + session
         p_clip = p_session + '/' + clip
 
-        print "Delete:", p_clip
-        shutil.rmtree(p_clip)
+        if os.path.exists(p_clip):
+            print "Delete:", p_clip
+            shutil.rmtree(p_clip)
+        else:
+            print "Session does not exist:", p_clip
 
 
 def submit(*args):
@@ -253,18 +276,31 @@ clip1_entry.grid(column=2, row=4, sticky=(W, E))
 calib2_entry.grid(column=2, row=5, sticky=(W, E))
 clip2_entry.grid(column=2, row=6, sticky=(W, E))
 
-# FILE EXPLORER BUTTONS
-choose1 = ttk.Button(frame, text="Choose", command=choose1)
-choose1.grid(column=3, row=3, sticky=(W, E))
+# FILE SELECTORS
+f_choose1 = ttk.Button(frame, text="Video", command=f_choose1)
+f_choose1.grid(column=3, row=3, sticky=(W, E))
 
-choose2 = ttk.Button(frame, text="Choose", command=choose2)
-choose2.grid(column=3, row=4, sticky=(W, E))
+f_choose2 = ttk.Button(frame, text="Video", command=f_choose2)
+f_choose2.grid(column=3, row=4, sticky=(W, E))
 
-choose3 = ttk.Button(frame, text="Choose", command=choose3)
-choose3.grid(column=3, row=5, sticky=(W, E))
+f_choose3 = ttk.Button(frame, text="Video", command=f_choose3)
+f_choose3.grid(column=3, row=5, sticky=(W, E))
 
-choose4 = ttk.Button(frame, text="Choose", command=choose4)
-choose4.grid(column=3, row=6, sticky=(W, E))
+f_choose4 = ttk.Button(frame, text="Video", command=f_choose4)
+f_choose4.grid(column=3, row=6, sticky=(W, E))
+
+# DIRECTORY SELECTORS
+d_choose1 = ttk.Button(frame, text="Image sequence", command=d_choose1)
+d_choose1.grid(column=4, row=3, sticky=(W, E))
+
+d_choose2 = ttk.Button(frame, text="Image sequence", command=d_choose2)
+d_choose2.grid(column=4, row=4, sticky=(W, E))
+
+d_choose3 = ttk.Button(frame, text="Image sequence", command=d_choose3)
+d_choose3.grid(column=4, row=5, sticky=(W, E))
+
+d_choose4 = ttk.Button(frame, text="Image sequence", command=d_choose4)
+d_choose4.grid(column=4, row=6, sticky=(W, E))
 
 # ANALYSE BUTTON
 button_sub = ttk.Button(frame, text="Analyse", command=submit)

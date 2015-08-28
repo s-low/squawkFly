@@ -38,7 +38,7 @@ def main():
     global outfile
     keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print "Usage : ./detect.py <image_sequence> *<outfile>* *<view>*"
         sys.exit(0)
 

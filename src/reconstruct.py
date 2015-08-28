@@ -462,7 +462,6 @@ def simScale(points):
         outfile.write(str(o) + '\n')
     outfile.close()
 
-    print "statfile:", std
     statfile.write(str(std) + '\n')
 
     return np.array(scaled, dtype='float32')
@@ -654,7 +653,6 @@ def getFundamentalMatrix(pts_1, pts_2):
     string = 'avg:' + str(avg) + ' std1:' + str(std)
     outfile.write(string)
     outfile.close()
-    print "statfile:", avg, std
     statfile.write(str(avg) + ' ' + str(std) + ' ')
 
     return F
@@ -953,7 +951,6 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     string = 'avg:' + str(avg) + '\nstd:' + str(std)
     outfile.write(string)
     outfile.close()
-    print "statfile:", avg, std
     statfile.write(str(avg) + ' ' + str(std) + ' ')
 
 
@@ -1213,19 +1210,15 @@ postPts1 = np.array(postPts1, dtype='float32')
 postPts2 = np.array(postPts2, dtype='float32')
 
 N = len(pts1)
-print "statfile:", N
 statfile.write(str(N) + ' ')
 
-print "statfile:", noise
 statfile.write(str(noise) + ' ')
 
 # NOISE
 if noise != 0:
-    print "Add Noise:", noise
     pts1, avg_mag1 = addNoise(noise, pts1)
     pts2, avg_mag2 = addNoise(noise, pts2)
     avg_mag = (avg_mag1 + avg_mag2) / 2
-    print "statfile:", avg_mag
     statfile.write(str(avg_mag) + ' ')
 
 # using the trajectories themselves to calculate geometry
