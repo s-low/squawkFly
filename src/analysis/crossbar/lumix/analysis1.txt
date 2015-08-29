@@ -1,0 +1,7 @@
+num_detections:280
+num_truth:36
+num_detected:35
+mean sep:2.79595102764
+std sep:1.07760348904
+num in trajectory:34
+num of truths in trajectory:34
