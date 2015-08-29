@@ -7,16 +7,25 @@ import numpy as np
 import os.path
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 
+
+# mouse callback function
+def click(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # make sure to invert y-coord
+        string = str(x) + ' -' + str(y) + ' ' + str(time)
+        truthfile.write(string + '\n')
+
 cap = 0
 debugging = False
 tracking = True
-paused = False
+paused = True
 point_index = 0
 
 max_area = 1500
 min_area = 250
 
 outfile = None
+truthfile = None
 
 startOfFile = True
 time = 0
@@ -36,6 +45,7 @@ except IndexError:
 def main():
     global cap
     global outfile
+    global truthfile
     keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
 
     if len(sys.argv) < 2:
@@ -47,9 +57,11 @@ def main():
     # supplied path can be a directory containing an image sequence: 00001.png
     if os.path.isdir(path):
         print "> INPUT: Image Sequence"
+        truthfile = open('ground_truth.txt', 'w')
         path = path + '/frame_%05d.png'
     else:
         print "> INPUT: Video File"
+        truthfile = open('ground_truth.txt', 'w')
 
     # otherwise just go and get the video file
     cap = cv2.VideoCapture(path)
@@ -84,6 +96,8 @@ def main():
             #     cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
 
         if view:
+            cv2.namedWindow('Feed')
+            cv2.setMouseCallback('Feed', click)
             cv2.imshow('Feed', frame1)
 
             if debugging:
