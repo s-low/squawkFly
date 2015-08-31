@@ -1,5 +1,0 @@
-#!/bin/bash
-
-./trace.py ../res/coombe/clips/crossbar/g3 tests/coombe_crossbar/g3_trajectory_with_bounce.txt
-
-./trace.py ../res/coombe/clips/crossbar/lumix tests/coombe_crossbar/lumix_trajectory_with_bounce.txt
