@@ -28,12 +28,15 @@ plt.rc('font', **font)
 
 Point = namedtuple("Point", "x y")
 simulation = False
+ground_truth_provided = False
 
 # debug and graphical modes
 view = True
 try:
     if sys.argv[3] == 'suppress':
         view = False
+    else:
+        view = True
 except IndexError:
     pass
 
@@ -130,13 +133,13 @@ def synchroniseAtApex(pts_1, pts_2):
 
 
 # add some random noise to n image point set
-def addNoise(scale, points):
+def addNoise(sigma, points):
     new = []
     mags = []
     for p in points:
 
-        nx = random.normal(0, scale)
-        ny = random.normal(0, scale)
+        nx = random.normal(0, sigma)
+        ny = random.normal(0, sigma)
 
         print "Add noise:", nx, ny
         n0 = p[0] + nx
@@ -154,6 +157,7 @@ def addNoise(scale, points):
 # Get point correspondeces (1+2) from subdir
 # Optionally: original 3d set, correspondences to be reconstructed (3+4)
 def getData(session, clip):
+    global ground_truth_provided
     session = 'sessions/' + str(session) + '/'
     clip = 'sessions/' + str(clip) + '/'
 
@@ -192,7 +196,7 @@ def getData(session, clip):
 
     # Try and get the 3D ground truth if exists
     try:
-        with open(clip + '3d.txt') as datafile:
+        with open(session + '3d.txt') as datafile:
             data = datafile.read()
             datafile.close()
 
@@ -206,6 +210,7 @@ def getData(session, clip):
             data3D.append([x, y, z])
 
         print "> 3D reference data provided. Simulation."
+        ground_truth_provided = True
 
     except IOError:
         print "> No 3D reference data provided. Not a simulation."
@@ -329,8 +334,11 @@ def run():
 
     # SYNCHRONISATION + CORRECTION
     if rec_data and simulation is False:
-        pts3, pts4 = synchroniseAtApex(pts3, pts4)
-        # pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
+        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
+        pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
+
+        # print "--------Testing Synchronisation---------"
+        # avg, std = fund.testFundamentalReln(F, pts3, pts4, view)
 
         pts3 = pts3.reshape((1, -1, 2))
         pts4 = pts4.reshape((1, -1, 2))
@@ -381,7 +389,7 @@ def run():
         scaled_gp = transform(scaled_gp)
         if view:
             plot.plot3D(scaled_gp, 'Final (Reorientated) 3D Reconstruction')
-        if simulation:
+        if ground_truth_provided:
             reconstructionError(data3D, scaled_gp)
 
         # write X Y Z to file
@@ -584,7 +592,7 @@ def transform(points):
 # given the scaled up set of trajectory points work out the speed and
 # distance to goal
 def getMetrics(worldPoints, goalPosts):
-    outfile = open('sessions/' + session + '/speed.txt', 'w')
+    outfile = open('sessions/' + clip + '/speed.txt', 'w')
     first = worldPoints.pop(0)
     prev = first
     speeds = []
@@ -864,22 +872,23 @@ def sep3D(a, b):
 
 
 def reconstructionError(original, reconstructed):
+    print "------Reconstruction Error------"
     seps = []
     for o, r in zip(original, reconstructed):
         sep = sep3D(o, r)
-        print ""
-        print o
-        print r
-        print sep
         seps.append(sep)
+        print sep
 
-    print sum(seps), '/', len(seps)
     avg = sum(seps) / len(seps)
-    # avg = np.mean(seps)
     std = np.std(seps)
+
+    print "Average 3D sep:", avg
+
     outfile = open('sessions/' + clip + statdir + 'reconstruction.txt', 'w')
     outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
     outfile.close()
+
+    statfile.write(str(avg) + ' ' + str(sep))
 
 
 # used for checking the triangulation - provide UNNORMALISED DATA
@@ -1006,9 +1015,10 @@ def synchroniseGeometric(pts_1, pts_2, F):
         short_flag = 2
 
     diff = len(longer) - len(shorter)
-    print "Longer:", len(longer)
-    print "Shorter:", len(shorter)
-    print "Diff:", diff
+    if debug:
+        print "Longer:", len(longer)
+        print "Shorter:", len(shorter)
+        print "Diff:", diff
 
     shorter_hom = cv2.convertPointsToHomogeneous(shorter)
     longer_hom = cv2.convertPointsToHomogeneous(longer)
@@ -1018,25 +1028,20 @@ def synchroniseGeometric(pts_1, pts_2, F):
     for offset in xrange(0, diff + 1):
         err = 0
         avg = 0
-        print ""
+
         for i in xrange(0, len(shorter)):
             a = shorter_hom[i]
             b = longer_hom[i + offset]
             this_err = abs(np.mat(a) * F * np.mat(b).T)
             err += this_err
-            print this_err
 
         avg = err / len(shorter)
-        # print "Offset, Err:", offset, avg
         avg_off = (avg, offset)
         averages.append(avg_off)
 
     m = min(float(a[0]) for a in averages)
 
     ret = [item for item in averages if item[0] == m]
-
-    print "Minimum:", m
-    print "Offset:", ret[0][1]
 
     # trim the beginning of the longer list
     offset = ret[0][1]
@@ -1054,9 +1059,10 @@ def synchroniseGeometric(pts_1, pts_2, F):
         syncd1 = longer
         syncd2 = shorter
 
-    print "Synched Trajectory Length:", len(longer), len(shorter)
+    if debug:
+        print "Synced Trajectory Length:", len(longer), len(shorter)
 
-    if view:
+    if view and debug:
         plot.plot2D(syncd1, name='First Synced Trajectory')
         plot.plot2D(syncd2, name='Second Synced Trajectory')
 
@@ -1162,7 +1168,7 @@ if not os.path.exists('sessions/' + clip):
     print "Clip does not exist."
     sys.exit()
 
-if session.isdigit() or session == 'errors':
+if "simulation" in session or session == 'errors':
     simulation = True
 
 # get the calibration data from the session directory
@@ -1173,24 +1179,19 @@ print K1
 print K2
 
 noise = 0
-# try:
-#     noise = float(sys.argv[2])
-# except IndexError:
-# pass
-
+try:
+    noise = float(sys.argv[2])
+except IndexError:
+    pass
 
 statdir = '/stats/'
 
 if not os.path.exists('sessions/' + clip + statdir):
     os.makedirs('sessions/' + clip + statdir)
 
-statfile = open('sessions/' + clip + statdir + 'newstats.txt', 'w')
+statfile = open('sessions/' + clip + statdir + 'all_stats.txt', 'w')
 statfile.write(
-    'N GaussianNoiseScale MeanNoiseMag MeanPLineDist Std MeanRepErr Std StdRec\n')
-
-# write a noise loop here
-# for n in xrange(0, 30):
-#     noise = n
+    'N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std\n')
 
 # get the data completely resh from file
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
@@ -1220,6 +1221,8 @@ if noise != 0:
     pts2, avg_mag2 = addNoise(noise, pts2)
     avg_mag = (avg_mag1 + avg_mag2) / 2
     statfile.write(str(avg_mag) + ' ')
+else:
+    statfile.write('0 ')
 
 # using the trajectories themselves to calculate geometry
 if rec_data is False and simulation is False:
