@@ -13,7 +13,8 @@ with open(filename) as datafile:
 
 data = data.split('\n')
 
-data.pop(-1)
+if data[-1] in ['\n', '\r\n', '']:
+    data.pop(-1)
 
 X = [float(row.split()[0]) for row in data]
 Y = [float(row.split()[1]) for row in data]
@@ -36,7 +37,7 @@ Zb = 0.5 * max_range * \
 
 # Comment or uncomment following both lines to test the fake bounding box:
 for xb, yb, zb in zip(Xb, Yb, Zb):
-    ax.plot([xb], [yb], [zb], 'w')
+    ax.plot([xb], [yb], [zb], 'w', zdir='z')
 
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
