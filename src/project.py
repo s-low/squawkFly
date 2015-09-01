@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import structureTools as tools
 import os.path
+import plotting as plot
 
 np.set_printoptions(suppress=True)
 # plt.style.use('ggplot')
@@ -83,7 +84,8 @@ def main():
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
 
-    plotSimulation(data_3d)
+    plot.plot3D(data_3d)
+    # plotSimulation(data_3d)
     plotImagePoints(img_pts1)
     plotImagePoints(img_pts2)
 
@@ -220,6 +222,8 @@ def plotImagePoints(imagePoints):
     plt.scatter(all_x[0], all_y[0], color='r')
     plt.xlim((0, 1280))
     plt.ylim((-720, 0))
+    plt.xlabel('Graphical X (px)')
+    plt.ylabel('Graphical Y (px)')
     plt.show()
 
 
