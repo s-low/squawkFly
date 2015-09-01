@@ -25,7 +25,7 @@ def main():
     data_3d = np.array(data_3d, dtype='float32')
 
     # artificial camera
-    K = tools.CalibArray(1000, 640, 360)
+    K = tools.CalibArray(1000, 640, -360)
     dist = (0, 0, 0, 0)
 
     rt2 = math.sqrt(2)
@@ -65,17 +65,20 @@ def main():
                     [0, 1, 0],
                     [rt2on2, 0, rt2on2]], dtype='float32')
 
-    zy180 = y180 * z180
+    # zy180 = y180 * z180
 
     # projections into image planes with the camera in different poses
-    tvec1 = (5, 1, -13)
-    # rvec1 = (0, 0, 0)
+    tvec1 = (-5, 1, 14)
+    # rvec1, jacobian = cv2.Rodrigues(z180)
 
-    tvec2 = (-5, 1, -14)
-    # rvec2 = (0, 0, 0)
+    tvec2 = (5, 1, 13)
+    # rvec2, jacobian = cv2.Rodrigues(z180)
 
-    img_pts1 = project(data_3d, K, zy180 * y45cw, tvec1)
-    img_pts2 = project(data_3d, K, zy180 * y45cc, tvec2)
+    img_pts1 = project(data_3d, K, y45cc, tvec1)
+    img_pts2 = project(data_3d, K, y45cw, tvec2)
+
+    # img_pts1, jacobian = cv2.projectPoints(data_3d, rvec1, tvec1, K, dist)
+    # img_pts2, jacobian = cv2.projectPoints(data_3d, rvec2, tvec2, K, dist)
 
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
@@ -84,8 +87,8 @@ def main():
     plotImagePoints(img_pts1)
     plotImagePoints(img_pts2)
 
-    img_pts1 = addNoise(0.0, img_pts1)
-    img_pts2 = addNoise(0.0, img_pts2)
+    # img_pts1 = addNoise(0.0, img_pts1)
+    # img_pts2 = addNoise(0.0, img_pts2)
 
     writeData(folder, img_pts1, img_pts2)
 
@@ -216,7 +219,7 @@ def plotImagePoints(imagePoints):
     plt.scatter(all_x, all_y)
     plt.scatter(all_x[0], all_y[0], color='r')
     plt.xlim((0, 1280))
-    plt.ylim((0, 720))
+    plt.ylim((-720, 0))
     plt.show()
 
 
