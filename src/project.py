@@ -4,26 +4,33 @@ import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
+import numpy.random as random
 import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import structureTools as tools
+import os.path
 
 np.set_printoptions(suppress=True)
 # plt.style.use('ggplot')
 
 
 def main():
-    folder = sys.argv[1]
-    data_3d = getData(folder)
+
+    path = sys.argv[1]
+    folder = os.path.dirname(path)
+
+    data_3d = getData(path)
 
     data_3d = np.array(data_3d, dtype='float32')
 
-    # artificial camera with f=5 units, cx = cy = 5 units
+    # artificial camera
     K = tools.CalibArray(1000, 640, 360)
     dist = (0, 0, 0, 0)
 
     rt2 = math.sqrt(2)
+
+    rt2on2 = rt2 / 2
 
     # 45 cc about z
     z45cc = np.mat([[1 / rt2, -1 / rt2, 0],
@@ -41,22 +48,34 @@ def main():
 
     x90cw = np.mat([[1, 0, 0], [0, 0, 1], [0, -1, 0]], dtype='float32')
     x90cc = np.mat([[1, 0, 0], [0, 0, -1], [0, 1, 0]], dtype='float32')
+
     y90cc = np.mat([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], dtype='float32')
+    y90cw = np.mat([[0, 0, -1], [0, 1, 0], [1, 0, 0]], dtype='float32')
 
     z90cc_vec, jacobian = cv2.Rodrigues(z90cc)
     z90cc_vec, jacobian = cv2.Rodrigues(z90cc)
     y90cc_vec, jacobian = cv2.Rodrigues(y90cc)
     x90cc_vec, jacobian = cv2.Rodrigues(x90cc)
 
+    y45cc = np.mat([[rt2on2, 0, rt2on2],
+                    [0, 1, 0],
+                    [-rt2on2, 0, rt2on2]], dtype='float32')
+
+    y45cw = np.mat([[rt2on2, 0, -rt2on2],
+                    [0, 1, 0],
+                    [rt2on2, 0, rt2on2]], dtype='float32')
+
+    zy180 = y180 * z180
+
     # projections into image planes with the camera in different poses
-    tvec1 = (0, 0, -3)
-    rvec1 = (0, 0, 0)
+    tvec1 = (5, 1, -13)
+    # rvec1 = (0, 0, 0)
 
-    tvec2 = (1, -0.5, -3)
-    rvec2 = (0, 0, 0)
+    tvec2 = (-5, 1, -14)
+    # rvec2 = (0, 0, 0)
 
-    img_pts1 = project(data_3d, K, nothing, tvec1)
-    img_pts2 = project(data_3d, K, nothing, tvec2)
+    img_pts1 = project(data_3d, K, zy180 * y45cw, tvec1)
+    img_pts2 = project(data_3d, K, zy180 * y45cc, tvec2)
 
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
@@ -65,7 +84,8 @@ def main():
     plotImagePoints(img_pts1)
     plotImagePoints(img_pts2)
 
-    sys.exit()
+    img_pts1 = addNoise(0.0, img_pts1)
+    img_pts2 = addNoise(0.0, img_pts2)
 
     writeData(folder, img_pts1, img_pts2)
 
@@ -94,9 +114,7 @@ def project(objectPoints, K, R, t):
 
     for X in objectPoints:
         x = np.mat(X).T
-        print x
         x_ = P * x
-        print x_
         imagePoints.append(x_)
 
     # image points are homogeneous (xz, yz, z) -> (x, y, 1)
@@ -109,17 +127,21 @@ def project(objectPoints, K, R, t):
     return normed
 
 
-def getData(folder):
-    path = 'tests/' + str(folder) + '/'
+def getData(path):
     pts1 = []
     pts2 = []
     original_3Ddata = []
 
-    with open(path + '3d.txt') as datafile:
+    folder = os.path.dirname(path)
+
+    with open(path) as datafile:
         data = datafile.read()
         datafile.close()
 
     data = data.split('\n')
+    # get rid of any empty line at the end of file
+    if data[-1] in ['\n', '\r\n', '']:
+        data.pop(-1)
     for row in data:
         x = float(row.split()[0])
         y = float(row.split()[1])
@@ -130,10 +152,8 @@ def getData(folder):
 
 
 def writeData(folder, pts1, pts2):
-    path = 'tests/' + str(folder) + '/'
-
     startoffile = True
-    outfile = open(path + 'pts1.txt', 'w')
+    outfile = open(os.path.join(folder, 'pts1.txt'), 'w')
 
     for p in pts1:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
@@ -144,7 +164,7 @@ def writeData(folder, pts1, pts2):
     outfile.close()
 
     startoffile = True
-    outfile = open(path + 'pts2.txt', 'w')
+    outfile = open(os.path.join(folder, 'pts2.txt'), 'w')
 
     for p in pts2:
         dstring = str(p[0, 0]) + ' ' + str(p[1, 0])
@@ -195,6 +215,25 @@ def plotImagePoints(imagePoints):
 
     plt.scatter(all_x, all_y)
     plt.scatter(all_x[0], all_y[0], color='r')
+    plt.xlim((0, 1280))
+    plt.ylim((0, 720))
     plt.show()
+
+
+# add some random noise to n image point set
+def addNoise(sigma, points):
+    new = []
+    for p in points:
+
+        nx = random.normal(0, sigma)
+        ny = random.normal(0, sigma)
+
+        n0 = p[0] + nx
+        n1 = p[1] + ny
+        n = [n0, n1]
+        new.append(n)
+
+    return np.array(new, dtype='float32')
+
 
 main()
