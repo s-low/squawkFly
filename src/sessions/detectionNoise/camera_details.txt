@@ -1,0 +1,9 @@
+
+K = tools.CalibArray(1000, 640, -360)
+dist = (0, 0, 0, 0)
+
+tvec1 = (-5, 1, 14)
+tvec2 = (5, 1, 13)
+
+img_pts1 = project(data_3d, K, y45cc, tvec1)
+img_pts2 = project(data_3d, K, y45cw, tvec2)
