@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hello World</title>
+      <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'></script> 
+      <script type='text/javascript' src='http://www.x3dom.org/download/1.7/components/Geometry2D.js'></script>
+      <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+  </head>
+       
+<body>
+
+    <h1>XHTML Hello World</h1>
+    <p>
+      Navigation modes: 
+      <ul>
+      <li>e: Examine </li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>w: Walk </li>
+      <li>f: Fly </li>
+      <li>h: Helicopter</li>
+      <li>l: Look at</li>
+      <li>t: Turntable</li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>g: Game</li>
+      </ul>
+
+      Also:
+      <ul>
+        <li>r: reset view</li>
+        <li>a: show all</li>
+        <li>u: upright</li>
+      </ul>
+    </p>
+
+    <x3d width='900px' height='900px'> 
+    <scene> 
+    <background skyColor = '0.7 0.89 0.95'></background>
+    <navigationInfo type='"any"' id="navType"></navigationInfo>
+        <Viewpoint position='0 0 80'/>
+        <directionalLight ambientIntensity='0.5' global='true'/>
+            
+          <!-- GRASS -->
+          <shape>
+          <rectangle2D size='100,100' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='0.1 0.7 0.1' ambientIntensity='0.1'></material> 
+            </appearance>
+          </shape>
+          
+        <transform translation = '0 16 0'>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='0 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='6 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- CROSSBAR -->
+          <transform rotation='0 0 1 1.57'>
+          <transform rotation='0 1 0 1.57' translation='0 -3 2.3'>
+          <shape>
+            <cylinder radius ='0.1' height='6.0'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <shape>
+          <rectangle2D size='0.2,60' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          
+          <transform translation='-4 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 13' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 34.2' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          </transform>
+
+          <transform translation='-3.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='9.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='20 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <transform translation='3 -9 0'>
+          <shape>
+          <disk2D outerRadius='0.2'></disk2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+
+        </transform>
+
+        <!-- insert balls here -->
+         
+  
+
+
+      </scene>
+      </x3d>
+</body>
+</html>
