@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import webbrowser
 import os.path
 from yattag import Doc
 from yattag import indent
@@ -71,3 +72,5 @@ template = "".join(template)
 outfile = open(html_target, 'w')
 outfile.write(template)
 outfile.close()
+
+webbrowser.open('file://' + os.path.realpath(html_target))

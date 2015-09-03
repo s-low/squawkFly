@@ -161,27 +161,19 @@
           
 
         </transform>
-          <!-- BALLS -->
 
-
-          <transform translation=''>
-                <group DEF='ball'>
-                <shape>
-                  <sphere radius='0.1'></sphere>
-                  <appearance>
-                    <material diffuseColor='0 0 1'></material> 
-                  </appearance>
-                </shape>
-                </group>
-          </transform>
-          
-          <!-- insert balls here -->
+        <!-- insert balls here -->
          
-<transform translation="0 -1.33 0">
+<transform translation="0 -1.035 0">
+  <group DEF="ball">
+    <shape>
+      <sphere radius="0.1" />
+      <appearance>
+        <material diffuseColor="0 0 1" />
+      </appearance>
+    </shape>
+  </group>
   <transform translation="0.0 0.0 0.0">
-    <group USE="ball" />
-  </transform>
-  <transform translation="0.04 0.28 0.05">
     <group USE="ball" />
   </transform>
   <transform translation="0.09 0.59 0.1">
@@ -377,7 +369,6 @@
     <group USE="ball" />
   </transform>
 </transform>  
-
 
 
       </scene>
