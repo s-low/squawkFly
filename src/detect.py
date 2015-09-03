@@ -18,7 +18,7 @@ def click(event, x, y, flags, param):
 cap = 0
 debugging = False
 tracking = True
-paused = True
+paused = False
 point_index = 0
 
 max_area = 1500
@@ -92,8 +92,6 @@ def main():
         # Frame1 gets modified with contours
         if tracking:
             search(frame1, temp_thresh)
-            # for dot in dots:
-            #     cv2.circle(frame1, dot, 3, (0, 0, 255), thickness=-1)
 
         if view:
             cv2.namedWindow('Feed')

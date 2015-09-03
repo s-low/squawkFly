@@ -178,6 +178,8 @@ def submit(*args):
     args_trace2 = vid2 + ' ' + clip + \
         'trajectory2.txt ' + clip + 'graphs/trace2.mov'
 
+    args_beehive = p_session + ' ' + os.path.join(p_session, 'beehive.png')
+
     # New session: create the scene data
     if not os.path.exists(p_session):
         os.makedirs(p_session)
@@ -227,6 +229,8 @@ def submit(*args):
     setStatus('Generating and saving views...')
     os.system("./top_down.py " + args_topdown)
     os.system("./side_on.py " + args_sideon)
+    os.system("./beehive.py " + args_beehive)
+    os.system("./generate_x3d.py " + p_clip)
     setStatus("Done!")
 
     # finish by revealing the results in finder

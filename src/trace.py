@@ -67,7 +67,7 @@ save = False
 
 if outfilename is not None:
     save = True
-    fps = 30.0
+    fps = 29.0
     capsize = (1280, 720)
     fourcc = cv2.cv.CV_FOURCC('m', 'p', '4', 'v')
     vout = cv2.VideoWriter()
