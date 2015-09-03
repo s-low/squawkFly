@@ -35,7 +35,7 @@ view = True
 try:
     if sys.argv[3] == 'suppress':
         view = False
-    else:
+    elif sys.argv[3] == 'view':
         view = True
 except IndexError:
     pass
@@ -141,7 +141,6 @@ def addNoise(sigma, points):
         nx = random.normal(0, sigma)
         ny = random.normal(0, sigma)
 
-        print "Add noise:", nx, ny
         n0 = p[0] + nx
         n1 = p[1] + ny
         n = [n0, n1]
@@ -193,6 +192,8 @@ def getData(session, clip):
         x = float(row.split()[0])
         y = float(row.split()[1])
         pts2.append([x, y])
+
+    # pts1, pts2 = stereoMatching()
 
     # Try and get the 3D ground truth if exists
     try:
@@ -335,6 +336,7 @@ def run():
     # SYNCHRONISATION + CORRECTION
     if rec_data and simulation is False:
         # pts3, pts4 = synchroniseAtApex(pts3, pts4)
+        print "---Synchronisation---"
         pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
 
         # print "--------Testing Synchronisation---------"
@@ -469,8 +471,6 @@ def simScale(points):
     for o in offset:
         outfile.write(str(o) + '\n')
     outfile.close()
-
-    statfile.write(str(std) + '\n')
 
     return np.array(scaled, dtype='float32')
 
@@ -661,7 +661,7 @@ def getFundamentalMatrix(pts_1, pts_2):
     string = 'avg:' + str(avg) + ' std1:' + str(std)
     outfile.write(string)
     outfile.close()
-    statfile.write(str(avg) + ' ' + str(std) + ' ')
+    # statfile.write(str(avg) + ' ')
 
     return F
 
@@ -877,7 +877,6 @@ def reconstructionError(original, reconstructed):
     for o, r in zip(original, reconstructed):
         sep = sep3D(o, r)
         seps.append(sep)
-        print sep
 
     avg = sum(seps) / len(seps)
     std = np.std(seps)
@@ -888,7 +887,7 @@ def reconstructionError(original, reconstructed):
     outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
     outfile.close()
 
-    statfile.write(str(avg) + ' ' + str(sep))
+    statfile.write(str(avg) + '\n')
 
 
 # used for checking the triangulation - provide UNNORMALISED DATA
@@ -960,7 +959,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     string = 'avg:' + str(avg) + '\nstd:' + str(std)
     outfile.write(string)
     outfile.close()
-    statfile.write(str(avg) + ' ' + str(std) + ' ')
+    statfile.write(str(avg) + ' ')
 
 
 def BoringCameraArray():
@@ -1069,7 +1068,6 @@ def synchroniseGeometric(pts_1, pts_2, F):
     return syncd1, syncd2
 
 
-# Copyright 2013, Alexander Mordvintsev & Abid K
 def autoGetCorrespondences(img1, img2):
     sift = cv2.SIFT()
 
@@ -1077,41 +1075,61 @@ def autoGetCorrespondences(img1, img2):
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
 
-    # FLANN parameters
-    FLANN_INDEX_KDTREE = 0
-    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-    search_params = dict(checks=50)
+    # Brute Force Matcher
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
+    matches = sorted(matches, key=lambda x: x.distance)
 
-    flann = cv2.FlannBasedMatcher(index_params, search_params)
-    matches = flann.knnMatch(des1, des2, k=2)
+    # Ratio test
+    good = []
+
+    for m, n in matches:
+        if m.distance < 0.75 * n.distance:
+            good.append(m)
+
+    # cv2.drawMatchesKnn expects list of lists as matches.
+    img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, flags=2)
+    plt.imshow(img3), plt.show()
+
+    sys.exit()
+
+
+def stereoMatching():
+
+    img1 = cv2.imread('image1.png', 0)
+    img2 = cv2.imread('image2.png', 0)
+
+    sift = cv2.SIFT()
+
+    k1, d1 = sift.detectAndCompute(img1, None)
+    k2, d2 = sift.detectAndCompute(img2, None)
+
+    # matches
+    bf = cv2.BFMatcher()
+    matches = bf.knnMatch(d1, d2, k=2)
 
     good = []
-    auto_pts1 = []
-    auto_pts2 = []
+    pts1 = []
+    pts2 = []
 
-    # ratio test as per Lowe's paper
-    for i, (m, n) in enumerate(matches):
-        if m.distance < 0.8 * n.distance:
+    for m, n in matches:
+        if m.distance < 0.75 * n.distance:
             good.append(m)
-            auto_pts2.append(kp2[m.trainIdx].pt)
-            auto_pts1.append(kp1[m.queryIdx].pt)
+            pts2.append(k2[m.trainIdx].pt)
+            pts1.append(k1[m.queryIdx].pt)
 
-    intpts1 = np.int32(auto_pts1)
-    intpts2 = np.int32(auto_pts2)
+    good = sorted(good, key=lambda x: x.distance)
 
-    img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
-    img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
+    pts1 = np.float32(pts1)
+    pts2 = np.float32(pts2)
+    F, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC, 2)
+    print len(pts1)
 
-    for p1, p2 in zip(intpts1, intpts2):
-        color = tuple(np.random.randint(0, 255, 3).tolist())
-        cv2.circle(img1, tuple(p1), 5, color, -1)
-        cv2.circle(img2, tuple(p2), 5, color, -1)
-
-    plt.subplot(121), plt.imshow(img1)
-    plt.subplot(122), plt.imshow(img2)
-    plt.show()
-
-    return np.float32(auto_pts1), np.float32(auto_pts2)
+    # We select only inlier points
+    pts1 = pts1[mask.ravel() == 1]
+    pts2 = pts2[mask.ravel() == 1]
+    print len(pts1)
+    return pts1, pts2
 
 
 def autoGetF(pts_1, pts_2):
@@ -1179,19 +1197,21 @@ print K1
 print K2
 
 noise = 0
-try:
-    noise = float(sys.argv[2])
-except IndexError:
-    pass
+# try:
+#     noise = float(sys.argv[3])
+#     print "NOISY:", noise
+# except IndexError:
+#     pass
 
 statdir = '/stats/'
 
 if not os.path.exists('sessions/' + clip + statdir):
     os.makedirs('sessions/' + clip + statdir)
 
-statfile = open('sessions/' + clip + statdir + 'all_stats.txt', 'w')
-statfile.write(
-    'N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std\n')
+# append to the statfile
+statfile = open('sessions/' + clip + statdir + 'all_stats.txt', 'a')
+# statfile.write(
+#     'N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std\n')
 
 # get the data completely resh from file
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
@@ -1213,12 +1233,14 @@ postPts2 = np.array(postPts2, dtype='float32')
 N = len(pts1)
 statfile.write(str(N) + ' ')
 
+
 statfile.write(str(noise) + ' ')
 
 # NOISE
 if noise != 0:
-    pts1, avg_mag1 = addNoise(noise, pts1)
-    pts2, avg_mag2 = addNoise(noise, pts2)
+    print "ADD NOISE"
+    pts3, avg_mag1 = addNoise(noise, pts3)
+    pts4, avg_mag2 = addNoise(noise, pts4)
     avg_mag = (avg_mag1 + avg_mag2) / 2
     statfile.write(str(avg_mag) + ' ')
 else:
