@@ -38,7 +38,6 @@ for sub in clips:
 
     # get the last point
     final = trajectory[-1]
-    print final
     x = float(final.split()[0])
     y = float(final.split()[1])
     shots_x.append(x)
