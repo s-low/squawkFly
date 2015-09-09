@@ -1,11 +1,21 @@
 #!/usr/local/bin/python
 
-'''
-./manualMatch.py <infile> <outfile>
+''' manualMatch.py
 
-User interface for marking up correspondences manually. Input file is a pair of
-images. One image is shown, and when a point is marked with a click the second
-image is shown for comparison and click.
+User interface for marking up stereo correspondences manually. Input is
+a pair of images. One image is shown, and when a point is marked with a
+click the second image is shown for comparison and click.
+
+User actually supplies either a video or image sequence, and the first
+frame is sampled for matching.
+
+correspondences are written to two different files in an ordered list.
+
+arg1 = image sequence or video 1
+arg2 = image sequence or video 2
+arg3 = outfile1
+arg4 = outfile2
+
 '''
 
 import cv2
@@ -14,7 +24,7 @@ import sys
 import os
 
 
-# mouse callback function
+# mouse callback function, record the click coords and swap image
 def click(event, x, y, flags, param):
     global counter
     global current
@@ -33,6 +43,7 @@ def click(event, x, y, flags, param):
             outfile2.write(string + '\n')
 
 
+# Just colors and fonts we want to use
 blue = (255, 0, 0)
 red = (0, 0, 255)
 white = (255, 255, 255)
@@ -67,7 +78,7 @@ cap = cv2.VideoCapture(image2)
 ret, img2 = cap.read()
 cap.release()
 
-
+# label the images
 cv2.putText(img1, "Image 1", (30, 45),
             fontFace=font,
             fontScale=1.5,

@@ -1,5 +1,13 @@
 #!/usr/local/bin/python
 
+''' project.py <3d.txt>
+
+    create artificial image data of a 3d model, and save that image data
+    to the same directory as the model resides in.
+
+'''
+
+
 import sys
 import cv2
 import cv2.cv as cv
@@ -13,7 +21,6 @@ import os.path
 import plotting as plot
 
 np.set_printoptions(suppress=True)
-# plt.style.use('ggplot')
 
 
 def main():
@@ -25,15 +32,17 @@ def main():
 
     data_3d = np.array(data_3d, dtype='float32')
 
-    # artificial camera
+    # Artificial cameras - both have the same intrinsics
     K = tools.CalibArray(1000, 640, -360)
     dist = (0, 0, 0, 0)
 
+    # Some numbers we use a lot
     rt2 = math.sqrt(2)
-
     rt2on2 = rt2 / 2
 
-    # 45 cc about z
+    # Lots of rotation matrices...
+    # naming: z45cc = 45deg counter-clockwise rotation about z
+
     z45cc = np.mat([[1 / rt2, -1 / rt2, 0],
                     [1 / rt2, 1 / rt2, 0],
                     [0, 0, 1]], dtype='float32')
@@ -66,31 +75,29 @@ def main():
                     [0, 1, 0],
                     [rt2on2, 0, rt2on2]], dtype='float32')
 
-    # zy180 = y180 * z180
-
-    # projections into image planes with the camera in different poses
+    # cameras have different poses
     tvec1 = (-5, 1, 14)
-    # rvec1, jacobian = cv2.Rodrigues(z180)
-
     tvec2 = (5, 1, 13)
-    # rvec2, jacobian = cv2.Rodrigues(z180)
 
+    # Project the model into each camera
     img_pts1 = project(data_3d, K, y45cc, tvec1)
     img_pts2 = project(data_3d, K, y45cw, tvec2)
-
-    # img_pts1, jacobian = cv2.projectPoints(data_3d, rvec1, tvec1, K, dist)
-    # img_pts2, jacobian = cv2.projectPoints(data_3d, rvec2, tvec2, K, dist)
 
     img_pts1 = np.reshape(img_pts1, (len(img_pts1), 2, 1))
     img_pts2 = np.reshape(img_pts2, (len(img_pts2), 2, 1))
 
+    # Plot the model and images
     plot.plot3D(data_3d)
-    # plotSimulation(data_3d)
     plotImagePoints(img_pts1)
     plotImagePoints(img_pts2)
 
-    # img_pts1 = addNoise(0.0, img_pts1)
-    # img_pts2 = addNoise(0.0, img_pts2)
+    # Add noise to the image data if desired
+    try:
+        noise = sys.argv[2]
+        img_pts1 = addNoise(float(noise), img_pts1)
+        img_pts2 = addNoise(float(noise), img_pts2)
+    except indexError:
+        continue
 
     writeData(folder, img_pts1, img_pts2)
 
@@ -144,9 +151,11 @@ def getData(path):
         datafile.close()
 
     data = data.split('\n')
+
     # get rid of any empty line at the end of file
     if data[-1] in ['\n', '\r\n', '']:
         data.pop(-1)
+
     for row in data:
         x = float(row.split()[0])
         y = float(row.split()[1])
@@ -180,6 +189,7 @@ def writeData(folder, pts1, pts2):
     outfile.close()
 
 
+# little hack to fix some weird parantheses conventions returned by numpy
 def fixExtraneousParentheses(points):
     temp = []
     for p in points:
@@ -205,9 +215,6 @@ def plotSimulation(objectPoints):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    # ax.set_xlim(0, 100)
-    # ax.set_ylim(0, 100)
-    # ax.set_zlim(0, 100)
 
     plt.show()
 

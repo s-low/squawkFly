@@ -1,5 +1,10 @@
 #!/usr/local/bin/python
 
+''' 3dsim.py
+Given a text file containing 3 columns of space-delimited coordinates,
+plot them as X, Y, Z and put to screen.
+'''
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,6 +18,7 @@ with open(filename) as datafile:
 
 data = data.split('\n')
 
+# if there is a blank line at EOF - pop it
 if data[-1] in ['\n', '\r\n', '']:
     data.pop(-1)
 

@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hello World</title>
+      <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'></script> 
+      <script type='text/javascript' src='http://www.x3dom.org/download/1.7/components/Geometry2D.js'></script>
+      <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+  </head>
+       
+<body>
+
+    <h1>XHTML Hello World</h1>
+    <p>
+      Navigation modes: 
+      <ul>
+      <li>e: Examine </li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>w: Walk </li>
+      <li>f: Fly </li>
+      <li>h: Helicopter</li>
+      <li>l: Look at</li>
+      <li>t: Turntable</li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>g: Game</li>
+      </ul>
+
+      Also:
+      <ul>
+        <li>r: reset view</li>
+        <li>a: show all</li>
+        <li>u: upright</li>
+      </ul>
+    </p>
+
+    <x3d width='900px' height='900px'> 
+    <scene> 
+    <background skyColor = '0.7 0.89 0.95'></background>
+    <navigationInfo type='"any"' id="navType"></navigationInfo>
+        <Viewpoint position='0 0 80'/>
+        <directionalLight ambientIntensity='0.5' global='true'/>
+            
+          <!-- GRASS -->
+          <shape>
+          <rectangle2D size='100,100' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='0.1 0.7 0.1' ambientIntensity='0.1'></material> 
+            </appearance>
+          </shape>
+          
+        <transform translation = '0 16 0'>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='0 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='6 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- CROSSBAR -->
+          <transform rotation='0 0 1 1.57'>
+          <transform rotation='0 1 0 1.57' translation='0 -3 2.3'>
+          <shape>
+            <cylinder radius ='0.1' height='6.0'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <shape>
+          <rectangle2D size='0.2,60' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          
+          <transform translation='-4 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 13' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 34.2' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          </transform>
+
+          <transform translation='-3.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='9.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='20 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <transform translation='3 -9 0'>
+          <shape>
+          <disk2D outerRadius='0.2'></disk2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+
+        </transform>
+
+        <!-- insert balls here -->
+         
+<transform translation="0 1.17 0">
+  <group DEF="ball">
+    <shape>
+      <sphere radius="0.1" />
+      <appearance>
+        <material diffuseColor="0 0 1" />
+      </appearance>
+    </shape>
+  </group>
+  <transform translation="0.0 0.0 0.0">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.27 0.78 0.13">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.4 1.19 0.2">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.54 1.62 0.26">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.67 2.02 0.31">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.8 2.42 0.37">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.94 2.8 0.41">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.08 3.18 0.46">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.21 3.55 0.51">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.35 3.94 0.56">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.49 4.31 0.59">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.64 4.7 0.63">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.78 5.06 0.67">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.92 5.43 0.7">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.06 5.78 0.73">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.2 6.13 0.76">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.34 6.47 0.78">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.48 6.82 0.8">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.63 7.15 0.82">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.78 7.49 0.83">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.92 7.83 0.84">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.06 8.16 0.85">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.2 8.48 0.86">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.35 8.8 0.85">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.5 9.13 0.86">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.65 9.47 0.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.8 9.77 0.85">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.95 10.08 0.84">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.09 10.36 0.83">
+    <group USE="ball" />
+  </transform>
+</transform>  
+
+
+      </scene>
+      </x3d>
+</body>
+</html>

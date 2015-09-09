@@ -1,5 +1,13 @@
 #!/usr/local/bin/python
 
+''' simulate_calibration.py
+
+    Test script to simulate the calibration process using Zhang's method
+    as implemented in OpenCV. Completely academic exercise to help understand
+    what's going on here.
+'''
+
+
 import math
 import cv2
 import cv2.cv as cv
@@ -47,7 +55,6 @@ def plotImagePoints(imagePoints):
 
     plt.scatter(all_x, all_y)
     plt.scatter(all_x[0], all_y[0], color='r')
-    # plt.axis([0, 200, 0, 200])
     plt.show()
 
 

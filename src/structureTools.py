@@ -1,4 +1,14 @@
-# General tools for 3d reconstruction
+''' structureTools.py
+
+    Bundle of useful methods for use in 3d reconstruction:
+        - create calibration array
+        - create normalised, homogeneous coordinates from X Y
+        - strip extra layer of parentheses inevitably returned by some
+        numpy actions
+        - init the W Z arrays for finding camera matrices
+        - check if a matrix is singular / invertible
+
+'''
 
 import numpy as np
 import cv2

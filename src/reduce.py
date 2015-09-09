@@ -1,5 +1,15 @@
 #!/usr/local/bin/python
 
+''' reduce.py
+
+Post processing to make analysis easier. Strip out all trivial trajectories
+from the output of Kalman.py
+
+trivial = completely contained in a longer trajectory
+
+'''
+
+
 import sys
 import numpy as np
 

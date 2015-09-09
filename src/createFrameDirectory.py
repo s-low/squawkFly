@@ -1,5 +1,18 @@
 #!/usr/local/bin/python
 
+''' createFrameDirectory.py
+
+Given a video file, read every frame and save it as a png to a new directory.
+
+Frames are ordered 1.png, 2.png etc...
+
+arg1 = input video
+
+Out directory is the name of video file without the extension
+
+'''
+
+
 import cv2
 import cv2.cv as cv
 import sys

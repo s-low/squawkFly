@@ -1,16 +1,21 @@
 #!/usr/local/bin/python
 
-# 1D Kalman filter.
+''' kalman.py
 
-# INPUT: Output.txt containing set of ball candidates for each frame
-# format is space delimited three column file eg:
-# X    Y    F
-# 1    5    1
-# 16   3    1
-# 1    35   3
-# 20   4    4
+2D Kalman filter-based trajectory segmentation
 
-# OUTPUT: Set of candidate trajectories
+INPUT: The set of ball detections from detect.py
+
+in format: x y frame point_id
+
+OUTPUT: A set of candidate trajectories to data_trajectories.txt
+
+in format: trajectory_id x y frame point_id
+
+*arg1* = optional infile, otherwise data/data_detections.txt
+*arg2* = optional outfile, otherwise data/data_trajectories.txt
+
+'''
 
 import sys
 import cv2
@@ -19,11 +24,12 @@ import numpy as np
 import plotting as plot
 import matplotlib.pyplot as plt
 
-# Kalman Parameters
+# Trajectory generation / verification parameters
 init_dist = 400
 denom = 2.5
 min_v_dist = 6
 
+# Kalman covariances and system equation parameters
 Sensor_Cov = 10
 PN_Cov = 4
 horizontal_acc_const = -0.04
@@ -33,9 +39,8 @@ max_frame = 0
 max_length = 0
 new_trajectory = True
 n_miss = 0
-max_misses = 10
+max_misses = 7
 min_length = 8
-
 
 # debug mode
 d = False
@@ -45,7 +50,7 @@ detections = []
 corrections = []
 
 
-# create a fresh kalman filter object and return it
+# create a fresh kalman filter object using OpenCV and return it
 def KalmanFilter():
     kf = cv.CreateKalman(6, 2, 0)
 
@@ -92,15 +97,17 @@ def KalmanFilter():
     kf.measurement_matrix[1, 1] = 1
 
     # process noise cov matrix Q: models the EXTERNAL uncertainty
-    cv.SetIdentity(kf.process_noise_cov, cv.RealScalar(PN_Cov))
+    cv.SetIdentity(kf.process_noise_cov, PN_Cov)
 
     # measurement noise cov matrix R: covariance of SENSOR noise
-    cv.SetIdentity(kf.measurement_noise_cov, cv.RealScalar(Sensor_Cov))
+    cv.SetIdentity(kf.measurement_noise_cov, Sensor_Cov)
 
     '''
     error estimate covariance matrix P: relates the correlation of state vars
     priori: before measurement
     posteriori: after measurement
+    diagonals are all 1. x-vy and y-vy also correlated.
+
     | xx  xy  xvx  xvy  xax  xay  |   | 1 0 1 0 0 0 |
     | yx  yy  yvx  yvy  yax  yay  |   | 0 1 0 1 0 0 |
     | vxx vxy vxvx vxvy vxax vxay | = | 1 0 1 0 0 0 |
@@ -108,7 +115,7 @@ def KalmanFilter():
     | axx axy axvx axvy axax axay |   | 0 0 0 0 1 0 |
     | ayx ayy ayvx ayvy ayax ayay |   | 0 0 0 0 0 1 |
     '''
-    cv.SetIdentity(kf.error_cov_post, cv.RealScalar(1))
+    cv.SetIdentity(kf.error_cov_post, 1)
     kf.error_cov_post[0, 2] = 1
     kf.error_cov_post[1, 3] = 1
     kf.error_cov_post[2, 0] = 1
@@ -128,7 +135,7 @@ def setPostState(x, y, vx, vy, ax, ay):
     kf.state_post[5, 0] = ay
 
 
-# kalman filter predict and return as tuple
+# kalman filter predict and return it as a tuple
 def predict(kf):
     predicted = cv.KalmanPredict(kf)
     return (predicted[0, 0], predicted[1, 0],
@@ -136,7 +143,7 @@ def predict(kf):
             predicted[4, 0], predicted[5, 0])
 
 
-# KF correct and return as tuple
+# KF correct and return it as a tuple
 def correct(kf, x, y):
     global measurement
     measurement[0, 0] = x
@@ -148,7 +155,8 @@ def correct(kf, x, y):
             corrected[4, 0], corrected[5, 0])
 
 
-def verified(corrected_point, next_frame_index, v_distance):
+# Check if the prediction is verified by a detection in the next frame
+def verified(predicted_point, next_frame_index, v_distance):
     try:
         next_frame = frame_array[next_frame_index]
     except IndexError:
@@ -158,7 +166,7 @@ def verified(corrected_point, next_frame_index, v_distance):
     min_sep = v_distance
     vpoint = None
 
-    # for each point in the next frame, check the distance between the pair
+    # for each candidate in the next frame, check the distance between the pair
     for point_index, point in enumerate(next_frame["x"]):
         cx = float(next_frame["x"][point_index])
         cy = float(next_frame["y"][point_index])
@@ -168,9 +176,10 @@ def verified(corrected_point, next_frame_index, v_distance):
         # POINT: X / Y / FRAME / PID
         c = (cx, cy, c_frame, c_pid)
 
-        vflag, sep = point_is_near_point(corrected_point, c, v_distance)
+        # Check the separation against the current verify distance
+        vflag, sep = point_is_near_point(predicted_point, c, v_distance)
 
-        # a point may be verified by several points. we want the best one.
+        # a point may be verified by several points, but we want the best one.
         if vflag is True and sep < min_sep:
             min_sep = sep
             vpoint = c
@@ -181,6 +190,7 @@ def verified(corrected_point, next_frame_index, v_distance):
         return False
 
 
+# Is distance between point A and point B less than C
 def point_is_near_point(point1, point2, dist):
     x1 = point1[0]
     y1 = point1[1]
@@ -196,7 +206,19 @@ def point_is_near_point(point1, point2, dist):
         return False, sep
 
 
-# given a valid pair of nearby points, try to build the next step in trajectory
+''' build_trajectory()
+
+main recursive trajectory generation method.
+
+given a valid pair of nearby points in sequential frames, initalise the
+kalman filter and try to follow that trajectory forwards in time.
+
+Current two points are referred to as the HEAD and ARM
+
+o-----o-----o-----o-----o-----x
+                  HEAD  ARM   PREDICTED
+
+'''
 def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
     global predictions
@@ -208,9 +230,6 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
     postState = kf.state_post
     preState = kf.state_pre
 
-    # if p1[3] == 71:
-    #     d = True
-
     if d and new_trajectory:
         print "\nNEW"
 
@@ -221,17 +240,18 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
         print "Post state:\n", np.asarray(postState[:, :])
         print "Pre state:\n", np.asarray(preState[:, :])
 
-    # PREDICT location of branch
+    # PREDICT location of next point
     predicted = predict(kf)
     predictions.append((predicted[0], predicted[1]))
     if d:
         print "Predicted:", predicted
 
-    # MEASURE location of verifying point
-    # v_dist is half current speed
+    # Set verifying distance to fraction of current speed, or a minumum value
     v_dist = (((postState[2, 0] ** 2) + (postState[3, 0] ** 2)) ** 0.5) / denom
     if v_dist < min_v_dist:
         v_dist = min_v_dist
+
+    # MEASURE location of verifying point
     p_verification = verified(predicted, frame_index + 1, v_dist)
 
     if d:
@@ -240,6 +260,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
     if p_verification is False:
         n_miss += 1
 
+        # If we've made too many unverified predictions, give up.
         if n_miss >= max_misses:
             if d:
                 print "Bridge too far. End at last verified point."
@@ -248,18 +269,13 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
             bridge = []
             predictions = []
 
+        # Otherwise, have another crack
         else:
             # keep predicting from the unverified corrected point
-            # POINT: X / Y / FRAME / PID
             unverified = (predicted[0], predicted[1], frame_index + 1, 1000)
-            # new_trajectory = False
             if d:
                 print "Append predicted point to bridge:", unverified
             bridge.append(unverified)
-
-            # set the x-acceleration to zero to account for poor modelling
-            # essentially drop to constant velocity in x
-            # kf.state_post[4, 0] = 0
 
             if graphs:
                 plt.plot(all_x, all_y, '.')
@@ -279,15 +295,15 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
 
                 x = [p[0] for p in predictions]
                 y = [p[1] for p in predictions]
-                # p = predictions[-1]
-                # x = p[0]
-                # y = p[1]
+
                 plt.plot(x, y, 'g.')
                 plt.show()
 
+            # Recursive call from new trajectory
             this_trajectory = build_trajectory(
                 this_trajectory, bridge, kf, frame_index + 1, p1, unverified, False)
 
+    # PREDICTION WAS VERIFED BY MEASUREMENT
     else:
         # CORRECT filter against the verifying (but noisy) measurement
         x = p_verification[0]
@@ -306,12 +322,12 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
                 this_trajectory.append(p1)
             new_trajectory = False
 
-        # if a bridge of unverifieds was needed reset it
+        # if a bridge of unverifieds was needed to get here, reset it to zero
         if len(bridge) != 0:
             bridge = []
             n_miss = 0
 
-        # add verified point to trajectory + continue
+        # add verifying point to trajectory + continue
         this_trajectory.append(p_verification)
         detections.append((x, y))
 
@@ -338,6 +354,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
             plt.plot(x, y, 'g.')
             plt.show()
 
+        # RECURSIVE CALL WITH NEW HEAD AND ARM
         this_trajectory = build_trajectory(this_trajectory, bridge, kf,
                                            frame_index + 1, p1,
                                            p_verification,
@@ -348,18 +365,7 @@ def build_trajectory(this_trajectory, bridge, kf, frame_index, p0, p1, real):
     return this_trajectory
 
 
-# see if a full trajectory can be extended backwards to it's true source
-def checkForRoot(trajectory):
-    p0 = trajectory[0]
-    p1 = trajectory[1]
-    vx = p0[0] - p1[0]
-    vy = p0[1] - p1[1]
-
-    tx = p0[0] + vx
-    ty = p0[1] + vy
-
-
-# retrieve output of detection system and parse
+# retrieve output of detection system and parse it
 def get_data(filename):
     global max_frame
 
@@ -369,7 +375,7 @@ def get_data(filename):
 
     data = data.split('\n')
 
-    # get rid of any empty line at the end of file
+    # Gobble blank at EOF if exists
     if data[-1] in ['\n', '\r\n', '']:
         data.pop(-1)
 
@@ -379,7 +385,9 @@ def get_data(filename):
     all_frames = [row.split()[2] for row in data]
     all_pid = [row.split()[3] for row in data]
 
-    # now translate into 'frame array' (each element is a frame)
+    # now translate into 'frame_array' structure
+    # each element of array represents a frame, and holds all the detections
+    # in that particular frame
     max_frame = int(all_frames[-1])
     frame_array = [{} for x in xrange(max_frame + 1)]
 
@@ -426,7 +434,7 @@ frame_array, all_x, all_y = get_data(infilename)
 outfile = open(outfilename, 'w')
 trajectories = []
 
-# create OpenCV Kalman object
+# Initialise the state/measurement/prediction/correction for KF
 state = cv.CreateMat(6, 1, cv.CV_32FC1)
 measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
 predicted = None
@@ -435,7 +443,7 @@ corrected = None
 # FOR each frame F0:
 for frame_index, f0 in enumerate(frame_array):
 
-    # always need two frames of headroom
+    # always need two frames of headroom to avoid indexError
     if frame_index == max_frame - 1:
         break
 
@@ -469,6 +477,7 @@ for frame_index, f0 in enumerate(frame_array):
             ydiff = b1_y - b0_y
             sep = ((ydiff ** 2) + (xdiff ** 2)) ** 0.5
 
+            # If two points are closer than the initisation distance
             if sep < init_dist:
 
                 # init new kalman filter and try to build a single trajectory
@@ -480,6 +489,7 @@ for frame_index, f0 in enumerate(frame_array):
                     print "\n-------- INIT Filter --------"
                     print "Points:", b0, b1
 
+                # Manually initialise state with guess at speed as well
                 setPostState(b1[0], b1[1], vx, vy, 0, 0)
                 if d:
                     print "Post state set:", b1[0], b1[1], vx, vy, 0, 0

@@ -1,3 +1,18 @@
+''' plotting.py
+
+    A bundle of useful plotting functions using pyplot and mplot3D.
+
+    plot3D
+    plot2D
+    plotOrderedBar
+    plotEpilines
+
+    Credit to Remy F on StackOverflow for the bounding box trick to simulate
+    equal aspect ratio in 3D axes.
+
+    http://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -10,9 +25,7 @@ def plot3D(data_3d, name='3D Plot'):
     Z = [point[2] for point in data_3d]
 
     fig = plt.figure(name)
-    # ax = Axes3D(fig)
     ax = fig.add_subplot(111, projection='3d')
-    # ax.set_aspect('equal')
     ax.scatter(X, Y, Z, marker='o', c='b', zdir='y')
 
     # Create cubic bounding box to simulate equal aspect ratio
@@ -68,7 +81,6 @@ def plot2D(pts1, pts2=[], name='2D Plot', lims=(0, 0)):
 def plotEpilines(lines, pts, index):
     name = 'Corresponding Epilines on Image ' + str(index)
     fig = plt.figure(name)
-    # ax = plt.axes(xlim=(0, 1280), ylim=(0, 720))
     ax = plt.axes(xlim=(0, 1280))
 
     for r in lines:

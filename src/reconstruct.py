@@ -1,5 +1,54 @@
 #!/usr/local/bin/python
 
+''' recontruct.py
+
+    Compute a scale reconstruction of the trajectory from corresponding image
+    data. derive performance stats, test quality of epipolar geometry
+    estimation.
+
+    INPUT: <session_folder> <clip_folder>
+
+    Session folder should contain:
+        camera1.txt
+        camera2.txt
+        statics1.txt
+        statics2.txt
+        postPts1.txt
+        postPts2.txt
+
+    Clip folder should contain:
+        trajectory1.txt
+        trajectory2.txt
+
+    OUTPUT:
+        - 3d_out.txt into <clip_folder>
+        - /stats/ in <clip_folder> containing accuracy of reconstruction etc.
+
+    KEY METHODS CONTAINED:
+        - run
+        - getData
+        - synchroniseGeometric
+        - synchroniseAtApex
+        - getFundamentalMatrix
+        - getEssentialMatrix
+        - getNormalisedPMatrices
+        - getValidRtCombo
+        - testRtCombo
+        - getMetrics
+        - importCalibration
+        - transform
+        - triangulateLS
+        - reconstructionError
+        - reprojectionError
+
+    NOTES:
+        pts1: static image correspondences in camera 1
+        pts2: static image correspondences in camera 2
+        pts3: trajectory images in camera 1
+        pts4: trajectory images in camera 2
+'''
+
+
 import sys
 import cv2
 import cv2.cv as cv
@@ -10,7 +59,6 @@ from collections import namedtuple
 from mpl_toolkits.mplot3d import Axes3D
 import os.path
 import numpy.random as random
-
 import fundamental as fund
 import triangulation as tri
 import structureTools as tools
@@ -18,7 +66,6 @@ import plotting as plot
 
 random.seed()
 np.set_printoptions(suppress=True)
-# plt.style.use('ggplot')
 
 font = {'family': 'normal',
         'weight': 'normal',
@@ -31,7 +78,7 @@ simulation = False
 ground_truth_provided = False
 
 # debug and graphical modes
-view = True
+view = False
 try:
     if sys.argv[3] == 'suppress':
         view = False
@@ -41,6 +88,103 @@ except IndexError:
     pass
 
 debug = False
+
+
+def run():
+    global pts3
+    global pts4
+
+    if simulation and view:
+        plot.plot3D(data3D, 'Original 3D Data')
+
+    if view:
+        plot.plot2D(pts1_raw, name='First Statics (Noise not shown)')
+        plot.plot2D(pts2_raw, name='Second Statics (Noise not shown)')
+
+    # FUNDAMENTAL MATRIX
+    F = getFundamentalMatrix(pts1, pts2)
+
+    # ESSENTIAL MATRIX (HZ 9.12)
+    E, w, u, vt = getEssentialMatrix(F, K1, K2)
+
+    # PROJECTION/CAMERA MATRICES from E (HZ 9.6.2)
+    P1, P2 = getNormalisedPMatrices(u, vt)
+    P1_mat = np.mat(P1)
+    P2_mat = np.mat(P2)
+
+    # FULL PROJECTION MATRICES (with K) P = K[Rt]
+    KP1 = K1 * P1_mat
+    KP2 = K2 * P2_mat
+
+    print "\n> KP1:\n", KP1
+    print "\n> KP2:\n", KP2
+
+    # SYNCHRONISATION + CORRECTION
+    if rec_data and simulation is False:
+        print "---Synchronisation---"
+        pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
+
+        pts3 = pts3.reshape((1, -1, 2))
+        pts4 = pts4.reshape((1, -1, 2))
+        newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
+        pts3 = newPoints3.reshape((-1, 2))
+        pts4 = newPoints4.reshape((-1, 2))
+
+    elif simulation:
+        print "> Simulation: Use whole point set for reconstruction"
+        pts3 = pts1
+        pts4 = pts2
+
+    # Triangulate the trajectory
+    p3d = triangulateCV(KP1, KP2, pts3, pts4)
+
+    # Triangulate goalposts
+    if simulation is False:
+        goalPosts = triangulateCV(KP1, KP2, postPts1, postPts2)
+
+    # SCALING AND PLOTTING
+    if simulation:
+        if view:
+            plot.plot3D(p3d, 'Simulation Reconstruction')
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d)
+        p3d = simScale(p3d)
+        if view:
+            plot.plot3D(p3d, 'Scaled Simulation Reconstruction')
+
+    else:
+        # add the post point data into the reconstruction for context
+        if len(postPts1) == 4:
+            print "> Concatenate goal posts to trajectory"
+            pts3_gp = np.concatenate((postPts1, pts3), axis=0)
+            pts4_gp = np.concatenate((postPts2, pts4), axis=0)
+            p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
+
+        scale = getScale(goalPosts)
+
+        scaled_gp_only = [[a * scale for a in inner] for inner in goalPosts]
+        scaled_gp = [[a * scale for a in inner] for inner in p3d_gp]
+        scaled = [[a * scale for a in inner] for inner in p3d]
+
+        if view:
+            plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
+        reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
+
+        getMetrics(scaled, scaled_gp_only)
+        scaled_gp = transform(scaled_gp)
+        if view:
+            plot.plot3D(scaled_gp, 'Final (Reorientated) 3D Reconstruction')
+        if ground_truth_provided:
+            reconstructionError(data3D, scaled_gp)
+
+        # write X Y Z to file
+        outfile = open('sessions/' + clip + '/3d_out.txt', 'w')
+        for p in scaled_gp:
+            p0 = round(p[0], 2)
+            p1 = round(p[1], 2)
+            p2 = round(p[2], 2)
+            string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
+            outfile.write(string + '\n')
+        outfile.close()
 
 
 def synchroniseAtApex(pts_1, pts_2):
@@ -297,115 +441,7 @@ def undistortData(points, K, d):
     return points_
 
 
-'''
-Method: Run
-Action: Flow control for bulk of reconstruction process.
-'''
-
-
-def run():
-    global pts3
-    global pts4
-
-    if simulation and view:
-        plot.plot3D(data3D, 'Original 3D Data')
-
-    if view:
-        plot.plot2D(pts1_raw, name='First Statics (Noise not shown)')
-        plot.plot2D(pts2_raw, name='Second Statics (Noise not shown)')
-
-    # FUNDAMENTAL MATRIX
-    F = getFundamentalMatrix(pts1, pts2)
-    # F, pts1, pts2 = autoGetF(pts1, pts2)
-
-    # ESSENTIAL MATRIX (HZ 9.12)
-    E, w, u, vt = getEssentialMatrix(F, K1, K2)
-
-    # PROJECTION/CAMERA MATRICES from E (HZ 9.6.2)
-    P1, P2 = getNormalisedPMatrices(u, vt)
-    P1_mat = np.mat(P1)
-    P2_mat = np.mat(P2)
-
-    # FULL PROJECTION MATRICES (with K) P = K[Rt]
-    KP1 = K1 * P1_mat
-    KP2 = K2 * P2_mat
-
-    print "\n> KP1:\n", KP1
-    print "\n> KP2:\n", KP2
-
-    # SYNCHRONISATION + CORRECTION
-    if rec_data and simulation is False:
-        # pts3, pts4 = synchroniseAtApex(pts3, pts4)
-        print "---Synchronisation---"
-        pts3, pts4 = synchroniseGeometric(pts3, pts4, F)
-
-        # print "--------Testing Synchronisation---------"
-        # avg, std = fund.testFundamentalReln(F, pts3, pts4, view)
-
-        pts3 = pts3.reshape((1, -1, 2))
-        pts4 = pts4.reshape((1, -1, 2))
-        newPoints3, newPoints4 = cv2.correctMatches(F, pts3, pts4)
-        pts3 = newPoints3.reshape((-1, 2))
-        pts4 = newPoints4.reshape((-1, 2))
-
-    elif simulation:
-        print "> Simulation: Use whole point set for reconstruction"
-        pts3 = pts1
-        pts4 = pts2
-
-    # Triangulate the trajectory
-    p3d = triangulateCV(KP1, KP2, pts3, pts4)
-
-    # Triangulate goalposts
-    if simulation is False:
-        goalPosts = triangulateCV(KP1, KP2, postPts1, postPts2)
-
-    # SCALING AND PLOTTING
-    if simulation:
-        if view:
-            plot.plot3D(p3d, 'Simulation Reconstruction')
-        reprojectionError(K1, P1_mat, K2, P2_mat, pts3, pts4, p3d)
-        p3d = simScale(p3d)
-        if view:
-            plot.plot3D(p3d, 'Scaled Simulation Reconstruction')
-
-    else:
-        # add the post point data into the reconstruction for context
-        if len(postPts1) == 4:
-            print "> Concatenate goal posts to trajectory"
-            pts3_gp = np.concatenate((postPts1, pts3), axis=0)
-            pts4_gp = np.concatenate((postPts2, pts4), axis=0)
-            p3d_gp = np.concatenate((goalPosts, p3d), axis=0)
-
-        scale = getScale(goalPosts)
-
-        scaled_gp_only = [[a * scale for a in inner] for inner in goalPosts]
-        scaled_gp = [[a * scale for a in inner] for inner in p3d_gp]
-        scaled = [[a * scale for a in inner] for inner in p3d]
-
-        if view:
-            plot.plot3D(scaled_gp, 'Scaled 3D Reconstruction')
-        reprojectionError(K1, P1_mat, K2, P2_mat, pts3_gp, pts4_gp, p3d_gp)
-
-        getMetrics(scaled, scaled_gp_only)
-        scaled_gp = transform(scaled_gp)
-        if view:
-            plot.plot3D(scaled_gp, 'Final (Reorientated) 3D Reconstruction')
-        if ground_truth_provided:
-            reconstructionError(data3D, scaled_gp)
-
-        # write X Y Z to file
-        outfile = open('sessions/' + clip + '/3d_out.txt', 'w')
-        for p in scaled_gp:
-            p0 = round(p[0], 2)
-            p1 = round(p[1], 2)
-            p2 = round(p[2], 2)
-            string = str(p0) + ' ' + str(p1) + ' ' + str(p2)
-            outfile.write(string + '\n')
-        outfile.close()
-
-
-# the error simulation is a sphere of unit radius
+# Specific to certain error simulations using a unit sphere ground truth.
 def simScale(points):
     cx = 0
     cy = 0
@@ -475,7 +511,8 @@ def simScale(points):
     return np.array(scaled, dtype='float32')
 
 
-# transform the scaled 3d model so that it's orientation is sensible
+# transform the scaled 3d model so that it's orientation is sensible, and
+# it is closely aligned with ground truth in the case of a simulation
 def transform(points):
 
     # STEP ONE: translate everything so that the first ball point is at origin
@@ -630,6 +667,7 @@ def getMetrics(worldPoints, goalPosts):
     outfile.close()
 
 
+# return 3-space midpoint between A and B
 def midpoint(a, b):
     x0 = a[0]
     y0 = a[1]
@@ -661,11 +699,11 @@ def getFundamentalMatrix(pts_1, pts_2):
     string = 'avg:' + str(avg) + ' std1:' + str(std)
     outfile.write(string)
     outfile.close()
-    # statfile.write(str(avg) + ' ')
 
     return F
 
 
+# compute E from F, test it, return it
 def getEssentialMatrix(F, K1, K2):
 
     E = K2.T * np.mat(F) * K1
@@ -695,7 +733,9 @@ def getConstrainedEssentialMatrix(u, vt):
     return E_prime, s2, u2, vt2
 
 
+# Compute P1 and P2 via R and t from E
 def getNormalisedPMatrices(u, vt):
+    # R = u * W * vT OR u * W.T * vT
     R1 = np.mat(u) * np.mat(W) * np.mat(vt)
     R2 = np.mat(u) * np.mat(W.T) * np.mat(vt)
 
@@ -706,9 +746,11 @@ def getNormalisedPMatrices(u, vt):
     if np.linalg.det(R2) < 0:
         R2 = -1 * R2
 
+    # t1 is last col of u, t2 = -t1
     t1 = u[:, 2]
     t2 = -1 * u[:, 2]
 
+    # Test all combinations of R1/R2/t1/t2 for the correct geometric one
     R, t = getValidRtCombo(R1, R2, t1, t2)
 
     # NORMALISED CAMERA MATRICES P = [Rt]
@@ -721,8 +763,8 @@ def getNormalisedPMatrices(u, vt):
     return P1, P2
 
 
+# enforce positive depth combination of Rt using normalised coords
 def getValidRtCombo(R1, R2, t1, t2):
-    # enforce positive depth combination of Rt using normalised coords
     if testRtCombo(R1, t1, norm_pts1, norm_pts2):
         print "\n> R|t: R1 t1"
         R = R1
@@ -772,14 +814,16 @@ def testRtCombo(R, t, norm_pts1, norm_pts2):
         X = tri.LinearTriangulation(P1, u1, P2, u2)
         points3d.append(X[1])
 
-    # check if any z coord is negative
+    # check if ANY z coord is negative
     for point in points3d:
         if point[2] < 0:
             return False
+    # Otherwise...
     return True
 
 
-# linear least squares triangulation for one 3-space point X
+# linear least squares triangulation a set of 3-space points
+# P1/P2 are camera matrices
 def triangulateLS(P1, P2, pts_1, pts_2):
     points3d = []
 
@@ -794,6 +838,7 @@ def triangulateLS(P1, P2, pts_1, pts_2):
         p1 = Point(x1, y1)
         p2 = Point(x2, y2)
 
+        # triangulation.py
         X = tri.LinearTriangulation(P1, p1, P2, p2)
 
         points3d.append(X[1])
@@ -871,6 +916,7 @@ def sep3D(a, b):
     return dist
 
 
+# Compute and save average reconstruction error
 def reconstructionError(original, reconstructed):
     print "------Reconstruction Error------"
     seps = []
@@ -882,6 +928,12 @@ def reconstructionError(original, reconstructed):
     std = np.std(seps)
 
     print "Average 3D sep:", avg
+
+    outfile = open('sessions/' + clip + statdir + 'separations.txt', 'a')
+    for s in seps[4:]:
+        outfile.write(str(s) + '\n')
+    outfile.write('\n\n')
+    outfile.close()
 
     outfile = open('sessions/' + clip + statdir + 'reconstruction.txt', 'w')
     outfile.write('avg: ' + str(avg) + '\nstd: ' + str(std))
@@ -962,6 +1014,7 @@ def reprojectionError(K1, P1_mat, K2, P2_mat, pts_3, pts_4, points3d):
     statfile.write(str(avg) + ' ')
 
 
+# P = [I|0]
 def BoringCameraArray():
     P = np.zeros((3, 4), dtype='float32')
     P[0][0] = 1
@@ -1004,6 +1057,7 @@ def synchroniseGeometric(pts_1, pts_2, F):
     longer = []
     short_flag = 0
 
+    # Work out which of two trajectories is shorter
     if len(pts_1) < len(pts_2):
         shorter = pts_1
         longer = pts_2
@@ -1019,18 +1073,23 @@ def synchroniseGeometric(pts_1, pts_2, F):
         print "Shorter:", len(shorter)
         print "Diff:", diff
 
+    # Convert to homogeneous
     shorter_hom = cv2.convertPointsToHomogeneous(shorter)
     longer_hom = cv2.convertPointsToHomogeneous(longer)
 
     averages = []
 
+    # Shift the shorter through the longer
     for offset in xrange(0, diff + 1):
         err = 0
         avg = 0
 
         for i in xrange(0, len(shorter)):
+            # current matching of pts a-b from trajectories A-B
             a = shorter_hom[i]
             b = longer_hom[i + offset]
+
+            # Test x'Fx = 0
             this_err = abs(np.mat(a) * F * np.mat(b).T)
             err += this_err
 
@@ -1068,36 +1127,8 @@ def synchroniseGeometric(pts_1, pts_2, F):
     return syncd1, syncd2
 
 
-def autoGetCorrespondences(img1, img2):
-    sift = cv2.SIFT()
-
-    # find the keypoints and descriptors with SIFT
-    kp1, des1 = sift.detectAndCompute(img1, None)
-    kp2, des2 = sift.detectAndCompute(img2, None)
-
-    # Brute Force Matcher
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
-    matches = sorted(matches, key=lambda x: x.distance)
-
-    # Ratio test
-    good = []
-
-    for m, n in matches:
-        if m.distance < 0.75 * n.distance:
-            good.append(m)
-
-    # cv2.drawMatchesKnn expects list of lists as matches.
-    img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, flags=2)
-    plt.imshow(img3), plt.show()
-
-    sys.exit()
-
-
-def stereoMatching():
-
-    img1 = cv2.imread('image1.png', 0)
-    img2 = cv2.imread('image2.png', 0)
+# Attempted SIFT-SIFT Brute force matcher. Poor results.
+def stereoMatching(img1, img2):
 
     sift = cv2.SIFT()
 
@@ -1122,6 +1153,8 @@ def stereoMatching():
 
     pts1 = np.float32(pts1)
     pts2 = np.float32(pts2)
+
+    # Testing a hacky outlier detection with findFundamentalMat.
     F, mask = cv2.findFundamentalMat(pts1, pts2, cv2.RANSAC, 2)
     print len(pts1)
 
@@ -1132,19 +1165,7 @@ def stereoMatching():
     return pts1, pts2
 
 
-def autoGetF(pts_1, pts_2):
-
-    F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv2.FM_LMEDS)
-
-    # We select only inlier points
-    pts_1 = pts_1[mask.ravel() == 1]
-    pts_2 = pts_2[mask.ravel() == 1]
-
-    avg, std = fund.testFundamentalReln(F, pts_1, pts_2)
-
-    return F, pts_1, pts_2
-
-
+# Import the camera instrinsics from file
 def importCalibration(session):
 
     path1 = 'sessions/' + str(session) + '/camera1.txt'
@@ -1166,9 +1187,11 @@ def importCalibration(session):
 
     return K1, K2
 
-# ----------------------------------------------------------------------
-# ------------------- MAIN PROGRAM STARTS HERE -------------------------
-# ----------------------------------------------------------------------
+'''
+----------------------------------------------------------------------
+------------------- MAIN PROGRAM STARTS HERE -------------------------
+----------------------------------------------------------------------
+'''
 
 # INITIALISE ANY GLOBALLY AVAILABLE DATA
 try:
@@ -1196,6 +1219,7 @@ print "> Set Camera Matrices"
 print K1
 print K2
 
+# uncomment to add noise to the trajectory image data:
 noise = 0
 # try:
 #     noise = float(sys.argv[3])
@@ -1210,8 +1234,8 @@ if not os.path.exists('sessions/' + clip + statdir):
 
 # append to the statfile
 statfile = open('sessions/' + clip + statdir + 'all_stats.txt', 'a')
-# statfile.write(
-#     'N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std\n')
+statfile.write(
+    'N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std\n')
 
 # get the data completely resh from file
 data3D, pts1_raw, pts2_raw, pts3_raw, pts4_raw, postPts1, postPts2, rec_data = getData(
@@ -1232,8 +1256,6 @@ postPts2 = np.array(postPts2, dtype='float32')
 
 N = len(pts1)
 statfile.write(str(N) + ' ')
-
-
 statfile.write(str(noise) + ' ')
 
 # NOISE

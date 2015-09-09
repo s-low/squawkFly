@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hello World</title>
+      <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'></script> 
+      <script type='text/javascript' src='http://www.x3dom.org/download/1.7/components/Geometry2D.js'></script>
+      <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+  </head>
+       
+<body>
+
+    <h1>XHTML Hello World</h1>
+    <p>
+      Navigation modes: 
+      <ul>
+      <li>e: Examine </li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>w: Walk </li>
+      <li>f: Fly </li>
+      <li>h: Helicopter</li>
+      <li>l: Look at</li>
+      <li>t: Turntable</li>
+      <ul>
+        <li>Double click to set centre of rotation</li>
+      </ul>
+      <li>g: Game</li>
+      </ul>
+
+      Also:
+      <ul>
+        <li>r: reset view</li>
+        <li>a: show all</li>
+        <li>u: upright</li>
+      </ul>
+    </p>
+
+    <x3d width='900px' height='900px'> 
+    <scene> 
+    <background skyColor = '0.7 0.89 0.95'></background>
+    <navigationInfo type='"any"' id="navType"></navigationInfo>
+        <Viewpoint position='0 0 80'/>
+        <directionalLight ambientIntensity='0.5' global='true'/>
+            
+          <!-- GRASS -->
+          <shape>
+          <rectangle2D size='100,100' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='0.1 0.7 0.1' ambientIntensity='0.1'></material> 
+            </appearance>
+          </shape>
+          
+        <transform translation = '0 16 0'>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='0 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- UPRIGHT -->
+          <transform rotation='1 0 0 1.57' translation='6 0 1.2'>
+          <shape>
+            <cylinder radius ='0.1' height='2.4'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <!-- CROSSBAR -->
+          <transform rotation='0 0 1 1.57'>
+          <transform rotation='0 1 0 1.57' translation='0 -3 2.3'>
+          <shape>
+            <cylinder radius ='0.1' height='6.0'></cylinder>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <shape>
+          <rectangle2D size='0.2,60' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          
+          <transform translation='-4 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 13' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -3 0'>
+          <shape>
+          <rectangle2D size='0.2, 34.2' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          </transform>
+
+          <transform translation='-3.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='9.5 -2 0'>
+          <shape>
+          <rectangle2D size='0.2, 4' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='-14 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+
+          <transform translation='20 -7.0 0'>
+          <shape>
+          <rectangle2D size='0.2, 14' ></rectangle2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+          <transform translation='3 -9 0'>
+          <shape>
+          <disk2D outerRadius='0.2'></disk2D>
+            <appearance>
+              <material diffuseColor='1 1 1'></material> 
+            </appearance>
+          </shape>
+          </transform>
+          
+
+        </transform>
+
+        <!-- insert balls here -->
+         
+<transform translation="0 -3.89 0">
+  <group DEF="ball">
+    <shape>
+      <sphere radius="0.1" />
+      <appearance>
+        <material diffuseColor="0 0 1" />
+      </appearance>
+    </shape>
+  </group>
+  <transform translation="0.0 0.0 0.0">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.22 0.65 0.14">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.33 0.96 0.24">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.44 1.29 0.35">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.55 1.59 0.42">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.67 1.92 0.5">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.78 2.24 0.59">
+    <group USE="ball" />
+  </transform>
+  <transform translation="0.89 2.58 0.69">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.0 2.9 0.76">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.12 3.24 0.83">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.22 3.56 0.91">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.32 3.9 0.97">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.42 4.22 1.04">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.51 4.56 1.1">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.62 4.88 1.16">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.72 5.22 1.22">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.81 5.56 1.28">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.9 5.91 1.33">
+    <group USE="ball" />
+  </transform>
+  <transform translation="1.99 6.23 1.39">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.09 6.57 1.44">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.17 6.89 1.48">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.25 7.23 1.54">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.32 7.55 1.57">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.41 7.89 1.62">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.48 8.2 1.65">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.57 8.53 1.7">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.63 8.83 1.72">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.71 9.15 1.75">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.78 9.46 1.78">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.86 9.78 1.81">
+    <group USE="ball" />
+  </transform>
+  <transform translation="2.93 10.07 1.83">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.0 10.38 1.86">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.06 10.67 1.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.13 10.97 1.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.19 11.27 1.89">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.26 11.56 1.89">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.32 11.82 1.9">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.39 12.07 1.88">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.45 12.37 1.89">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.5 12.66 1.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.56 12.92 1.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.62 13.16 1.83">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.67 13.43 1.84">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.73 13.7 1.82">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.79 13.96 1.8">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.84 14.23 1.76">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.9 14.46 1.74">
+    <group USE="ball" />
+  </transform>
+  <transform translation="3.95 14.69 1.7">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.0 14.95 1.67">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.06 15.21 1.63">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.11 15.43 1.6">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.15 15.65 1.56">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.2 15.9 1.51">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.26 16.15 1.48">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.3 16.36 1.41">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.36 16.58 1.38">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.4 16.8 1.3">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.44 17.04 1.26">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.48 17.26 1.18">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.53 17.5 1.12">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.57 17.7 1.06">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.62 17.9 0.99">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.66 18.13 0.92">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.71 18.38 0.87">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.75 18.56 0.78">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.78 18.75 0.73">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.81 18.96 0.64">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.85 19.18 0.57">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.9 19.38 0.48">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.94 19.59 0.4">
+    <group USE="ball" />
+  </transform>
+  <transform translation="4.97 19.79 0.32">
+    <group USE="ball" />
+  </transform>
+  <transform translation="5.0 19.99 0.21">
+    <group USE="ball" />
+  </transform>
+  <transform translation="5.03 20.18 0.16">
+    <group USE="ball" />
+  </transform>
+</transform>  
+
+
+      </scene>
+      </x3d>
+</body>
+</html>

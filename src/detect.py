@@ -1,6 +1,18 @@
 #!/usr/local/bin/python
 
-# MAIN DETECTION TEST FILE
+''' detect.py
+
+OBJECT DETECTION
+
+Input: Video file or image sequence
+Output: Cloud of image point detections with frame data and unique point_ID
+
+arg1 = input video / image sequence
+*arg2* = outfile path, otherwise just to data/detections.txt
+*arg3* = 'suppress' to suppress any graphical feedback
+
+'''
+
 import sys
 import cv2
 import numpy as np
@@ -8,32 +20,35 @@ import os.path
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 
 
-# mouse callback function
+# Mouse call-back
+# In case we want to generate ground truth detections by-eye
 def click(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         # make sure to invert y-coord
         string = str(x) + ' -' + str(y) + ' ' + str(time)
         truthfile.write(string + '\n')
 
-cap = 0
-debugging = False
+# Flags: Debug mode, tracking display, pause
+showDiff = False
 tracking = True
 paused = False
-point_index = 0
 
+# Size (area) filter bounds
 max_area = 1500
 min_area = 250
 
+# Initialise variables
+startOfFile = True
+time = 0
+cap = 0
+point_index = 0
 outfile = None
 truthfile = None
 
-startOfFile = True
-time = 0
-
-dots = []
+# Detection list
 detections = []
 
-# default to showing the detection streams
+# Default to showing the detection streams, suppress if told to
 view = True
 try:
     if sys.argv[3] == 'suppress':
@@ -46,7 +61,9 @@ def main():
     global cap
     global outfile
     global truthfile
-    keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: debug}
+
+    # Keycodes for acioning
+    keys = {-1: cont, 116: track, 112: pause, 113: quit, 100: showDifference}
 
     if len(sys.argv) < 2:
         print "Usage : ./detect.py <image_sequence> *<outfile>* *<view>*"
@@ -54,7 +71,7 @@ def main():
 
     path = sys.argv[1]
 
-    # supplied path can be a directory containing an image sequence: 00001.png
+    # Supplied path can be a directory containing an image sequence: 00001.png
     if os.path.isdir(path):
         print "> INPUT: Image Sequence"
         truthfile = open('ground_truth.txt', 'w')
@@ -63,13 +80,12 @@ def main():
         print "> INPUT: Video File"
         truthfile = open('ground_truth.txt', 'w')
 
-    # otherwise just go and get the video file
+    # Otherwise just go and get the video file
     cap = cv2.VideoCapture(path)
-    # print "Frame rate: " + repr(cap.get(5))
 
     outfile = open('data/data_detections.txt', 'w')
 
-    # read three frames for initialisation
+    # Read first three frames for initialisation
     ret, frame0 = cap.read()
     grayed0 = cv2.cvtColor(frame0, cv2.COLOR_RGB2GRAY)
 
@@ -83,8 +99,9 @@ def main():
     while(cap.isOpened()):
 
         temp = frame1  # without contours
-        current = diff(grayed0, grayed1, grayed2)
 
+        # 3-frame difference image and morphological ops
+        current = diff(grayed0, grayed1, grayed2)
         current = morph(current)
 
         temp_thresh = current.copy()
@@ -98,26 +115,30 @@ def main():
             cv2.setMouseCallback('Feed', click)
             cv2.imshow('Feed', frame1)
 
-            if debugging:
+            if showDiff:
                 cv2.imshow('Threshold Image', current)  # why does this go odd
             else:
                 cv2.destroyWindow('Threshold Image')
 
         if paused:
+            # Wait indefinitely for a keypress
             key = cv2.waitKey()
 
+            # P - unpause
             if key == 112:
                 pause()
 
+            # Q - quit everything
             if key == 113:
                 cap.release()
                 cv2.destroyAllWindows()
                 outfile.close()
                 sys.exit()
 
-        # Next iteration
+        # Read next frame
         ret, next_frame = cap.read()
 
+        # Shuffle the frames along 0=1 1=2 2=next
         if ret is True:
             frame0 = temp
             grayed0 = grayed1
@@ -128,6 +149,7 @@ def main():
             frame2 = next_frame
             grayed2 = cv2.cvtColor(next_frame, cv2.COLOR_RGB2GRAY)
 
+            # If a key has been pressed, route it to the relevant mode-toggle
             try:
                 keys[cv2.waitKey(1)]()
             except KeyError:
@@ -140,12 +162,10 @@ def main():
     outfile.close()
 
 
-# returns a thresholded difference image
+# returns a thresholded difference image between 3-frames
 def diff(f0, f1, f2):
     d1 = cv2.absdiff(f2, f1)
-
     d2 = cv2.absdiff(f1, f0)
-
     overlap = cv2.bitwise_and(d1, d2)
 
     # binary threshold(src, thresh, maxval, type)
@@ -189,26 +209,33 @@ def search(src, thresh):
 
             area = cv2.contourArea(contour)
 
-            # filter by size
+            # filter by size/area
             if area < max_area and area > min_area:
-                # filter by squareness
+
+                # Get the bounding box and label contours with area
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.putText(src, str(area), (x, y), cv2.FONT_HERSHEY_PLAIN,
                             0.8, (255, 255, 255))
+
+                # filter by squareness/aspect ratio
                 if square(h, w) and circular(area, h, w):
                     point_index += 1
+
+                    # Draw the bounding box if detected
                     cv2.rectangle(src, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
+                    # Get central coords
                     cx = x + float(w) / 2.0
                     cy = -1 * (y + float(h) / 2.0)
-                    dots.append((int(cx), -int(cy)))
 
+                    # Create and append detection
                     d = (cx, cy, time, point_index)
                     detections.append(d)
 
                     if not startOfFile:
                         outfile.write('\n')
 
+                    # Write to file
                     outfile.write(repr(cx) + ' ' + repr(cy) + ' ' +
                                   repr(time) + ' ' + repr(point_index))
 
@@ -216,6 +243,7 @@ def search(src, thresh):
                         startOfFile = False
 
 
+# test aspect ratio
 def square(h, w):
     shorter = min((h, w))
     longer = max((h, w))
@@ -238,6 +266,7 @@ def circular(area, h, w):
         return False
 
 
+# Toggle whether or not to draw the contours/boxes
 def track():
     global tracking
     tracking = not tracking
@@ -253,14 +282,15 @@ def pause():
     paused = not paused
 
 
-def debug():
-    global debugging
-    debugging = not debugging
+# Show the difference images or not
+def showDifference():
+    global showDiff
+    showDiff = not showDiff
 
-    if debugging:
-        print "Debug ON"
+    if showDiff:
+        print "Diff ON"
     else:
-        print "Debug OFF"
+        print "Diff OFF"
 
 
 def cont():
@@ -276,7 +306,7 @@ def quit():
 # Procedural body
 main()
 
-# optionally specify a dedicated outfile
+# Check for a dedicated outfile (in addition to the standard)
 try:
     outfile = open(sys.argv[2], 'w')
 

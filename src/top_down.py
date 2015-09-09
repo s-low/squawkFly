@@ -1,8 +1,13 @@
 #!/usr/local/bin/python
 
-'''
-Open a 3d trajectory file (x y z) and produce a top-down plot of the
-x-z plane.
+''' top_down.py
+
+    Open a 3d trajectory file (x y z) and produce a top-down plot of the
+    x-z plane, with straight line between start and end and the maximum
+    lateral displacement from that line measured.
+
+    arg1 = infile
+    arg2 = optional outfile
 '''
 
 import sys
@@ -13,10 +18,9 @@ left = 'left'
 right = 'right'
 neither = ''
 
+
 # return the distance from a cartesian point to a straight line through
 # the origin: y = mx + 0
-
-
 def distanceToLine(m1, point):
     curve = neither
     x = point[0]
@@ -45,6 +49,7 @@ def distanceToLine(m1, point):
         curve = neither
 
     return d, curve
+
 
 infilename = sys.argv[1]
 outfilename = None

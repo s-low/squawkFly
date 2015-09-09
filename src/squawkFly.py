@@ -1,4 +1,18 @@
 #!/usr/local/bin/python
+
+
+''' squawkFly.py
+
+The all-encompassing GUI and controller for user operation.
+
+Requires no command line arguments, just boots the graphical interface and
+proceeds to call the requisite scripts based on the file paths supplied through
+that, and manage the underlying filesystem.
+
+Built with Python's Tkinter and ttk framework.
+
+'''
+
 from Tkinter import *
 import ttk
 from tkFileDialog import askopenfilename
@@ -8,11 +22,13 @@ import shutil
 import subprocess
 
 
+# Set the status message
 def setStatus(string):
     status.set(string)
     status_label.update()
 
 
+# escape any spaces that might appear in the input paths
 def handleSpaces(string):
     i = string.find(' ')
     new = string[:i] + '\\' + string[i:]
@@ -22,6 +38,12 @@ def handleSpaces(string):
         new = handleSpaces(new)
 
     return new
+
+
+'''
+    All of the choose methods assign a path to a text variable to later
+    be passed as command line arguments to the system scripts.
+'''
 
 
 def d_choose1():
@@ -64,19 +86,21 @@ def f_choose4():
     clip2.set(filename)
 
 
+# Update the list of existing clips when a session is selected
 def changeClipOptions(event):
     session_value = session_name.get()
     lst = get_subdirectories('sessions/' + session_value)
     clip_entry['values'] = lst
 
 
+# return the list of subdirectories within a folder
 def get_subdirectories(folder):
     return [sub for sub in os.listdir(folder)
             if os.path.isdir(os.path.join(folder, sub))]
 
 
+# Delete the current clip folder and all of it's contents
 def delete():
-
     clip = clip_name.get()
     session = session_name.get()
     if session is not None and session != '':
@@ -90,6 +114,7 @@ def delete():
             print "Session does not exist:", p_clip
 
 
+# Submit the four file paths for analysis
 def submit(*args):
     print "--Submit--"
 
@@ -115,20 +140,22 @@ def submit(*args):
     if not os.path.exists(p_session):
         new_session = True
         if not cal1 or not cal2 or not vid1 or not vid2:
-            print "WARN: Invalid input. To create a session you must submit all four files with a valid clip name."
+            print "WARN: Invalid input. To create a session you must" + \
+                "submit all four files with a valid clip name."
             return
 
     if not os.path.exists(p_clip):
         new_clip = True
         if not vid1 or not vid2:
-            print "WARN: Invalid input. To create a new clip in an existing session you must submit both free kick videos."
+            print "WARN: Invalid input. To create a new clip in an" + \
+                "existing session you must submit both free kick videos."
             return
 
     if new_session:
         cal1 = handleSpaces(calib1.get())
         cal2 = handleSpaces(calib2.get())
 
-    # technically, could supply these for the visualisation of an old clip
+    # technically, user could supply these for the visualisation of an old clip
     if videos:
         vid1 = handleSpaces(clip1.get())
         vid2 = handleSpaces(clip2.get())
@@ -143,6 +170,8 @@ def submit(*args):
     session = ' ' + p_session + '/'
     clip = ' ' + p_clip + '/'
 
+    # Setup all of the various arguments to be passed to each step
+    # of the processing pipeline
     args_cal1 = cal1 + session + 'camera1.txt ' + view
     args_cal2 = cal2 + session + 'camera2.txt ' + view
 
@@ -236,10 +265,17 @@ def submit(*args):
     # finish by revealing the results in finder
     subprocess.call(["open", "-R", p_clip + '/graphs'])
 
+'''
+----------------------------------------------------------
+----------------Program begins to run HERE----------------
+----------------------------------------------------------
+'''
 
+# create graphical components
 root = Tk()
 root.title("squawkFly")
 
+# Get the session names
 lst = os.listdir('sessions')
 
 frame = ttk.Frame(root, padding="3 3 12 12")

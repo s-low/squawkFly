@@ -2,13 +2,26 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 import math
-
 import plotting as plot
 import structureTools as tools
 
+''' fundamental.py
+
+Methods relating exclusively to the fundamental matrix and epipolar geometry.
+
+Helpful to have all of these in one file:
+
+- Test a fundamental matrix(F, pts1, pts2, view_flag)
+- Test an essential matrix(E, pts1, pts2)
+- Compute the distance to an epiline(line, point)
+- Compute Hartley's normalisation
+- Check Hartley's normalisation
+
+'''
+
 
 def testFundamentalReln(F, pts_1, pts_2, view):
-    # check that xFx = 0 for homog coords x x'
+    # check that xFx = 0 for homogenenous coords x x'
     F = np.mat(F)
     tools.is_singular(F)
 
@@ -18,17 +31,18 @@ def testFundamentalReln(F, pts_1, pts_2, view):
     errors = []
     sum_err = 0
 
-    # forwards
+    # forwards: pt1 * F * pt2 = ?
     for i in range(0, len(pts1_hom)):
         this_err = abs(np.mat(pts1_hom[i]) * F * np.mat(pts2_hom[i]).T)
         sum_err += this_err[0, 0]
         errors.append(this_err[0, 0])
 
-    # backwards
+    # backwards 2 * F * 1 = ?
     for i in range(0, len(pts2_hom)):
         this_err = abs(np.mat(pts2_hom[i]) * F * np.mat(pts1_hom[i]).T)
         sum_err += this_err[0, 0]
         errors.append(this_err[0, 0])
+
     # NB: although defining eqn is K'.T * F * K, this just means
     # row x grid x col or (3x1)(3x3)(1x3). here our points are already rows
     # so we have to transpose the last to get our column
@@ -36,7 +50,7 @@ def testFundamentalReln(F, pts_1, pts_2, view):
     err = sum_err / (2 * len(pts1_hom))
     print "> x'Fx = 0:", err
 
-    # inspec the error distribution
+    # inspect the error distribution
     if view:
         plot.plotOrderedBar(errors,
                             name='x\'Fx = 0 Test Results ',
@@ -48,11 +62,12 @@ def testFundamentalReln(F, pts_1, pts_2, view):
     pts2_epi = pts_2.reshape((-1, 1, 2))
 
     # lines computed from pts1
+    # arg 2/3 is a flag to transpose F (2) or not (1)
     lines1 = cv2.computeCorrespondEpilines(pts1_epi, 1, F)
     lines1 = lines1.reshape(-1, 3)
 
     # lines computed from pts2
-    # (NB: index == 2 results in a transpose of F) in the calculation
+    # NB: passing 2 at pos1 results in a transpose of F in the calculation
     lines2 = cv2.computeCorrespondEpilines(pts2_epi, 2, F)
     lines2 = lines2.reshape(-1, 3)
 
@@ -64,20 +79,24 @@ def testFundamentalReln(F, pts_1, pts_2, view):
     for l, p in zip(lines2, pts_1):
         distances1.append(distanceToEpiline(l, p))
 
+    # Average p-line distances
     avg1 = sum(distances1) / len(distances1)
     avg2 = sum(distances2) / len(distances2)
 
     std1 = np.std(distances1)
     std2 = np.std(distances2)
 
+    # Append the two lists of p-line measures
     distances = distances1 + distances2
     avg = np.mean(distances)
     std = np.std(distances)
 
     print "> Average distance to epiline in image 1 and 2 (px):", avg1, avg2
-    print "> Averaged:", avg
+    print "> Overall Average:", avg
+    print "> Std Dev:", std
 
     if view:
+        # Inspect the distributions
         plot.plotOrderedBar(distances1,
                             'Image 1: Point-Epiline Distances', 'Index', 'px')
 
@@ -93,7 +112,7 @@ def testFundamentalReln(F, pts_1, pts_2, view):
     return avg, std
 
 
-# find the distance between an epiline and image point pair
+# find the distance between an epiline and image point
 def distanceToEpiline(line, pt):
 
     # ax + by + c = 0
@@ -134,8 +153,8 @@ def distanceToEpiline(line, pt):
     return d
 
 
+# check that x'Ex = 0 for normalised, homog coords x x'
 def testEssentialReln(E, nh_pts1, nh_pts2):
-    # check that x'Ex = 0 for normalised, homog coords x x'
     E = np.mat(E)
     tools.is_singular(E)
 
@@ -203,8 +222,8 @@ def eightPointNormalisation(pts):
     return pts_r, T
 
 
+# average distance from origin should be sqrt(2) and centroid = origin
 def check8PointNormalisation(pts_):
-    # average distance from origin should be sqrt(2) and centroid = origin
     d_tot = 0
     cx = 0
     cy = 0

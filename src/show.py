@@ -1,11 +1,13 @@
 #!/usr/local/bin/python
 
+''' show.py
+
+    command line accessible 2D plot of any space separated two column text file
+'''
+
 import sys
 import matplotlib.pyplot as plt
 import plotting as plot
-
-# plt.style.use('ggplot')
-
 
 filename = sys.argv[1]
 

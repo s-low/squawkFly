@@ -1,4 +1,18 @@
 #!/usr/local/bin/python
+''' trace.py
+
+    generates a video of the extracted trajectory overlayed on the
+    original footage, tracing it's 2D trajectory. Also overlays
+    the final speed and distance to goal extracted from the 3D model.
+
+    arg1 = video clip or image sequence (clip.mp4 or /clip/)
+    arg2 = 2d trajectory corresponding to that clip (trajectory.txt)
+    arg3 = optional outfilename for saving the video to
+
+    Finds speed and distance in 'tracer_stats.txt' inside the same
+    directory as the trajectory resides in.
+
+'''
 
 import sys
 import cv2
@@ -7,11 +21,6 @@ import numpy as np
 import os.path
 from time import sleep
 import plotting as plot
-
-
-# two arguments:
-# 1. A video clip or image sequence
-# 2. The the 2D trajectory corresponding to that clip
 
 if len(sys.argv) < 3:
     print "Usage : python trace.py <image_sequence> <trajectory> <outfile>"
@@ -65,6 +74,7 @@ count = 0
 dots = []
 save = False
 
+# Save the video if filename supplied
 if outfilename is not None:
     save = True
     fps = 29.0
@@ -73,6 +83,7 @@ if outfilename is not None:
     vout = cv2.VideoWriter()
     success = vout.open(outfilename, fourcc, fps, capsize, True)
 
+# read each frame, and draw lines between detections in the relevant frames
 while (1):
     ret, frame = cap.read()
 
@@ -91,9 +102,6 @@ while (1):
                     color=(255, 255, 255))
 
         for dot in dots:
-            # draw the dot
-            # cv2.circle(frame, dot, 4, (0, 0, 255), thickness=-1)
-
             # connect the dots
             if prev is not None:
 
@@ -102,6 +110,7 @@ while (1):
                          color=(0, 0, 255),
                          thickness=2)
 
+            # update the last dot to be the current one
             prev = dot
 
         try:
@@ -118,7 +127,6 @@ while (1):
         if save:
             vout.write(frame)
 
-        
     else:
         break
 

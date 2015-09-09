@@ -1,5 +1,24 @@
 #!/usr/local/bin/python
 
+''' trajectories.py
+
+    select the longest tip-to-tail trajectory from the candidates outputted
+    by Kalman.py
+
+    Write that trajectory data to a new file.
+
+    optionally show all trajectories longer than a minimum length.
+
+    arg1 = minimum length of a trajectory to be included in the subset
+        (-1 for longest trajectory)
+
+    arg2 = optional infile for infile of raw detections
+
+    arg3 = optional infile for candidate trajectories
+
+    arg4 = optional outfile for subset of trajectories
+'''
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +33,7 @@ except IndexError:
     pass
 
 
+# how long is the trajectory from start to finish across the screen
 def pixLength(set_x, set_y):
 
     copy_x = [x for x in set_x]
@@ -37,12 +57,6 @@ def pixLength(set_x, set_y):
 
     return length
 
-
-# font = {'family': 'normal',
-#         'weight': 'bold',
-#         'size': 18}
-
-# plt.rc('font', **font)
 
 min_length = 0
 if len(sys.argv) > 1:
@@ -93,7 +107,6 @@ h = 800 / dpi
 w = 1280 / dpi
 fig = plt.figure(figsize=(w, h))
 
-# xlim=(400, 800), ylim=(-720,0)
 ax = plt.axes(xlim=(0, 1280), ylim=(-720, 0))
 ax.set_title("Ball Trajectory from Kalman Filter", y=1.03)
 ax.set_xlabel("Graphical X")

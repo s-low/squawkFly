@@ -1,7 +1,8 @@
 #!/usr/local/bin/python
 
 '''
-pulled the synchronise method out of reconstruct.py to test it in isolation
+    Pulled the Apex synchronisation method out of reconstruct.py to test
+    it in isolation
 '''
 import os.path
 import sys

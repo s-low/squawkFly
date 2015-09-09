@@ -6,14 +6,25 @@ Calibrate.py
 Supplied with either a video file or a sequence of photographs of a calibration
 pattern, retrieve the camera intrinsics and write to file if supplied.
 
+The calibration pattern should be ! 9X6 ! and can be downloaded here:
+
+http://docs.opencv.org/_downloads/pattern.png
+
 arg1 = input video or dir of photographs
 arg2 = designated outfile destination *optional*
+arg3 = 'suppress' *optional* suppress the graphical feedback
 
 Note that if an image sequence is supplied (directory of every frame in a
 video) then it will be interpreted as a dir of photographs and every frame will
 be used up to a maximum of 50.
-'''
 
+The core method implemented here is from the OpenCV Documentation itself:
+
+http://opencv-python-tutroals.readthedocs.org/
+en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+
+with additional functionality to handle video input
+'''
 
 import sys
 import cv2
@@ -22,7 +33,7 @@ import numpy as np
 import glob
 import os
 
-# default to showing the calibration images
+# Default to showing the calibration images unless told otherwise
 view = True
 try:
     if sys.argv[3] == 'suppress':
@@ -30,30 +41,29 @@ try:
 except IndexError:
     pass
 
-# termination criteria
+# DIRECTLY FROM THE OPENCV DOCUMENTATION:
+# CornerSubPix Termination Criteria - stock values
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-# prepare (3D) object points (x,y,z): (0,0,0), (1,0,0) ....,(6,5,0)
-# using unit squares initially
-objp = np.zeros((6 * 9, 3), np.float32)
-# just a shortcut to the desired coords
+dims = 9 * 6
+# Setting up the object point array
+objp = np.zeros((dims, 3), np.float32)
 objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
+objpoints = []
+imgpoints = []
 
-objpoints = []  # 3d points in real space
-imgpoints = []  # 2d points in image plane
+# Supply video file or folder of images
 images = []
 num_images = 0
-
 source = sys.argv[1]
 
-# if the source is a directory
+# If the source is a directory
 if os.path.isdir(source):
     is_video = False
     folder = source + '/*.png'
     print "Calibrate from images:", folder
     images = glob.glob(folder)
 
-# if the source is a file (should be video)
+# If the source is a file (should be video)
 elif os.path.isfile(source):
 
     is_video = True
@@ -90,6 +100,7 @@ for image in images:
     else:
         img = cv2.imread(image)
 
+    # Convert to grayscale then find chessboardCorners
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, corners = cv2.findChessboardCorners(
         gray, (9, 6),
@@ -100,6 +111,7 @@ for image in images:
         success_count += 1
         objpoints.append(objp)
 
+        # Increase the accuracy of found corner coordinates
         cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         imgpoints.append(corners)
 
@@ -113,9 +125,11 @@ for image in images:
         print "> 50 calibration images processed. Stopping."
         break
 
+# Calibrate from world and image coords of corners
 err, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
 
+# Calculate the reprojection error manually
 mean_error = 0
 for i in xrange(len(objpoints)):
     imgpoints2, _ = cv2.projectPoints(

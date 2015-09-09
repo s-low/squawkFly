@@ -1,15 +1,25 @@
 #!/usr/local/bin/python
 
+''' interpoate.py
+
+Interpolate an extracted trajectory.
+
+trajectory is first split at bounce points into complete segments, which
+are fit with 5th degree polynomial and interpolated.
+
+arg1 = input list of trajectory image points
+arg2 = frame rate, float.
+*arg3* = optional outfilename
+*arg4* = optional 'suppress' of graphics
+
+'''
+
 import sys
 import cv2
 import cv2.cv as cv
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path
-
-plt.style.use('ggplot')
-
-max_ms_diff = float(17)  # no two points should be further apart in time
 
 try:
     filename = sys.argv[1]
@@ -32,10 +42,14 @@ try:
 except IndexError:
     pass
 
+# if the user thinks the camera is 24fps, correct it slightly
 if abs(frame_rate - 24) < 0.01:
     frame_rate = 23.976
 
 frame_length_ms = float(1000) / float(frame_rate)
+
+# no two points should be further apart in time than 17ms after interpolation
+max_ms_diff = float(frame_length_ms / 2)
 
 print "Frame Rate:", frame_rate
 print "Length of each frame (ms):", frame_length_ms
@@ -44,9 +58,9 @@ print "Length of each frame (ms):", frame_length_ms
 with open(filename) as datafile:
     data = datafile.read()
     datafile.close()
-
 data = data.split('\n')
-# get rid of any empty line at the end of file
+
+# Gobble blanks at EOF if there
 if data[-1] in ['\n', '\r\n', '']:
     data.pop(-1)
 
@@ -62,6 +76,7 @@ for row in data:
     points.append(point)
 
 
+# fit the curve segment with 5th degree polynomial
 def fit(a, b):
 
     z = np.polyfit(a, b, 5)
@@ -78,6 +93,7 @@ def fit(a, b):
     return func
 
 
+# fill in the gaps, func is the fit function
 def interpolate(start, end, func):
     global interpolated_points
 
@@ -115,11 +131,10 @@ def interpolate(start, end, func):
     y_new = func(x_new)
     if view:
         plt.plot(x, y, 'o', x_new, y_new)
-        # plt.xlim([seg_x[0] - 1, seg_x[-1] + 1])
         plt.show()
 
 
-# Find any bounces in the trajectory
+# FIRST: Find any bounces in the trajectory
 arr = np.array(points)
 x = arr[:, 0]
 y = arr[:, 1]
@@ -141,7 +156,7 @@ for i, ay in enumerate(y):
         ax = x[i]
         bounc_i.append(i)
 
-# Split at the bounces and interpolate each individually
+# Split trajectory at the bounces and interpolate each segment individually
 root = 0
 
 # for each bounce

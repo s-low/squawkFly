@@ -1,11 +1,13 @@
 #!/usr/local/bin/python
 
-'''
-./postPoints.py <infile> <outfile>
+''' postPoints.py <infile> <points outfile> <image_outfile>
 
 User interface for marking up goal post corners. Input file is a video or image
 sequence, of which the first frame is taken and displayed to the user, who is
 prompted to click the bottom left, top left, top right and bottom right corners
+
+points are saved to file, and the relevant frame is saved too.
+
 '''
 import cv2
 import cv2.cv as cv
@@ -30,12 +32,13 @@ def click(event, x, y, flags, param):
             string = str(x) + ' -' + str(y)
             outfile.write(string + '\n')
 
-
+# Colors and fonts
 blue = (255, 0, 0)
 red = (0, 0, 255)
 white = (255, 255, 255)
 font = cv2.FONT_HERSHEY_DUPLEX
 
+# No optional arguments
 if len(sys.argv) != 4:
     print "Usage : /postPoints.py <infile> <points outfile> <image_outfile>"
     sys.exit(0)
@@ -55,6 +58,7 @@ cap = cv2.VideoCapture(infilename)
 
 ret, original = cap.read()
 
+# need a bunch of copies because we're going to draw all over them
 frame0 = original.copy()
 frame1 = original.copy()
 frame2 = original.copy()
@@ -110,6 +114,7 @@ cv2.putText(frame5, "Great! Press Q to exit.", (360, 600),
             color=white,
             thickness=2)
 
+# Mouse click will iterate through the frame list
 frames = (frame0, frame1, frame2, frame3, frame4, frame5)
 current = frame0
 

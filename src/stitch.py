@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 
+''' stitch.py
+
+    Now unused post processing step that appends overlapping trajectories to
+    one another. Was extremely important when the Kalman filter didn't work.
+'''
+
 import sys
 import numpy as np
 import math
@@ -131,52 +137,6 @@ def stitch():
                                         point[TID] = A
                                     elif point[TID] == B and point[PID] not in B_points:
                                         point[TID] = 1000
-
-                    # if the last two points of A are the first two points of B
-                    # if A_points[-1] == B_points[1]:
-                    #     if A_points[-2] == B_points[0]:
-                    #         changed = True
-                    #         print "\n> MATCH between TIDS:", A, B
-                    #         print ">", A_points[-2], B_points[0]
-                    #         print ">", A_points[-1], B_points[1]
-
-                    # change tid of B to match A and and remove dupes
-                    #         print "> deleting points", B_points[0:2], "from", B
-                    #         del B_points[0:2]
-
-                    # do this to original data
-                    #         print "> updating data with stitch"
-                    #         for point in tid_pid:
-                    #             if point[TID] == B and point[PID] in B_points:
-                    #                 point[TID] = A
-                    #             elif point[TID] == B and point[PID] \
-                    #                     not in B_points:
-                    #                 point[0] = 1000
-
-                    # OR if the last point is the first point only
-                    # elif A_points[-1] == B_points[0]:
-                    # compare the angle between end of A and start of B
-                    #     theta1 = getAngle(A_points[-2], A_points[-1])
-                    #     theta2 = getAngle(B_points[0], B_points[1])
-
-                    # if the angles are within k degrees
-                    #     if abs(theta1 - theta2) < 15:
-                    #         changed = True
-                    #         print "\n PARTIAL MATCH between TIDS:", A, B
-                    #         print ">", A_points[-1], B_points[0]
-
-                    # change tid of B to match A and and remove dupes
-                    #         print "> deleting point", B_points[0:1], "from", B
-                    #         del B_points[0:1]
-
-                    # do this to original data
-                    #         print "> updating data with stitch"
-                    #         for point in tid_pid:
-                    #             if point[TID] == B and point[PID] in B_points:
-                    #                 point[TID] = A
-                    #             elif point[TID] == B and point[PID] \
-                    #                     not in B_points:
-                    #                 point[0] = 1000
 
     # HAVE THEIR BEEN ANY CHANGES TO THE DATA SET AT ALL?
     print "\n> dataset changed:", changed

@@ -1,25 +1,34 @@
 #!/usr/local/bin/python
+
+''' plot.py
+
+Plot the detections output by detect.py
+
+Plots can be static and aggregated so that we see all the detections across
+the duration of the clip at once, or they can be animated and optionally
+'stacked'.
+
+Animate but don't stack = only show the detections in the current frame
+Animate and stack = add the detections in the current frame, leave them there
+
+Animation can be saved to file.
+
+Option to supply a different infile and plot that instead.
+
+'''
+
 import sys
 from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-# dark_background, bmh, grayscale, ggplot, fivethirtyeight
-# plt.style.use('ggplot')
-
-
-# font = {'family': 'normal',
-#         'weight': 'bold',
-#         'size': 12}
-
-# plt.rc('font', **font)
-
 # FLAGS
 save = False
 animate_on = False
 stack = True
 
+# check for stacking and saving
 if len(sys.argv) > 1:
     if sys.argv[1] == 'w':
         save = True
@@ -29,6 +38,7 @@ if len(sys.argv) > 1:
 # DATA
 filename = "data/data_detections.txt"
 
+# Check if a different infile supplied
 if len(sys.argv) > 1:
     filename = sys.argv[1]
 
@@ -83,9 +93,8 @@ scat, = ax.plot([], [], 'k.')
 x_set = []
 y_set = []
 
+
 # initialization function: plot the background of each frame
-
-
 def init():
     scat.set_data([], [])
     return scat,
@@ -111,9 +120,9 @@ def animate(i, fig, counter):
     if int(i) == int(max_frame - 1):
         x_set = []
         y_set = []
-    # plt.waitforbuttonpress()
     return scat
 
+# ANIMATE
 if animate_on:
     anim = animation.FuncAnimation(fig, animate, fargs=(
         fig, counter), init_func=init, frames=max_frame,
