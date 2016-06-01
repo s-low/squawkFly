@@ -1,2 +1,0 @@
-N NoiseSigma MeanNoiseMag MeanPLineDist Std MeanRepErr Std reconstructionError Std
-28 0 0 107.452019824 
