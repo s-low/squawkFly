@@ -1,6 +1,9 @@
 /src/tutorials/*
 /src/3d_data/*
 /src/archived_test_data/*
+/src/data/*
+/src/detectionAnalysis/*
+/src/sessions/*
 
 x3dom-1.7.0/*
 
