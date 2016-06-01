@@ -1,4 +1,4 @@
-# squawkFly
+# squawkFly VUS (Very Ugly Submission Version)
 
 3D Ball-Tracking and Trajectory Reconstruction from Fixed Stereo Views
 
