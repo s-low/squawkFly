@@ -28,14 +28,28 @@ def click(event, x, y, flags, param):
         string = str(x) + ' -' + str(y) + ' ' + str(time)
         truthfile.write(string + '\n')
 
+
+def removeWhite(img):
+    lower = [0, 0, 0]
+    upper = [220, 220, 220]
+
+    lower = np.array(lower, dtype="uint8")
+    upper = np.array(upper, dtype="uint8")
+
+    mask = cv2.inRange(image, lower, upper)
+    output = cv2.bitwise_and(img, img, mask=mask)
+
+    return output
+
+
 # Flags: Debug mode, tracking display, pause
 showDiff = False
 tracking = True
-paused = False
+paused = True
 
 # Size (area) filter bounds
-max_area = 1500
-min_area = 250
+max_area = 200
+min_area = 100
 
 # Initialise variables
 startOfFile = True
@@ -175,10 +189,11 @@ def diff(f0, f1, f2):
 
 # returns a re-thresholded image after blur and open/close/erode/dilate
 def morph(image):
-    kernel = np.ones((11, 11), np.uint8)
-    image = cv2.dilate(image, kernel)
-    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-    image = cv2.GaussianBlur(image, (11, 11), 0)
+    kernel5 = np.ones((5, 5), np.uint8)
+    kernel9 = np.ones((9, 9), np.uint8)
+    image = cv2.dilate(image, kernel5)
+    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel9)
+    image = cv2.GaussianBlur(image, (7, 7), 0)
     ret, image = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
     return image
 

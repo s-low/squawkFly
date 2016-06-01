@@ -43,3 +43,5 @@ data_detections.txt
 src/data_trajectories_subset.txt
 
 res
+
+*.pdf

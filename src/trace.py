@@ -28,7 +28,7 @@ if len(sys.argv) < 3:
 
 clip = sys.argv[1]
 trajectory = sys.argv[2]
-
+outfilename = None
 try:
     outfilename = sys.argv[3]
 except:
@@ -64,6 +64,10 @@ all_y = []
 all_f = []
 
 data = data.split('\n')
+
+if data[-1] in ['\n', '\r\n', '']:
+    data.pop(-1)
+
 for row in data:
     all_x.append(row.split()[0])
     all_y.append(row.split()[1])
@@ -77,7 +81,7 @@ save = False
 # Save the video if filename supplied
 if outfilename is not None:
     save = True
-    fps = 29.0
+    fps = 28.0
     capsize = (1280, 720)
     fourcc = cv2.cv.CV_FOURCC('m', 'p', '4', 'v')
     vout = cv2.VideoWriter()
@@ -101,6 +105,15 @@ while (1):
                     thickness=2,
                     color=(255, 255, 255))
 
+        try:
+            i = all_f.index(count)
+            x = float(all_x[i])
+            y = -float(all_y[i])
+            dots.append((int(x), int(y)))
+
+        except ValueError, e:
+            pass
+
         for dot in dots:
             # connect the dots
             if prev is not None:
@@ -113,14 +126,6 @@ while (1):
             # update the last dot to be the current one
             prev = dot
 
-        try:
-            i = all_f.index(count)
-            x = float(all_x[i])
-            y = -float(all_y[i])
-            dots.append((int(x), int(y)))
-
-        except ValueError, e:
-            pass
         cv2.imshow('Stream', frame)
         cv2.waitKey(1)
         count += 1
